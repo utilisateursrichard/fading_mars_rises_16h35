@@ -1,0 +1,194 @@
+import React from 'react';
+import { 
+  LayoutDashboard, 
+  CalendarDays, 
+  MessageSquareText, 
+  Award, 
+  BookOpen, 
+  X, 
+  GraduationCap, 
+  Plus, 
+  Sparkles,
+  Info,
+  ShieldCheck,
+  LogOut
+} from 'lucide-react';
+import { useSchool, TabType } from '../../context/SchoolContext';
+
+interface MobileNavProps {
+  isDrawerOpen: boolean;
+  onCloseDrawer: () => void;
+}
+
+export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawer }) => {
+  const { 
+    activeTab, 
+    setActiveTab, 
+    unreadMessagesTotal, 
+    pendingHomeworksTotal,
+    student,
+    setIsNewHomeworkModalOpen
+  } = useSchool();
+
+  const navItems: { id: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
+    { id: 'dashboard', label: 'Accueil', icon: LayoutDashboard },
+    { id: 'agenda', label: 'Agenda', icon: CalendarDays, badge: pendingHomeworksTotal > 0 ? pendingHomeworksTotal : undefined },
+    { id: 'messages', label: 'Messages', icon: MessageSquareText, badge: unreadMessagesTotal > 0 ? unreadMessagesTotal : undefined },
+    { id: 'results', label: 'Notes', icon: Award },
+    { id: 'courses', label: 'Cours', icon: BookOpen },
+  ];
+
+  const handleSelectTab = (tab: TabType) => {
+    setActiveTab(tab);
+    onCloseDrawer();
+  };
+
+  return (
+    <>
+      {/* Slide-over Drawer Menu for Mobile */}
+      {isDrawerOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+            onClick={onCloseDrawer}
+          />
+
+          {/* Drawer panel */}
+          <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
+            {/* Drawer Header */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/20">
+                  <GraduationCap className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="font-bold text-base text-slate-900">Better<span className="text-indigo-600">School</span></span>
+                  <p className="text-[11px] text-slate-400 font-medium">Lycée Victor Hugo</p>
+                  <p className="text-[11px] text-slate-400 font-medium truncate">{student?.schoolName || 'Mon Lycée'}</p>
+                </div>
+              </div>
+              <button
+                onClick={onCloseDrawer}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Student card in drawer */}
+            <div className="p-4 bg-slate-50/90 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <img
+                  src={student?.avatar}
+                  alt="Avatar"
+                  className="w-12 h-12 rounded-full object-cover ring-2 ring-indigo-200"
+                />
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900">{student?.firstName} {student?.lastName}</h4>
+                  <p className="text-xs text-slate-500">{student?.studentClass}</p>
+                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">INE: {student?.ineNumber}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Nav list */}
+            <div className="flex-1 p-3 space-y-1 overflow-y-auto">
+              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Menu
+              </div>
+              {navItems.map(item => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSelectTab(item.id)}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                      isActive 
+                        ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                        : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge !== undefined && (
+                      <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-indigo-600 text-white">
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              <div className="pt-4 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Actions rapides
+              </div>
+              <button
+                onClick={() => {
+                  onCloseDrawer();
+                  setIsNewHomeworkModalOpen(true);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <Plus className="w-4 h-4 text-indigo-600" />
+                <span>Ajouter un devoir</span>
+              </button>
+              <button
+                onClick={() => handleSelectTab('results')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Simulateur de moyenne</span>
+              </button>
+            </div>
+
+            {/* Footer */}
+            <div className="p-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <span className="flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Session sécurisée</span>
+              </span>
+              <span className="text-[10px] text-slate-400">v1.0.0</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Fixed Bottom Navigation Bar */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1.5 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+        <div className="flex items-center justify-around">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+                  isActive ? 'text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <div className="relative">
+                  <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+                  {item.badge !== undefined && (
+                    <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[11px] mt-1">{item.label}</span>
+                {isActive && (
+                  <span className="w-1 h-1 bg-indigo-600 rounded-full mt-0.5" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </>
+  );
+};
+
