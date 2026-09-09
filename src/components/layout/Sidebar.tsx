@@ -10,6 +10,7 @@ import {
   Bookmark
 } from 'lucide-react';
 import { useSchool, TabType } from '../../context/SchoolContext';
+import { isFeatureReadyInLive } from '../../utils/featureFlags';
 
 export const Sidebar: React.FC = () => {
   const { 
@@ -21,9 +22,33 @@ export const Sidebar: React.FC = () => {
     isSidebarCollapsed,
     toggleSidebar,
     isInsideSmartschoolPlatform
+    isInsideSmartschoolPlatform,
+    isDemoMode
   } = useSchool();
 
   const navItems: { id: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
+  /**
+   * Nom de l'établissement dynamique :
+   * 
+   * 💡 GESTION DU NOM DU LYCÉE :
+   * - En Mode Démo : affiche les données factices (ex: student?.schoolName || 'Mon Lycée').
+   * - En Mode Réel :
+   *   - Si l'établissement n'est pas encore connu : affiche "Lycée : inconnu".
+   *   - Dès que le lycée sera extrait de Smartschool (ex: "Lycée Henri IV") :
+   *     afficher directement {student.schoolName} SANS le préfixe "Lycée : ".
+   */
+  const getDisplaySchoolName = () => {
+    if (isDemoMode) {
+      return student?.schoolName || 'Mon Lycée';
+    }
+    // Mode Réel
+    if (student?.schoolName && student.schoolName.trim() !== '') {
+      return student.schoolName; // Quand c'est connu : directement le nom (sans "Lycée : ")
+    }
+    return 'Lycée : inconnu'; // Quand c'est inconnu
+  };
+
+  const allNavItems: { id: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
     { id: 'dashboard', label: 'Accueil', icon: LayoutDashboard },
     { id: 'agenda', label: 'Emploi du temps', icon: CalendarDays, badge: pendingHomeworksTotal > 0 ? pendingHomeworksTotal : undefined },
     { id: 'messages', label: 'Messagerie', icon: MessageSquareText, badge: unreadMessagesTotal > 0 ? unreadMessagesTotal : undefined },
@@ -32,6 +57,12 @@ export const Sidebar: React.FC = () => {
     { id: 'tutor', label: 'Tuteur IA', icon: Bot },
     ...(!isInsideSmartschoolPlatform ? [{ id: 'book' as TabType, label: 'Bookmarklet', icon: Bookmark }] : []),
   ];
+
+  // En Mode Réel : les modules non faits (ex: Tuteur IA) sont invisibles à gauche dans le menu
+  const navItems = allNavItems.filter(item => {
+    if (isDemoMode) return true;
+    return isFeatureReadyInLive(item.id) || item.id === 'dashboard';
+  });
 
   return (
     <aside 
@@ -63,6 +94,7 @@ export const Sidebar: React.FC = () => {
                 </span>
                 <p className="text-[11px] text-slate-400 font-medium truncate max-w-[130px]">
                   {student?.schoolName || 'Mon Lycée'}
+                  {getDisplaySchoolName()}
                 </p>
               </div>
             )}

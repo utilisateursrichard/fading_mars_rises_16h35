@@ -16,6 +16,7 @@ import {
   Bookmark
 } from 'lucide-react';
 import { useSchool, TabType } from '../../context/SchoolContext';
+import { isFeatureReadyInLive } from '../../utils/featureFlags';
 
 interface MobileNavProps {
   isDrawerOpen: boolean;
@@ -31,9 +32,33 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
     student,
     setIsNewHomeworkModalOpen,
     isInsideSmartschoolPlatform
+    isInsideSmartschoolPlatform,
+    isDemoMode
   } = useSchool();
 
   const navItems: { id: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
+  /**
+   * Nom de l'établissement dynamique :
+   * 
+   * 💡 GESTION DU NOM DU LYCÉE :
+   * - En Mode Démo : affiche les données factices (ex: student?.schoolName || 'Mon Lycée').
+   * - En Mode Réel :
+   *   - Si l'établissement n'est pas encore connu : affiche "Lycée : inconnu".
+   *   - Dès que le lycée sera extrait de Smartschool (ex: "Lycée Henri IV") :
+   *     afficher directement {student.schoolName} SANS le préfixe "Lycée : ".
+   */
+  const getDisplaySchoolName = () => {
+    if (isDemoMode) {
+      return student?.schoolName || 'Mon Lycée';
+    }
+    // Mode Réel
+    if (student?.schoolName && student.schoolName.trim() !== '') {
+      return student.schoolName; // Quand c'est connu : directement le nom (sans "Lycée : ")
+    }
+    return 'Lycée : inconnu'; // Quand c'est inconnu
+  };
+
+  const allNavItems: { id: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
     { id: 'dashboard', label: 'Accueil', icon: LayoutDashboard },
     { id: 'agenda', label: 'Agenda', icon: CalendarDays, badge: pendingHomeworksTotal > 0 ? pendingHomeworksTotal : undefined },
     { id: 'messages', label: 'Messages', icon: MessageSquareText, badge: unreadMessagesTotal > 0 ? unreadMessagesTotal : undefined },
@@ -41,6 +66,12 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
     { id: 'courses', label: 'Cours', icon: BookOpen },
     { id: 'tutor', label: 'Tuteur IA', icon: Bot },
   ];
+
+  // En Mode Réel : les modules non faits (ex: Tuteur IA) sont invisibles dans le menu
+  const navItems = allNavItems.filter(item => {
+    if (isDemoMode) return true;
+    return isFeatureReadyInLive(item.id) || item.id === 'dashboard';
+  });
 
   const handleSelectTab = (tab: TabType) => {
     setActiveTab(tab);
@@ -70,6 +101,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
                   <span className="font-bold text-base text-slate-900">Better<span className="text-indigo-600">School</span></span>
                   <p className="text-[11px] text-slate-400 font-medium">Lycée Victor Hugo</p>
                   <p className="text-[11px] text-slate-400 font-medium truncate">{student?.schoolName || 'Mon Lycée'}</p>
+                  <p className="text-[11px] text-slate-400 font-medium truncate">{getDisplaySchoolName()}</p>
                 </div>
               </div>
               <button

@@ -48,6 +48,16 @@ export const FEATURES_REGISTRY: Record<FeatureKey, FeatureConfig> = {
 > - Quand un module est relié aux vraies API Smartschool, passez simplement `isReadyInLive: true`.
 > - Quand tout le projet sera terminé, nous pourrons simplement passer `isDemoMode = false` par défaut sans aucune modification de structure dans les composants.
 
+### 2.4. Visibilité des Menus en Mode Réel
+- En **Mode Démo** : Tous les onglets sont visibles (Accueil, Agenda, Messages, Notes, Cours, Tuteur IA) pour montrer l'étendue complète du projet.
+- En **Mode Réel** : Les modules non faits (`isReadyInLive: false`, ex: Tuteur IA) sont **invisibles** à gauche dans la barre de navigation et dans le menu mobile. Ils apparaissent automatiquement dès qu'ils sont marqués comme fonctionnels.
+
+### 2.5. Affichage Dynamique de l'Établissement
+Dans la barre latérale et le tiroir mobile, le nom de l'école est géré par `getDisplaySchoolName()` :
+- **Mode Démo :** Affiche la donnée factice (`student?.schoolName || 'Mon Lycée'`).
+- **Mode Réel (Non connecté / inconnu) :** Affiche explicitement **`"Lycée : inconnu"`**.
+- **Mode Réel (Quand l'établissement sera extrait de Smartschool) :** Afficher **directement le nom** de l'établissement (ex: `"Lycée Victor Hugo"`), **sans** ajouter de préfixe `"Lycée : "`.
+
 ---
 
 ## 3. 🌐 Intégration Smartschool & Bookmarklet Chrome
