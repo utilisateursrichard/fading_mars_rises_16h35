@@ -8,6 +8,7 @@ import { AgendaView } from './components/views/AgendaView';
 import { MessagesView } from './components/views/MessagesView';
 import { ResultsView } from './components/views/ResultsView';
 import { CoursesView } from './components/views/CoursesView';
+import { TutorView } from './components/views/TutorView';
 import { CourseDetailModal } from './components/modals/CourseDetailModal';
 import { NewHomeworkModal } from './components/modals/NewHomeworkModal';
 
@@ -27,6 +28,8 @@ const MainLayout: React.FC = () => {
         return <ResultsView />;
       case 'courses':
         return <CoursesView />;
+      case 'tutor':
+        return <TutorView />;
       default:
         return <DashboardView />;
     }

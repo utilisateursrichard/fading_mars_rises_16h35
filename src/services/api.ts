@@ -34,11 +34,11 @@ import {
 
 // Clés de persistance locale (versionnées pour forcer les nouvelles données centralisées)
 const STORAGE_KEYS = {
-  HOMEWORKS: 'betterschool_v2_homeworks',
-  MESSAGES: 'betterschool_v2_messages',
-  CONVERSATIONS: 'betterschool_v2_conversations',
-  ASSIGNMENTS: 'betterschool_v2_assignments',
-  SIMULATED_GRADES: 'betterschool_v2_simulated_grades'
+  HOMEWORKS: 'betterschool_v3_homeworks',
+  MESSAGES: 'betterschool_v3_messages',
+  CONVERSATIONS: 'betterschool_v3_conversations',
+  ASSIGNMENTS: 'betterschool_v3_assignments',
+  SIMULATED_GRADES: 'betterschool_v3_simulated_grades'
 };
 
 // Helpers de persistance sécurisée

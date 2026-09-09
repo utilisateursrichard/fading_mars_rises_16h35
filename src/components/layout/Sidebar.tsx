@@ -5,7 +5,8 @@ import {
   MessageSquareText, 
   Award, 
   BookOpen, 
-  GraduationCap
+  GraduationCap,
+  Bot
 } from 'lucide-react';
 import { useSchool, TabType } from '../../context/SchoolContext';
 
@@ -26,6 +27,7 @@ export const Sidebar: React.FC = () => {
     { id: 'messages', label: 'Messagerie', icon: MessageSquareText, badge: unreadMessagesTotal > 0 ? unreadMessagesTotal : undefined },
     { id: 'results', label: 'Notes & Résultats', icon: Award },
     { id: 'courses', label: 'Espace Cours', icon: BookOpen },
+    { id: 'tutor', label: 'Tuteur IA', icon: Bot },
   ];
 
   return (

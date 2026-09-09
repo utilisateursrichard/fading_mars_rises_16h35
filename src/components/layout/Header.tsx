@@ -49,6 +49,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
       case 'messages': return 'Messagerie';
       case 'results': return 'Notes & Résultats';
       case 'courses': return 'Espace Cours';
+      case 'tutor': return 'Tuteur IA';
       default: return 'Accueil';
     }
   };

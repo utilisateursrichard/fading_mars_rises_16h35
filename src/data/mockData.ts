@@ -47,12 +47,12 @@ export const TEACHERS: Record<string, TeacherProfile> = {
   NSI: {
     id: 'teacher-nsi',
     name: 'nootends',
-    subject: 'Numérique & Sc. Informatiques',
-    subjectCode: 'NSI',
-    role: 'Enseignant Spécialité NSI',
+    subject: 'Science',
+    subjectCode: 'SCI',
+    role: 'Enseignant Science',
     email: 'nootends@betterschool.fr',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-    room: 'Labo Info 3',
+    room: 'Labo Science',
   },
   ANG: {
     id: 'teacher-ang',
@@ -134,7 +134,7 @@ export const mockHomeworks: Homework[] = [
   {
     id: 'hw-1',
     subject: 'JSP',
-    subjectCode: 'NSI',
+    subjectCode: 'SCI',
     color: '#6366f1',
     title: 'manger mes morts',
     description: 'XXX',
@@ -246,8 +246,8 @@ export const mockCourseEvents: CourseEvent[] = [
   },
   {
     id: 'evt-mon-3',
-    subject: 'Numérique & Sc. Informatiques',
-    subjectCode: 'NSI',
+    subject: TEACHERS.NSI.subject,
+    subjectCode: TEACHERS.NSI.subjectCode,
     teacher: TEACHERS.NSI.name,
     room: TEACHERS.NSI.room,
     startTime: '14:00',
@@ -259,7 +259,7 @@ export const mockCourseEvents: CourseEvent[] = [
     description: 'jsp.',
     status: 'completed',
     materials: [
-      { id: 'mat-2', title: 'tp_arbres_binaires.ipynb', type: 'code', size: '250 Ko' }
+      { id: 'mat-2', title: 'tp_science.pdf', type: 'pdf', size: '250 Ko' }
     ]
   },
   {
@@ -332,8 +332,8 @@ export const mockCourseEvents: CourseEvent[] = [
   // MERCREDI (dayOfWeek: 3)
   {
     id: 'evt-wed-1',
-    subject: 'Numérique & Sc. Informatiques',
-    subjectCode: 'NSI',
+    subject: TEACHERS.NSI.subject,
+    subjectCode: TEACHERS.NSI.subjectCode,
     teacher: TEACHERS.NSI.name,
     room: TEACHERS.NSI.room,
     startTime: '08:30',
@@ -342,7 +342,7 @@ export const mockCourseEvents: CourseEvent[] = [
     date: weekDates[3],
     type: 'cours',
     color: '#6366f1',
-    description: 'Travail sur les structures de données et complexité algorithmique.',
+    description: 'Travail sur la démarche scientifique.',
     status: 'scheduled',
     homeworkDue: [mockHomeworks[0]],
   },
@@ -396,8 +396,8 @@ export const mockCourseEvents: CourseEvent[] = [
   },
   {
     id: 'evt-thu-3',
-    subject: 'Numérique & Sc. Informatiques',
-    subjectCode: 'NSI',
+    subject: TEACHERS.NSI.subject,
+    subjectCode: TEACHERS.NSI.subjectCode,
     teacher: TEACHERS.NSI.name,
     room: TEACHERS.NSI.room,
     startTime: '13:30',
@@ -406,7 +406,7 @@ export const mockCourseEvents: CourseEvent[] = [
     date: weekDates[4],
     type: 'cours',
     color: '#6366f1',
-    description: 'Approfondissement des algorithmes de parcours et des structures arborescentes.',
+    description: 'Approfondissement des notions scientifiques.',
     status: 'scheduled',
   },
   {
@@ -478,8 +478,8 @@ export const mockCourseEvents: CourseEvent[] = [
 // Notes & Résultats scolaires
 export const mockSubjectReports: SubjectReport[] = [
   {
-    subject: 'Numérique & Sc. Informatiques',
-    subjectCode: 'NSI',
+    subject: TEACHERS.NSI.subject,
+    subjectCode: TEACHERS.NSI.subjectCode,
     color: '#6366f1',
     teacher: TEACHERS.NSI.name,
     coefficient: 16,
@@ -487,53 +487,53 @@ export const mockSubjectReports: SubjectReport[] = [
     classAverage: 14.1,
     minAverage: 9.8,
     maxAverage: 19.4,
-    teacherAppreciation: 'Excellent trimestre. Richard fait preuve d’une remarquable rigueur algorithmique et d’une réelle curiosité technique.',
+    teacherAppreciation: 'Excellent trimestre. Richard fait preuve d’une remarquable rigueur et d’une réelle curiosité scientifique.',
     grades: [
       {
         id: 'gr-1',
-        subject: 'NSI',
-        subjectCode: 'NSI',
+        subject: TEACHERS.NSI.subject,
+        subjectCode: TEACHERS.NSI.subjectCode,
         value: 18.5,
         maxValue: 20,
         coefficient: 2,
-        title: 'DS 1 : Récursivité et Arbres Binaires',
+        title: 'DS 1 : Démarche et modélisation scientifique',
         date: '2026-09-02',
         classAverage: 13.8,
         minGrade: 8,
         maxGrade: 19.5,
-        teacherComment: 'Très bonne maîtrise de la récursivité, code propre et commenté.',
+        teacherComment: 'Très bonne maîtrise de la démarche scientifique.',
         period: 'T1',
         type: 'DS'
       },
       {
         id: 'gr-2',
-        subject: 'NSI',
-        subjectCode: 'NSI',
+        subject: TEACHERS.NSI.subject,
+        subjectCode: TEACHERS.NSI.subjectCode,
         value: 17.0,
         maxValue: 20,
         coefficient: 1,
-        title: 'TP Noté : Modélisation SQL & Requêtes',
+        title: 'TP Noté : Mesures et analyse expérimentale',
         date: '2026-08-28',
         classAverage: 14.5,
         minGrade: 10,
         maxGrade: 18,
-        teacherComment: 'Toutes les requêtes jointes sont correctes.',
+        teacherComment: 'Toutes les mesures sont rigoureuses.',
         period: 'T1',
         type: 'TP'
       },
       {
         id: 'gr-3',
-        subject: 'NSI',
-        subjectCode: 'NSI',
+        subject: TEACHERS.NSI.subject,
+        subjectCode: TEACHERS.NSI.subjectCode,
         value: 16.5,
         maxValue: 20,
         coefficient: 1,
-        title: 'Interro rapide : Complexité algorithmique',
+        title: 'Interro rapide : Notions scientifiques clés',
         date: '2026-08-22',
         classAverage: 13.2,
         minGrade: 7.5,
         maxGrade: 19,
-        teacherComment: 'Notation Grand O bien assimilée.',
+        teacherComment: 'Notions fondamentales bien assimilées.',
         period: 'T1',
         type: 'Interro'
       }
@@ -779,7 +779,7 @@ export const mockConversations: Conversation[] = [
   },
   {
     id: 'conv-3',
-    name: 'Bot/ No reply — Lycée Victor Hugo',
+    name: 'Bot/ No reply — college jean arabe XXIII',
     role: 'Administration & Surveillance',
     avatar: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=120&auto=format&fit=crop&q=80',
     category: 'admin',
@@ -790,8 +790,8 @@ export const mockConversations: Conversation[] = [
   },
   {
     id: 'conv-4',
-    name: 'Groupe Projet NSI (Équipe Alpha)',
-    role: 'Projet Grand Oral & NSI (4 élèves)',
+    name: 'Groupe Projet Science (Équipe Alpha)',
+    role: 'Projet Science (4 élèves)',
     avatar: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=120&auto=format&fit=crop&q=80',
     category: 'groups',
     lastMessage: 'message placeholder 649',
@@ -1004,46 +1004,44 @@ export const mockMessages: { [key: string]: Message[] } = {
 // Matières et Espace de cours complets
 export const mockCourses: SubjectCourse[] = [
   {
-    id: 'course-nsi',
-    subject: 'Numérique et Sciences Informatiques',
-    subjectCode: 'NSI',
+    id: 'course-sci',
+    subject: TEACHERS.NSI.subject,
+    subjectCode: TEACHERS.NSI.subjectCode,
     color: '#6366f1',
     teacher: TEACHERS.NSI.name,
     teacherEmail: TEACHERS.NSI.email,
     room: TEACHERS.NSI.room,
     hoursPerWeek: 6,
     progressPercent: 72,
-    nextExam: 'DS n°2 — Réseaux & Protocoles (18 Sept)',
+    nextExam: 'DS n°2 — Science (18 Sept)',
     chapters: [
       {
-        id: 'chap-nsi-1',
-        title: 'Chapitre 1 : Structures de Données Linéaires & Arbres Binaires',
-        description: 'Piles, files, listes chaînées et arbres binaires de recherche. Algorithmes récursifs.',
+        id: 'chap-sci-1',
+        title: 'Chapitre 1 : Méthodes et Démarche Scientifique',
+        description: 'Observation, protocoles de mesure et analyse expérimentale.',
         order: 1,
         status: 'completed',
         documents: [
-          { id: 'doc-1', title: 'Cours_Arbres_Binaires.pdf', type: 'pdf', size: '2.3 Mo', uploadDate: '28 Août 2026' },
-          { id: 'doc-2', title: 'Fiche_Revision_Parcours_Arbres.pdf', type: 'pdf', size: '890 Ko', uploadDate: '01 Sept 2026' },
-          { id: 'doc-3', title: 'Notebook_Exercices_Arbres.ipynb', type: 'archive', size: '340 Ko', uploadDate: '02 Sept 2026' },
+          { id: 'doc-1', title: 'Cours_Demarche_Scientifique.pdf', type: 'pdf', size: '2.3 Mo', uploadDate: '28 Août 2026' },
+          { id: 'doc-2', title: 'Fiche_Revision_Mesures.pdf', type: 'pdf', size: '890 Ko', uploadDate: '01 Sept 2026' },
         ]
       },
       {
-        id: 'chap-nsi-2',
-        title: 'Chapitre 2 : Bases de Données & Modèle Relationnel',
-        description: 'Schéma relationnel, clés primaires et étrangères, algèbre relationnelle et langage SQL.',
+        id: 'chap-sci-2',
+        title: 'Chapitre 2 : Modélisation et Systèmes Expérimentaux',
+        description: 'Systèmes de données, représentations graphiques et analyse critique.',
         order: 2,
         status: 'in_progress',
         documents: [
-          { id: 'doc-4', title: 'Guide_Syntaxe_SQL_Jointures.pdf', type: 'pdf', size: '1.5 Mo', uploadDate: '04 Sept 2026' },
-          { id: 'doc-5', title: 'Base_Exemple_Cinemas.sqlite', type: 'archive', size: '512 Ko', uploadDate: '05 Sept 2026' },
+          { id: 'doc-4', title: 'Guide_Donnees_Graphiques.pdf', type: 'pdf', size: '1.5 Mo', uploadDate: '04 Sept 2026' },
         ]
       }
     ],
     assignments: [
       {
         id: 'asg-1',
-        title: 'Mini-Projet : Moteur de recherche local avec index inversé',
-        subject: 'NSI',
+        title: 'Mini-Projet : Synthèse d’investigation scientifique',
+        subject: 'Science',
         dueDate: '2026-09-25',
         points: 20,
         status: 'pending',

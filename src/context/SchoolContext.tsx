@@ -11,7 +11,7 @@ import {
 import { schoolService } from '../services/api';
 import { mockNotifications } from '../data/mockData';
 
-export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses';
+export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'tutor';
 
 export interface AppNotification {
   id: string;

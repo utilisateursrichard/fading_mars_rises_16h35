@@ -6,7 +6,7 @@ import { getSubjectTheme } from '../../utils/theme';
 export const NewHomeworkModal: React.FC = () => {
   const { isNewHomeworkModalOpen, setIsNewHomeworkModalOpen, addHomework } = useSchool();
 
-  const [subject, setSubject] = useState('Numérique & Sc. Informatiques');
+  const [subject, setSubject] = useState('Science');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState(() => {
@@ -20,9 +20,9 @@ export const NewHomeworkModal: React.FC = () => {
   if (!isNewHomeworkModalOpen) return null;
 
   const subjectOptions = [
-    { name: 'Numérique & Sc. Informatiques', code: 'NSI' },
+    { name: 'Science', code: 'SCI' },
     { name: 'Mathématiques', code: 'MATH' },
-    { name: 'Philosophie', code: 'PHILO' },
+    { name: 'Kialuta', code: 'PHILO' },
     { name: 'Physique-Chimie', code: 'PC' },
     { name: 'Histoire-Géographie', code: 'HIST-GEO' },
     { name: 'Anglais LV1', code: 'ANG' },
@@ -32,7 +32,7 @@ export const NewHomeworkModal: React.FC = () => {
     e.preventDefault();
     if (!title.trim()) return;
 
-    const opt = subjectOptions.find(s => s.name === subject) || { code: 'NSI' };
+    const opt = subjectOptions.find(s => s.name === subject) || { code: 'SCI' };
     const theme = getSubjectTheme(opt.code);
 
     await addHomework({

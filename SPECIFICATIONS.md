@@ -41,7 +41,7 @@ L'un des objectifs fondamentaux de la refonte est de **supprimer la surcharge co
 * **Lisibilité en 3 secondes :** En ouvrant l'application, l'élève sait immédiatement :
   1. Quel est son prochain cours, dans quelle salle et avec qui.
   2. Quels sont ses devoirs urgents et le temps estimé pour les réaliser.
-  3. Où se situe sa moyenne générale (notée sur 100).
+  3. Où se situe sa moyenne générale.
 
 ---
 
@@ -58,7 +58,7 @@ L'un des objectifs fondamentaux de la refonte est de **supprimer la surcharge co
   * Textes secondaires calmes en `slate-400` et `slate-500`.
 * **Codes Couleurs par Matière (Identité Tonale M3) :**
   * Mathématiques : `#0284c7` (Sky blue)
-  * NSI (Informatique) : `#6366f1` (Indigo vibrant)
+  * Science : `#6366f1` (Indigo vibrant)
   * Physique-Chimie : `#059669` (Emerald)
   * Philosophie / Kialuta : `#d97706` (Amber)
   * Histoire-Géographie : `#f97316` (Orange vif)
@@ -89,7 +89,7 @@ L'un des objectifs fondamentaux de la refonte est de **supprimer la surcharge co
   * Carte proéminente indiquant l'horaire, la salle, l'enseignant titulaire et le statut temps réel (*En direct maintenant* ou *Prochain cours*).
   * Clic direct pour ouvrir la modal de détail de séance ou envoyer un message au professeur.
 * **Trio de Métriques Décisionnelles (Bento 3 KPI) :**
-  1. *Moyenne Générale :* Note globale calculée sur 100 (ex: 81.5/100), comparaison avec la moyenne de classe et tendance par rapport au trimestre précédent.
+  1. *Moyenne Générale :* Note précise, comparaison avec la moyenne de classe et tendance par rapport au trimestre précédent.
   2. *Devoirs en attente :* Nombre d'exercices restants, temps de travail estimé (ex: 1h15) et niveau d'urgence.
   3. *Séances du jour :* Volume d'heures et heure exacte de fin de journée.
 * **Double Colonne Opérationnelle :**
@@ -109,9 +109,9 @@ L'un des objectifs fondamentaux de la refonte est de **supprimer la surcharge co
 * Responsive mobile : bascule fluide entre la liste de discussions et la conversation plein écran avec bouton de retour.
 
 ### 4.4. 🏆 Notes & Résultats (`ResultsView`)
-* Récapitulatif trimestriel complet avec calcul de la moyenne générale pondérée sur 100 (au lieu de 20).
+* Récapitulatif trimestriel complet avec calcul de la moyenne pondérée officielle par les coefficients.
 * Détail par matière avec notes les plus hautes, moyennes de classe et appréciations officielles des professeurs.
-* **Simulateur de moyenne interactif :** Permet à l'élève de saisir une note hypothétique pour évaluer instantanément son impact sur sa moyenne générale (calculée sur 100) avant une évaluation.
+* **Simulateur de moyenne interactif :** Permet à l'élève de saisir une note hypothétique pour évaluer instantanément son impact sur sa moyenne générale avant une évaluation.
 
 ### 4.5. 📚 Espace Cours (`CoursesView`)
 * Grille claire des matières sans barres de progression superflues afin de maximiser la clarté et la sobriété.
@@ -130,7 +130,7 @@ L'un des objectifs fondamentaux de la refonte est de **supprimer la surcharge co
 Pour éliminer les doublons et les incohérences de noms de professeurs entre les différentes pages, toutes les structures de données font référence au dictionnaire centralisé `TEACHERS` dans `src/data/mockData.ts` :
 * **MATH :** `Imena` — Salle B204
 * **HIST_GEO :** `mere terresa nollet / derriderrr` — Salle A102
-* **NSI :** `nootends` — Labo Info 3
+* **SCI (Science) :** `nootends` — Labo Science
 * **ANG :** `Mr. le gay` — Salle C105
 * **PC :** `Dury` — Labo Chimie 2
 * **PHILO :** `Pape Kialuta` — Salle B108 (Matière : *Kialuta*)
@@ -156,3 +156,4 @@ Les données enregistrées côté client (devoirs cochés, nouveaux messages, et
 | **Prise en main** | Menus rigides et navigation lente | Barre rétractable fluide, raccourci `Ctrl+B`, tactile M3E |
 | **Messagerie** | Formulaires rigides sans statut | Fil direct avec les enseignants et réponses réactives |
 | **Simplicité** | Barres et jauges partout sans valeur ajoutée | Retrait des indicateurs inutiles au profit de l'essentiel |
+

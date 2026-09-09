@@ -11,7 +11,8 @@ import {
   Sparkles,
   Info,
   ShieldCheck,
-  LogOut
+  LogOut,
+  Bot
 } from 'lucide-react';
 import { useSchool, TabType } from '../../context/SchoolContext';
 
@@ -36,6 +37,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
     { id: 'messages', label: 'Messages', icon: MessageSquareText, badge: unreadMessagesTotal > 0 ? unreadMessagesTotal : undefined },
     { id: 'results', label: 'Notes', icon: Award },
     { id: 'courses', label: 'Cours', icon: BookOpen },
+    { id: 'tutor', label: 'Tuteur IA', icon: Bot },
   ];
 
   const handleSelectTab = (tab: TabType) => {

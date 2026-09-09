@@ -20,7 +20,7 @@ export const ResultsView: React.FC = () => {
   } = useSchool();
 
   const [expandedSubjects, setExpandedSubjects] = useState<{ [key: string]: boolean }>({
-    'NSI': true,
+    'SCI': true,
     'MATH': true
   });
 
