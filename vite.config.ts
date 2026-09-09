@@ -7,7 +7,13 @@ export default defineConfig({
   server: {
     port: 3000,
     open: false,
-    host: true
+    host: true,
+    allowedHosts: ['betterschool.dino.icu', '.dino.icu']
+  },
+  preview: {
+    port: 3000,
+    host: true,
+    allowedHosts: ['betterschool.dino.icu', '.dino.icu']
   }
 });
 
