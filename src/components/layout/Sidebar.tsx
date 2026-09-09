@@ -19,7 +19,8 @@ export const Sidebar: React.FC = () => {
     pendingHomeworksTotal,
     student,
     isSidebarCollapsed,
-    toggleSidebar
+    toggleSidebar,
+    isInsideSmartschoolPlatform
   } = useSchool();
 
   const navItems: { id: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
@@ -29,7 +30,7 @@ export const Sidebar: React.FC = () => {
     { id: 'results', label: 'Notes & Résultats', icon: Award },
     { id: 'courses', label: 'Espace Cours', icon: BookOpen },
     { id: 'tutor', label: 'Tuteur IA', icon: Bot },
-    { id: 'book', label: 'Bookmarklet', icon: Bookmark },
+    ...(!isInsideSmartschoolPlatform ? [{ id: 'book' as TabType, label: 'Bookmarklet', icon: Bookmark }] : []),
   ];
 
   return (

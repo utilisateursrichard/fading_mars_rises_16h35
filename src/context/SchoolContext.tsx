@@ -10,6 +10,7 @@ import {
 } from '../types/school';
 import { schoolService } from '../services/api';
 import { mockNotifications } from '../data/mockData';
+import { isInsideSmartschool } from '../utils/platform';
 
 export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'tutor' | 'book';
 
@@ -66,14 +67,26 @@ interface SchoolContextType {
   // Sidebar rétractable
   isSidebarCollapsed: boolean;
   toggleSidebar: () => void;
+  isInsideSmartschoolPlatform: boolean;
+  isDemoMode: boolean;
+  toggleDemoMode: () => void;
+  setDemoMode: (enabled: boolean) => void;
 }
 
 const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
 
 export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [student, setStudent] = useState<Student | null>(null);
+  const isInsideSmartschoolPlatform = useMemo(() => isInsideSmartschool(), []);
+
+  const isBookPath = (path: string) => {
+    if (isInsideSmartschoolPlatform) return false;
+    const clean = path.replace(/\/+/g, '/');
+    return clean === '/book' || clean.startsWith('/book/') || clean.startsWith('/book');
+  };
+
   const getInitialTab = (): TabType => {
-    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/book')) {
+    if (typeof window !== 'undefined' && isBookPath(window.location.pathname)) {
       return 'book';
     }
     return 'dashboard';
@@ -93,7 +106,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     const handlePopState = () => {
       if (typeof window !== 'undefined') {
-        if (window.location.pathname.startsWith('/book')) {
+        if (isBookPath(window.location.pathname)) {
           setActiveTabState('book');
         } else {
           setActiveTabState('dashboard');
@@ -124,6 +137,33 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications);
 
+  // État du mode démo (avec persistance locale)
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('betterschool_demo_mode');
+      return stored !== null ? stored === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleDemoMode = () => {
+    setIsDemoMode(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('betterschool_demo_mode', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const setDemoMode = (enabled: boolean) => {
+    setIsDemoMode(enabled);
+    try {
+      localStorage.setItem('betterschool_demo_mode', String(enabled));
+    } catch {}
+  };
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
 
@@ -139,9 +179,24 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Initialisation des données
+  // Initialisation des données en fonction du mode démo
   useEffect(() => {
     const initData = async () => {
+      if (!isDemoMode) {
+        // En mode Réel (sans API Smartschool connectée pour l'instant) : aucune fausse donnée
+        setStudent(null);
+        setEvents([]);
+        setTodayEvents([]);
+        setHomeworks([]);
+        setConversations([]);
+        setActiveMessages([]);
+        setSubjectReports([]);
+        setCourses([]);
+        setNotifications([]);
+        return;
+      }
+
+      // En mode Démo : chargement de la maquette avec fausses données
       const [stu, evts, tEvents, hws, convs, reports, stats, crss] = await Promise.all([
         schoolService.getStudent(),
         schoolService.getAgendaEvents(),
@@ -161,6 +216,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setSubjectReports(reports);
       setOverallStats(stats);
       setCourses(crss);
+      setNotifications(mockNotifications);
 
       if (convs.length > 0) {
         const msgs = await schoolService.getMessages(convs[0].id);
@@ -169,7 +225,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     initData();
-  }, []);
+  }, [isDemoMode]);
 
   // Chargement des messages quand la conversation active change
   useEffect(() => {
@@ -287,7 +343,11 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setGlobalSearch,
         startDirectMessageWithTeacher,
         isSidebarCollapsed,
-        toggleSidebar
+        toggleSidebar,
+        isInsideSmartschoolPlatform,
+        isDemoMode,
+        toggleDemoMode,
+        setDemoMode
       }}
     >
       {children}

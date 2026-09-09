@@ -10,14 +10,21 @@ import { ResultsView } from './components/views/ResultsView';
 import { CoursesView } from './components/views/CoursesView';
 import { TutorView } from './components/views/TutorView';
 import { BookmarkView } from './components/views/BookmarkView';
+import { LiveModeEmptyState } from './components/common/LiveModeEmptyState';
+import { isFeatureReadyInLive } from './utils/featureFlags';
 import { CourseDetailModal } from './components/modals/CourseDetailModal';
 import { NewHomeworkModal } from './components/modals/NewHomeworkModal';
 
 const MainLayout: React.FC = () => {
-  const { activeTab } = useSchool();
+  const { activeTab, isDemoMode } = useSchool();
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   const renderActiveView = () => {
+    // En Mode Réel, si la fonctionnalité n'est pas encore connectée, afficher la vue vide explicite
+    if (!isDemoMode && activeTab !== 'book' && !isFeatureReadyInLive(activeTab)) {
+      return <LiveModeEmptyState featureKey={activeTab} />;
+    }
+
     switch (activeTab) {
       case 'dashboard':
         return <DashboardView />;

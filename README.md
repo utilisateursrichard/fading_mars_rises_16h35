@@ -4,7 +4,10 @@
 
 Elle adopte le design system **M3E Pro** (hybride Google Material 3 Expressive & Apple/Stripe Pro), garantissant une interface minimaliste, chaleureuse et sans surcharge d'informations.
 
-👉 **Consultez les spécifications complètes du design system et de la plateforme dans [SPECIFICATIONS.md](./SPECIFICATIONS.md)**.
+👉 **Documentation complète disponible dans le dossier [`documentation/`](./documentation/) :**
+- 🏛️ **[Design System M3E Pro](./documentation/M3E%20Pro.md)** : Spécifications techniques fermées, tokens Tailwind, typographie, accessibilité et composants.
+- 🤖 **[Guide Développeur & Agent](./documentation/AGENT.md)** : Mode Démo vs Réel, intégration Smartschool, architecture API et consignes.
+- 📐 **[Spécifications Générales](./documentation/SPECIFICATIONS.md)** : Fonctionnalités, parcours utilisateur et modèle de données.
 
 ---
 

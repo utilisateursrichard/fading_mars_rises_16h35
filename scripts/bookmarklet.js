@@ -31,7 +31,7 @@ const overlayBookmarkletCode = `javascript:(function(){
   overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:2147483647;border:none;background:#F8FAFC;margin:0;padding:0;overflow:hidden;';
 
   const iframe = document.createElement('iframe');
-  iframe.src = '${DEFAULT_URL}';
+  iframe.src = '${DEFAULT_URL}?source=smartschool';
   iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
   iframe.title = 'BetterSchool Interface';
 

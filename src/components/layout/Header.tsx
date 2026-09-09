@@ -25,7 +25,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
     markNotificationsAsRead,
     setIsNewHomeworkModalOpen,
     isSidebarCollapsed,
-    toggleSidebar
+    toggleSidebar,
+    isDemoMode,
+    toggleDemoMode
   } = useSchool();
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -104,6 +106,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
         >
           <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
           <span>Devoir</span>
+        </button>
+
+        {/* Demo / Live Mode Toggle Button */}
+        <button
+          onClick={toggleDemoMode}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border m3-press ${
+            isDemoMode
+              ? 'bg-amber-50 hover:bg-amber-100/80 text-amber-800 border-amber-300/80 shadow-sm'
+              : 'bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 border-emerald-300/80 shadow-sm'
+          }`}
+          title={isDemoMode ? "Mode Démo actif (fausses données). Cliquez pour passer en Mode Réel." : "Mode Réel actif (sans fausses données). Cliquez pour activer le Mode Démo."}
+        >
+          <span className={`w-2 h-2 rounded-full ${isDemoMode ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
+          <span>{isDemoMode ? 'Mode Démo' : 'Mode Réel'}</span>
         </button>
 
         {/* Direct Messages Shortcut */}
