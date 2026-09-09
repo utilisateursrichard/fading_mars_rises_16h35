@@ -11,7 +11,7 @@ import {
 import { schoolService } from '../services/api';
 import { mockNotifications } from '../data/mockData';
 
-export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'tutor';
+export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'tutor' | 'book';
 
 export interface AppNotification {
   id: string;
@@ -72,7 +72,37 @@ const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
 
 export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [student, setStudent] = useState<Student | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const getInitialTab = (): TabType => {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/book')) {
+      return 'book';
+    }
+    return 'dashboard';
+  };
+  const [activeTab, setActiveTabState] = useState<TabType>(getInitialTab);
+
+  const setActiveTab = (tab: TabType) => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined') {
+      const targetPath = tab === 'book' ? '/book' : '/';
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState(null, '', targetPath);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window !== 'undefined') {
+        if (window.location.pathname.startsWith('/book')) {
+          setActiveTabState('book');
+        } else {
+          setActiveTabState('dashboard');
+        }
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
   const [events, setEvents] = useState<CourseEvent[]>([]);
   const [todayEvents, setTodayEvents] = useState<CourseEvent[]>([]);
   const [selectedEventModal, setSelectedEventModal] = useState<CourseEvent | null>(null);

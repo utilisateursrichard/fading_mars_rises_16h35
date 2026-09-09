@@ -12,7 +12,8 @@ import {
   Info,
   ShieldCheck,
   LogOut,
-  Bot
+  Bot,
+  Bookmark
 } from 'lucide-react';
 import { useSchool, TabType } from '../../context/SchoolContext';
 
@@ -144,6 +145,13 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
               >
                 <Sparkles className="w-4 h-4 text-amber-500" />
                 <span>Simulateur de moyenne</span>
+              </button>
+              <button
+                onClick={() => handleSelectTab('book')}
+                className="m3-press w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-100/80 bg-slate-50 border border-slate-200/60 mt-1.5"
+              >
+                <Bookmark className="w-4 h-4 text-indigo-600" />
+                <span>Bookmark Smartschool</span>
               </button>
             </div>
 

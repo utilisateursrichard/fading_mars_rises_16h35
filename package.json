@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "bookmarklet": "node scripts/bookmarklet.js"
   },
   "dependencies": {
     "clsx": "^2.1.1",
