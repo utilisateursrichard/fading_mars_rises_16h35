@@ -88,9 +88,18 @@ Pour éviter le **rate-limiting par IP** :
 - En exécutant les requêtes depuis le navigateur ou l'extension de chaque élève, les requêtes proviennent de l'IP personnelle de chaque utilisateur, éliminant tout risque de blocage global.
 
 ### 4.2. Remplacement des services
+### 4.2. Le Pont Same-Origin (`src/services/smartschoolBridge.ts`)
+Pour contourner la politique CORS sans passer par un serveur tiers à risque de blocage :
+- L'iframe BetterSchool appelle `fetchSmartschool(url, options)`.
+- La requête est transmise via `postMessage` au code du bookmarklet dans l'onglet Smartschool hôte.
+- Le bookmarklet exécute le `fetch()` en **Same-Origin** (avec les cookies de l'élève) et renvoie le JSON/HTML à l'iframe.
+- L'IP utilisée est celle de l'élève, aucun proxy serveur n'est nécessaire.
+
+### 4.3. Remplacement des services
 Toutes les méthodes de récupération de données sont centralisées dans `src/services/api.ts`.
 Pour brancher une vraie route Smartschool :
 1. Remplacer le retour de données factices dans la méthode correspondante de `src/services/api.ts` par un `fetch(...)`.
+1. Remplacer le retour de données factices dans la méthode correspondante de `src/services/api.ts` par un appel `await fetchSmartschool('/chemin/api')`.
 2. Passer `isReadyInLive: true` dans `src/utils/featureFlags.ts`.
 3. Aucun composant graphique n'a besoin d'être modifié !
 

@@ -58,6 +58,29 @@ const overlayBookmarkletCode = `javascript:(function(){
   closeBtn.onmouseenter = () => closeBtn.style.transform = 'scale(1.05)';
   closeBtn.onmouseleave = () => closeBtn.style.transform = 'scale(1)';
 
+  const onMsg = (ev) => {
+    try {
+      if (ev.source !== iframe.contentWindow) return;
+      const d = ev.data;
+      if (d && d.type === 'BETTERSCHOOL') {
+        if (d.action === 'CLOSE') cleanup();
+        if (d.action === 'SET_TITLE' && d.title) document.title = d.title;
+        if (d.action === 'FETCH' && d.url) {
+          const id = d.id;
+          fetch(d.url, d.options || {})
+            .then(r => r.text().then(b => ({ ok: r.ok, status: r.status, body: b })))
+            .then(res => {
+              iframe.contentWindow.postMessage({ type: 'BETTERSCHOOL_RES', id, ...res }, '*');
+            })
+            .catch(err => {
+              iframe.contentWindow.postMessage({ type: 'BETTERSCHOOL_RES', id, ok: false, error: err.message }, '*');
+            });
+        }
+      }
+    } catch(e) {}
+  };
+  window.addEventListener('message', onMsg);
+
   const cleanup = () => {
     overlay.remove();
     const curFav = document.getElementById(F);
@@ -68,6 +91,7 @@ const overlayBookmarkletCode = `javascript:(function(){
     });
     document.title = origTitle;
     window.removeEventListener('keydown', handleEsc);
+    window.removeEventListener('message', onMsg);
     delete window.__closeBS;
   };
 
