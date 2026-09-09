@@ -31,12 +31,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
     pendingHomeworksTotal,
     student,
     setIsNewHomeworkModalOpen,
-    isInsideSmartschoolPlatform
     isInsideSmartschoolPlatform,
     isDemoMode
   } = useSchool();
 
-  const navItems: { id: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
   /**
    * Nom de l'établissement dynamique :
    * 
@@ -99,8 +97,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
                 </div>
                 <div>
                   <span className="font-bold text-base text-slate-900">Better<span className="text-indigo-600">School</span></span>
-                  <p className="text-[11px] text-slate-400 font-medium">Lycée Victor Hugo</p>
-                  <p className="text-[11px] text-slate-400 font-medium truncate">{student?.schoolName || 'Mon Lycée'}</p>
                   <p className="text-[11px] text-slate-400 font-medium truncate">{getDisplaySchoolName()}</p>
                 </div>
               </div>

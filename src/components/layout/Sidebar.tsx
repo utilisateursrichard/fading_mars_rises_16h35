@@ -21,12 +21,9 @@ export const Sidebar: React.FC = () => {
     student,
     isSidebarCollapsed,
     toggleSidebar,
-    isInsideSmartschoolPlatform
     isInsideSmartschoolPlatform,
     isDemoMode
   } = useSchool();
-
-  const navItems: { id: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
   /**
    * Nom de l'établissement dynamique :
    * 
@@ -93,7 +90,6 @@ export const Sidebar: React.FC = () => {
                   Better<span className="text-indigo-600">School</span>
                 </span>
                 <p className="text-[11px] text-slate-400 font-medium truncate max-w-[130px]">
-                  {student?.schoolName || 'Mon Lycée'}
                   {getDisplaySchoolName()}
                 </p>
               </div>

@@ -65,7 +65,9 @@ Dans la barre latérale et le tiroir mobile, le nom de l'école est géré par `
 ### 3.1. Comment fonctionne le Bookmarklet
 - **Sur Smartschool connecté (`<ecole>.smartschool.be`) :** L'intranet scolaire autorise l'intégration d'iframes.
 - Le bookmarklet Chrome (`javascript:...`) crée un overlay plein écran sans conflit CSS qui charge l'interface BetterSchool par-dessus Smartschool.
-- L'utilisateur peut quitter BetterSchool à tout moment via la touche <kbd>Échap</kbd> ou le bouton *« ✕ Quitter BetterSchool »*.
+- **Transformation du Favicon et Titre :** À l'activation, le bookmarklet remplace l'icône de l'onglet par le favicon BetterSchool (chapeau de diplômé indigo en SVG data URI) et renomme l'onglet en *"BetterSchool — Smartschool"*.
+- **Restauration complète :** Dès la fermeture (touche <kbd>Échap</kbd>, bouton *« ✕ Quitter BetterSchool »* ou re-clic sur le favori), le titre et le favicon d'origine de Smartschool sont fidèlement restaurés.
+- **Sécurité encodage :** Le code du bookmarklet utilise des couleurs `rgb(...)` au lieu de `#...` pour éviter toute troncature d'URL fragment dans l'omnibox Chrome.
 
 ### 3.2. Route `/book` (Page d'installation)
 - Accessible sur `{site}/book` (ex: `https://betterschool.dino.icu/book`).
