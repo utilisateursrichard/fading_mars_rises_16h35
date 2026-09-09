@@ -32,13 +32,13 @@ import {
   mockCourses
 } from '../data/mockData';
 
-// Clés de persistance locale
+// Clés de persistance locale (versionnées pour forcer les nouvelles données centralisées)
 const STORAGE_KEYS = {
-  HOMEWORKS: 'betterschool_homeworks',
-  MESSAGES: 'betterschool_messages',
-  CONVERSATIONS: 'betterschool_conversations',
-  ASSIGNMENTS: 'betterschool_assignments',
-  SIMULATED_GRADES: 'betterschool_simulated_grades'
+  HOMEWORKS: 'betterschool_v2_homeworks',
+  MESSAGES: 'betterschool_v2_messages',
+  CONVERSATIONS: 'betterschool_v2_conversations',
+  ASSIGNMENTS: 'betterschool_v2_assignments',
+  SIMULATED_GRADES: 'betterschool_v2_simulated_grades'
 };
 
 // Helpers de persistance sécurisée
@@ -122,13 +122,17 @@ class SchoolService {
       totalCoeffs += rep.coefficient;
     });
 
-    const current = totalCoeffs > 0 ? Number((totalWeighted / totalCoeffs).toFixed(2)) : 0;
-    const classAvg = totalCoeffs > 0 ? Number((classWeighted / totalCoeffs).toFixed(2)) : 0;
+    const current20 = totalCoeffs > 0 ? (totalWeighted / totalCoeffs) : 0;
+    const classAvg20 = totalCoeffs > 0 ? (classWeighted / totalCoeffs) : 0;
+
+    // Moyenne générale calculée sur 100
+    const current = Number((current20 * 5).toFixed(1));
+    const classAvg = Number((classAvg20 * 5).toFixed(1));
 
     return Promise.resolve({
       current,
       classAvg,
-      previousTerm: 15.4 // Trimestre précédent pour calcul d'évolution
+      previousTerm: 77.0 // Trimestre précédent sur 100 (15.4 * 5 = 77.0)
     });
   }
 

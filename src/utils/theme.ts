@@ -93,7 +93,7 @@ export const SUBJECT_THEMES: { [key: string]: SubjectTheme } = {
 };
 
 export const getSubjectTheme = (codeOrName: string): SubjectTheme => {
-  const upper = codeOrName.toUpperCase();
+  const upper = (codeOrName || '').toUpperCase();
   for (const key in SUBJECT_THEMES) {
     if (upper.includes(key) || key.includes(upper)) {
       return SUBJECT_THEMES[key];

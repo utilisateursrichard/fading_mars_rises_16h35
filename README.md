@@ -2,7 +2,9 @@
 
 **BetterSchool** est une application web moderne (UI/UX soignée, réactive et 100% fonctionnelle) conçue pour permettre aux élèves de suivre leur vie scolaire : agenda/emploi du temps interactif, devoirs à rendre, messagerie en direct avec les professeurs, suivi des résultats scolaires avec simulateur de moyenne, et espace de cours complet.
 
-L'application a été pensée avec une **architecture modulaire et découplée**, facilitant l'intégration ultérieure d'une véritable API backend (REST, GraphQL, Supabase, Firebase, Django, FastAPI...).
+Elle adopte le design system **M3E Pro** (hybride Google Material 3 Expressive & Apple/Stripe Pro), garantissant une interface minimaliste, chaleureuse et sans surcharge d'informations.
+
+👉 **Consultez les spécifications complètes du design system et de la plateforme dans [SPECIFICATIONS.md](./SPECIFICATIONS.md)**.
 
 ---
 
@@ -67,11 +69,11 @@ npm run preview
 - **⚡ Simulateur de moyenne interactif** : L'élève peut sélectionner une matière, entrer une note hypothétique (ex: 18/20 avec coef. 2) et voir instantanément l'impact exact sur sa moyenne générale.
 
 ### 5. 📚 Espace Cours & Ressources
-- **Grille des matières** avec barres de progression dans le programme scolaire.
+- **Grille des matières** épurée et minimaliste (sans barres de progression superflues).
 - **Vue détaillée par matière** :
   - **Chapitres & Documents** : Fiches de cours, notebooks Python, synthèses téléchargeables.
   - **Devoirs & Dépôts en ligne** : Suivi des devoirs avec simulateur de téléversement de fichier.
-  - **Coordonnées enseignant** : Email académique et contact direct.
+  - **Coordonnées enseignant** : Email académique et contact direct en un clic.
 
 ### 6. 📱 Compatibilité Mobile & Ergonomie
 - **Mobile First** : Barre de navigation inférieure fixe (*Bottom Nav Bar*) sur smartphone avec badges de notification.

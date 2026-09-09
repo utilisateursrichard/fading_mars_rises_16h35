@@ -104,18 +104,18 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
                   <button
                     key={item.id}
                     onClick={() => handleSelectTab(item.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                    className={`m3-press w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all ${
                       isActive 
-                        ? 'bg-indigo-50 text-indigo-700 font-semibold'
-                        : 'text-slate-600 hover:bg-slate-50'
+                        ? 'bg-indigo-50 text-indigo-700 font-black border border-indigo-200/80 shadow-sm'
+                        : 'text-slate-600 hover:bg-slate-100/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600 stroke-[2.5]' : 'text-slate-400'}`} />
                       <span>{item.label}</span>
                     </div>
                     {item.badge !== undefined && (
-                      <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-indigo-600 text-white">
+                      <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-indigo-600 text-white">
                         {item.badge}
                       </span>
                     )}
@@ -123,7 +123,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
                 );
               })}
 
-              <div className="pt-4 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="pt-4 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
                 Actions rapides
               </div>
               <button
@@ -131,14 +131,14 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
                   onCloseDrawer();
                   setIsNewHomeworkModalOpen(true);
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="m3-press w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-100/80 bg-slate-50 border border-slate-200/60"
               >
-                <Plus className="w-4 h-4 text-indigo-600" />
+                <Plus className="w-4 h-4 text-indigo-600 stroke-[2.5]" />
                 <span>Ajouter un devoir</span>
               </button>
               <button
                 onClick={() => handleSelectTab('results')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="m3-press w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-100/80 bg-slate-50 border border-slate-200/60 mt-1.5"
               >
                 <Sparkles className="w-4 h-4 text-amber-500" />
                 <span>Simulateur de moyenne</span>

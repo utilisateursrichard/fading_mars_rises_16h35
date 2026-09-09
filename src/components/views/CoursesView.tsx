@@ -89,18 +89,15 @@ export const CoursesView: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Progress bar card */}
-                <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-100 min-w-[200px]">
-                  <div className="flex items-center justify-between text-xs font-bold mb-1.5">
-                    <span className="text-slate-500">Progression</span>
-                    <span className="text-slate-900">{selectedCourse.progressPercent}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-indigo-600 rounded-full transition-all"
-                      style={{ width: `${selectedCourse.progressPercent}%` }}
-                    />
-                  </div>
+                {/* Action shortcut */}
+                <div className="shrink-0 flex items-center">
+                  <button
+                    onClick={() => startDirectMessageWithTeacher(selectedCourse.teacher)}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-bold transition-all shadow-subtle m3-press"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>Contacter</span>
+                  </button>
                 </div>
               </div>
             );
@@ -327,20 +324,6 @@ export const CoursesView: React.FC = () => {
                     <p className="text-xs text-slate-400 font-medium mt-0.5">
                       {c.teacher} • <span className="text-slate-600">{c.room}</span>
                     </p>
-
-                    {/* Progress bar */}
-                    <div className="mt-5">
-                      <div className="flex items-center justify-between text-xs font-semibold mb-1">
-                        <span className="text-slate-400">Progression</span>
-                        <span className="text-slate-800 font-bold">{c.progressPercent}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-slate-900 group-hover:bg-indigo-600 rounded-full transition-all"
-                          style={{ width: `${c.progressPercent}%` }}
-                        />
-                      </div>
-                    </div>
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600 group-hover:text-indigo-600 transition-colors">

@@ -63,6 +63,9 @@ interface SchoolContextType {
   setGlobalSearch: (s: string) => void;
   // Action de raccourci pour contacter un prof
   startDirectMessageWithTeacher: (teacherName: string) => void;
+  // Sidebar rétractable
+  isSidebarCollapsed: boolean;
+  toggleSidebar: () => void;
 }
 
 const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
@@ -81,7 +84,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [activeMessages, setActiveMessages] = useState<Message[]>([]);
 
   const [subjectReports, setSubjectReports] = useState<SubjectReport[]>([]);
-  const [overallStats, setOverallStats] = useState({ current: 16.3, classAvg: 13.2, previousTerm: 15.4 });
+  const [overallStats, setOverallStats] = useState({ current: 81.5, classAvg: 66.0, previousTerm: 77.0 });
   const [activePeriod, setActivePeriod] = useState<'T1' | 'T2' | 'T3'>('T1');
 
   const [courses, setCourses] = useState<SubjectCourse[]>([]);
@@ -90,6 +93,21 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [globalSearch, setGlobalSearch] = useState('');
 
   const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications);
+
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
+
+  // Raccourci clavier Ctrl+B pour rétracter/déplier la barre latérale
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        setIsSidebarCollapsed(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Initialisation des données
   useEffect(() => {
@@ -157,9 +175,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Simulation d'une réponse de professeur ou camarade après 1.5 seconde
     setTimeout(() => {
       const conv = conversations.find(c => c.id === activeConversationId);
-      const autoReplyText = conv?.category === 'teachers'
-        ? `Bien reçu Alexandre, nous en rediscuterons lors de la prochaine séance.`
-        : `Parfait Alexandre ! Je note ça.`;
+      const autoReplyText = `message placeholder ${Math.floor(Math.random() * 900 + 100)}`;
 
       const replyMsg: Message = {
         id: `reply-${Date.now()}`,
@@ -239,7 +255,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         pendingHomeworksTotal,
         globalSearch,
         setGlobalSearch,
-        startDirectMessageWithTeacher
+        startDirectMessageWithTeacher,
+        isSidebarCollapsed,
+        toggleSidebar
       }}
     >
       {children}
