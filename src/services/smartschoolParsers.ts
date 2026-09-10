@@ -29,8 +29,6 @@ const mapColor = (smartschoolColor?: string): string => {
 export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
   try {
     const course = raw.courses?.[0];
-    const subject = course?.name || 'Cours';
-    const subjectCode = course?.scheduleCodes?.[0] || subject.substring(0, 4).toUpperCase();
     const rawName = raw.name || raw.title || raw.courseCluster?.name;
     const subject = course?.name || rawName || 'Cours';
     
@@ -41,7 +39,6 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
     
     // Organisateur / Enseignant
     const teacherUser = raw.organisers?.users?.[0];
-    const teacher = teacherUser?.name?.startingWithFirstName || 'Professeur';
     const teacher = teacherUser?.name?.startingWithFirstName || 
                     teacherUser?.name?.startingWithLastName || 
                     teacherUser?.name?.formatted || 
@@ -50,12 +47,9 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
     
     // Salle de classe
     const location = raw.locations?.[0];
-    const room = location?.title || 'Salle indéterminée';
     const room = location?.title || location?.name || 'Salle indéterminée';
     
     // Période et horaires
-    const fromDate = new Date(raw.period?.dateTimeFrom);
-    const toDate = new Date(raw.period?.dateTimeTo);
     const fromStr = raw.period?.dateTimeFrom;
     const toStr = raw.period?.dateTimeTo;
     if (!fromStr) return null;
@@ -72,7 +66,6 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
     
     // JS Date.getDay(): 0=Dimanche, 1=Lundi ... 6=Samedi
     const jsDay = fromDate.getDay();
-    const dayOfWeek = (jsDay === 0 ? 7 : jsDay) as DayOfWeek;
     const dayOfWeek = (jsDay === 0 ? 1 : jsDay) as DayOfWeek;
 
     // Type d'événement
@@ -95,7 +88,6 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
     }
 
     return {
-      id: raw.id,
       id: raw.id || `${date}_${startTime}_${subjectCode}`,
       subject,
       subjectCode,
@@ -105,10 +97,8 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
       endTime,
       date,
       dayOfWeek,
-      type: 'cours' as EventType,
       type,
       color: mapColor(raw.color),
-      status: 'scheduled' as EventStatus
       status
     };
   } catch (err) {
@@ -122,14 +112,11 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
  */
 export const parseSmartschoolHomework = (raw: any): Homework | null => {
   try {
-    const title = raw.name || 'Devoir';
     const title = raw.name || raw.title || 'Devoir';
     const course = raw.courses?.[0];
-    const subject = course?.name || 'Matière';
     const subject = course?.name || raw.courseCluster?.name || 'Matière';
     const subjectCode = course?.scheduleCodes?.[0] || subject.substring(0, 4).toUpperCase();
     
-    const dueDateObj = new Date(raw.period?.dateTimeTo || raw.period?.dateTimeFrom);
     const dateStr = raw.period?.dateTimeTo || raw.period?.dateTimeFrom;
     if (!dateStr) return null;
 
@@ -148,13 +135,11 @@ export const parseSmartschoolHomework = (raw: any): Homework | null => {
     const isCompleted = raw.resolvedStatus === 'resolved';
 
     return {
-      id: raw.id,
       id: raw.id || `hw_${dueDate}_${Math.random().toString(36).substring(2, 7)}`,
       subject,
       subjectCode,
       color: mapColor(raw.color),
       title,
-      description: raw.assignmentType?.name || 'Travail à réaliser',
       description: raw.assignmentType?.name || raw.description || 'Travail à réaliser',
       dueDate,
       dueTime,

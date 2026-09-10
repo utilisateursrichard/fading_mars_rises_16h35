@@ -6,7 +6,6 @@ import {
   CheckCheck, 
   MessageSquare, 
   ExternalLink, 
-  PanelLeft 
   PanelLeft,
   User
 } from 'lucide-react';
@@ -219,11 +218,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
           className="cursor-pointer pl-1"
           title="Mon profil"
         >
-          <img
-            src={student?.avatar}
-            alt="Avatar"
-            className="w-8 h-8 rounded-full object-cover ring-2 ring-slate-200/80 hover:ring-indigo-400 transition-all"
-          />
           {student?.avatar ? (
             <img
               src={student.avatar}

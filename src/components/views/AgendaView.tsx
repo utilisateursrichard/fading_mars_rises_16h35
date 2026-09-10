@@ -168,6 +168,12 @@ export const AgendaView: React.FC = () => {
             <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Emploi du temps</h2>
             <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-slate-100 text-slate-700">
               Semaine A
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Emploi du temps</h2>
+              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-slate-100 text-slate-700">
+                Semaine A
+              </span>
+            </div>
             <p className="text-xs text-slate-400 font-medium mt-0.5">
               Séances de cours, salles, devoirs et évaluations programmées
             </p>

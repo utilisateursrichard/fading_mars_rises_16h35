@@ -60,9 +60,6 @@ const overlayBookmarkletCode = `javascript:(function(){
 
   const onMsg = (ev) => {
     try {
-      if (ev.data && ev.data.type === 'BETTERSCHOOL') {
-        if (ev.data.action === 'CLOSE') cleanup();
-        if (ev.data.action === 'SET_TITLE' && ev.data.title) document.title = ev.data.title;
       if (ev.source !== iframe.contentWindow) return;
       const d = ev.data;
       if (!d || d.type !== 'BETTERSCHOOL') return;
