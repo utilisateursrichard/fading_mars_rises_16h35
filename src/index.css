@@ -79,3 +79,12 @@
 .smooth-card:hover {
   transform: translateY(-1px);
 }
+
+/* Custom minimal scrollbar hiding utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
