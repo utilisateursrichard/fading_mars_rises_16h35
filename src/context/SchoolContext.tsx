@@ -17,7 +17,6 @@ import {
   getCachedRealStudent, 
   syncAllSmartschoolData 
 } from '../services/smartschoolApi';
-import { isGenericImagePlaceholder } from '../services/smartschoolParsers';
 
 export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'tutor' | 'book';
 
@@ -195,24 +194,18 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const day = (curDay >= 1 && curDay <= 5) ? curDay : 1;
         setTodayEvents(res.events.filter(e => e.dayOfWeek === day));
         if (res.student) {
-          setStudent(prev => {
-            const rawFirst = res.student?.firstName || prev?.firstName || '';
-            const rawLast = res.student?.lastName || prev?.lastName || '';
-            const firstName = isGenericImagePlaceholder(rawFirst) ? '' : rawFirst;
-            const lastName = isGenericImagePlaceholder(rawLast) ? '' : rawLast;
-            return {
-              id: res.student?.id || prev?.id || 'real_student',
-              firstName,
-              lastName,
-              email: res.student?.email || prev?.email || '',
-              avatar: res.student?.avatar || prev?.avatar || '',
-              studentClass: res.student?.studentClass || prev?.studentClass || '',
-              schoolName: res.student?.schoolName || prev?.schoolName || '',
-              academicYear: res.student?.academicYear || prev?.academicYear || '',
-              ineNumber: res.student?.ineNumber || prev?.ineNumber || '',
-              unreadNotifications: 0
-            };
-          });
+          setStudent(prev => ({
+            id: res.student?.id || prev?.id || 'real_student',
+            firstName: res.student?.firstName || prev?.firstName || '',
+            lastName: res.student?.lastName || prev?.lastName || '',
+            email: res.student?.email || prev?.email || '',
+            avatar: res.student?.avatar || prev?.avatar || '',
+            studentClass: res.student?.studentClass || prev?.studentClass || '',
+            schoolName: res.student?.schoolName || prev?.schoolName || '',
+            academicYear: res.student?.academicYear || prev?.academicYear || '',
+            ineNumber: res.student?.ineNumber || prev?.ineNumber || '',
+            unreadNotifications: 0
+          }));
         }
       }
     }
@@ -241,12 +234,10 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const realStudentData = getCachedRealStudent();
 
         if (realStudentData) {
-          const rawFirst = realStudentData.firstName || '';
-          const rawLast = realStudentData.lastName || '';
           setStudent({
             id: realStudentData.id || 'real_student',
-            firstName: isGenericImagePlaceholder(rawFirst) ? '' : rawFirst,
-            lastName: isGenericImagePlaceholder(rawLast) ? '' : rawLast,
+            firstName: realStudentData.firstName || '',
+            lastName: realStudentData.lastName || '',
             email: realStudentData.email || '',
             avatar: realStudentData.avatar || '',
             studentClass: realStudentData.studentClass || '',
@@ -286,24 +277,18 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               const day = (curDay >= 1 && curDay <= 5) ? curDay : 1;
               setTodayEvents(res.events.filter(e => e.dayOfWeek === day));
               if (res.student) {
-                setStudent(prev => {
-                  const rawFirst = res.student?.firstName || prev?.firstName || '';
-                  const rawLast = res.student?.lastName || prev?.lastName || '';
-                  const firstName = isGenericImagePlaceholder(rawFirst) ? '' : rawFirst;
-                  const lastName = isGenericImagePlaceholder(rawLast) ? '' : rawLast;
-                  return {
-                    id: res.student?.id || prev?.id || 'real_student',
-                    firstName,
-                    lastName,
-                    email: res.student?.email || prev?.email || '',
-                    avatar: res.student?.avatar || prev?.avatar || '',
-                    studentClass: res.student?.studentClass || prev?.studentClass || '',
-                    schoolName: res.student?.schoolName || prev?.schoolName || '',
-                    academicYear: res.student?.academicYear || prev?.academicYear || '',
-                    ineNumber: res.student?.ineNumber || prev?.ineNumber || '',
-                    unreadNotifications: 0
-                  };
-                });
+                setStudent(prev => ({
+                  id: res.student?.id || prev?.id || 'real_student',
+                  firstName: res.student?.firstName || prev?.firstName || '',
+                  lastName: res.student?.lastName || prev?.lastName || '',
+                  email: res.student?.email || prev?.email || '',
+                  avatar: res.student?.avatar || prev?.avatar || '',
+                  studentClass: res.student?.studentClass || prev?.studentClass || '',
+                  schoolName: res.student?.schoolName || prev?.schoolName || '',
+                  academicYear: res.student?.academicYear || prev?.academicYear || '',
+                  ineNumber: res.student?.ineNumber || prev?.ineNumber || '',
+                  unreadNotifications: 0
+                }));
               }
             }
           });
