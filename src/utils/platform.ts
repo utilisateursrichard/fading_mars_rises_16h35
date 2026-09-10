@@ -1,3 +1,4 @@
+
 /**
  * Utilitaire pour détecter l'environnement d'exécution de BetterSchool.
  */

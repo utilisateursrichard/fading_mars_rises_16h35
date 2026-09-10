@@ -155,11 +155,96 @@ export const parseSmartschoolHomework = (raw: any): Homework | null => {
 };
 
 /**
+ * Vérifie si une chaîne est un texte générique d'image (ex: "Image de profil", "Photo de profil")
+ */
+export const isGenericImagePlaceholder = (str?: string | null): boolean => {
+  if (!str) return true;
+  const clean = str.trim().toLowerCase();
+  
+  const blockedTerms = [
+    'image de profil',
+    'image de profile',
+    'photo de profil',
+    'photo de profile',
+    'image',
+    'de profil',
+    'de profile',
+    'avatar',
+    'profielfoto',
+    'profile picture',
+    'profil',
+    'profile',
+    'utilisateur',
+    'user',
+    'inconnu',
+    'undefined',
+    'null',
+    'photo',
+    'picture',
+    'image de profil de l\'utilisateur',
+    'photo de profil de l\'utilisateur',
+    'profielfoto van de gebruiker'
+  ];
+
+  if (blockedTerms.includes(clean)) return true;
+  if (/^(image|photo|picture|avatar|profielfoto)\s*(de\s*profi?le?|van)?$/i.test(clean)) return true;
+  if (/^image\s*de\s*profi?le?\s*(de\s*l['’]utilisateur)?$/i.test(clean)) return true;
+  return false;
+};
+
+/**
+ * Nettoie une chaîne de nom en enlevant les préfixes de balises alt / title
+ */
+export const cleanProfileName = (rawName?: string | null): string => {
+  if (!rawName) return '';
+  let clean = rawName.trim();
+  
+  // Retirer les préfixes courants (ex: "Photo de profil de Lucas Dupont", "Image de profil : Lucas Dupont")
+  clean = clean.replace(/^(image|photo|picture|avatar|profielfoto)\s*(de\s*profil\s*(de\s*l['’]utilisateur|d['’]|de)?|van|of)?\s*:?\s*/i, '').trim();
+  clean = clean.replace(/^(utilisateur\s*:?|user\s*:?)\s*/i, '').trim();
+
+  if (isGenericImagePlaceholder(clean)) return '';
+  return clean;
+};
+
+/**
+ * Découpe un nom complet en prénom et nom de famille
+ */
+export const splitFullName = (fullName: string): { firstName: string; lastName: string } => {
+  const clean = cleanProfileName(fullName);
+  if (!clean) return { firstName: '', lastName: '' };
+
+  const parts = clean.split(/\s+/);
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: '' };
+  }
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(' ')
+  };
+};
+
+export interface PlannerMetadata {
+  schoolName?: string;
+  studentClass?: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+}
+
+/**
  * Extrait les métadonnées de l'élève et de l'école depuis un payload de planning
  */
 export const extractMetadataFromPlanner = (rawItems: any[]): { schoolName?: string; studentClass?: string } => {
+export const extractMetadataFromPlanner = (
+  rawItems: any[], 
+  effectiveUserId?: string | null
+): PlannerMetadata => {
   let schoolName: string | undefined;
   let studentClass: string | undefined;
+  let firstName: string | undefined;
+  let lastName: string | undefined;
+  let avatar: string | undefined;
 
   for (const item of rawItems) {
     if (!schoolName && item.locations?.[0]?.platformName) {
@@ -169,7 +254,68 @@ export const extractMetadataFromPlanner = (rawItems: any[]): { schoolName?: stri
       studentClass = item.participants.groups[0].name;
     }
     if (schoolName && studentClass) break;
+
+    // 1. Recherche directe de l'élève par son userId dans les participants ou organisateurs
+    if ((!firstName || !avatar) && effectiveUserId) {
+      const allUsers = [
+        ...(item.participants?.users || []),
+        ...(item.organisers?.users || [])
+      ];
+      const match = allUsers.find((u: any) => u && String(u.id) === String(effectiveUserId));
+      if (match) {
+        if (!avatar && match.pictureUrl) {
+          avatar = match.pictureUrl;
+        }
+        if (!firstName && match.name) {
+          if (match.name.firstName && !isGenericImagePlaceholder(match.name.firstName)) {
+            firstName = match.name.firstName;
+          }
+          if (match.name.lastName && !isGenericImagePlaceholder(match.name.lastName)) {
+            lastName = match.name.lastName;
+          }
+          if (!firstName && match.name.startingWithFirstName) {
+            const splitted = splitFullName(match.name.startingWithFirstName);
+            if (splitted.firstName) {
+              firstName = splitted.firstName;
+              lastName = splitted.lastName;
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Si c'est un to-do ou devoir personnel, l'organisateur est l'élève lui-même
+    if ((!firstName || !avatar) && (item.plannedElementType === 'planned-to-dos' || item.type === 'planned-to-dos')) {
+      const organiser = item.organisers?.users?.[0];
+      if (organiser) {
+        if (!avatar && organiser.pictureUrl) {
+          avatar = organiser.pictureUrl;
+        }
+        if (!firstName && organiser.name) {
+          if (organiser.name.firstName && !isGenericImagePlaceholder(organiser.name.firstName)) {
+            firstName = organiser.name.firstName;
+          }
+          if (organiser.name.lastName && !isGenericImagePlaceholder(organiser.name.lastName)) {
+            lastName = organiser.name.lastName;
+          }
+          if (!firstName && organiser.name.startingWithFirstName) {
+            const splitted = splitFullName(organiser.name.startingWithFirstName);
+            if (splitted.firstName) {
+              firstName = splitted.firstName;
+              lastName = splitted.lastName;
+            }
+          }
+        }
+      }
+    }
+
+    if (schoolName && studentClass && firstName && avatar) break;
   }
 
   return { schoolName, studentClass };
+  // Filtrage final anti-placeholder
+  if (isGenericImagePlaceholder(firstName)) firstName = undefined;
+  if (isGenericImagePlaceholder(lastName)) lastName = undefined;
+
+  return { schoolName, studentClass, firstName, lastName, avatar };
 };
