@@ -484,7 +484,12 @@ export const getCachedRealHomeworks = (): Homework[] => {
   if (typeof window === 'undefined') return [];
   try {
     const stored = localStorage.getItem(REAL_STORAGE_KEYS.HOMEWORKS);
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) return [];
+    const list: Homework[] = JSON.parse(stored);
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    return list.filter(h => !h.dueDate || h.dueDate >= todayStr);
   } catch {
     return [];
   }

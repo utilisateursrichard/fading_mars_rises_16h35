@@ -48,9 +48,19 @@ export const DashboardView: React.FC = () => {
     }).format(new Date());
   }, []);
 
-  // Filtered homeworks
+  // Date d'aujourd'hui (YYYY-MM-DD)
+  const todayDateStr = useMemo(() => {
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  }, []);
+
+  // Filtered homeworks (les devoirs passés / en retard sont supprimés et invisibles)
   const filteredHomeworks = useMemo(() => {
     return homeworks.filter(hw => {
+      // Ignorer tout devoir dans le passé
+      if (hw.dueDate && hw.dueDate < todayDateStr) return false;
+
       if (globalSearch) {
         const match = hw.title.toLowerCase().includes(globalSearch.toLowerCase()) ||
                       hw.subject.toLowerCase().includes(globalSearch.toLowerCase());
@@ -60,20 +70,25 @@ export const DashboardView: React.FC = () => {
       if (homeworkFilter === 'completed') return hw.isCompleted;
       return true;
     });
-  }, [homeworks, homeworkFilter, globalSearch]);
+  }, [homeworks, homeworkFilter, globalSearch, todayDateStr]);
+
+  // Tri chronologique strict des cours du jour par heure de début
+  const sortedTodayEvents = useMemo(() => {
+    return [...todayEvents].sort((a, b) => a.startTime.localeCompare(b.startTime));
+  }, [todayEvents]);
 
   // Current or next class
   const nextEvent = useMemo(() => {
-    return todayEvents.find(e => e.status === 'in_progress' || e.status === 'scheduled') || todayEvents[0];
-  }, [todayEvents]);
+    return sortedTodayEvents.find(e => e.status === 'in_progress' || e.status === 'scheduled') || sortedTodayEvents[0];
+  }, [sortedTodayEvents]);
 
   const pendingHomeworksCount = useMemo(() => {
-    return homeworks.filter(h => !h.isCompleted).length;
-  }, [homeworks]);
+    return homeworks.filter(h => !h.isCompleted && (!h.dueDate || h.dueDate >= todayDateStr)).length;
+  }, [homeworks, todayDateStr]);
 
   const urgentHomeworksCount = useMemo(() => {
-    return homeworks.filter(h => !h.isCompleted && h.priority === 'high').length;
-  }, [homeworks]);
+    return homeworks.filter(h => !h.isCompleted && h.priority === 'high' && (!h.dueDate || h.dueDate >= todayDateStr)).length;
+  }, [homeworks, todayDateStr]);
 
   const nextTheme = nextEvent ? getSubjectTheme(nextEvent.subjectCode) : null;
 
@@ -251,11 +266,11 @@ export const DashboardView: React.FC = () => {
             <Calendar className="w-4 h-4 text-indigo-500" />
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-black text-slate-900">{todayEvents.length}</span>
+            <span className="text-2xl sm:text-3xl font-black text-slate-900">{sortedTodayEvents.length}</span>
             <span className="text-xs text-slate-400 font-semibold">cours prévus</span>
           </div>
           <p className="text-[11px] text-slate-400 font-medium mt-1">
-            Fin à {todayEvents[todayEvents.length - 1]?.endTime || '17:30'}
+            Fin à {sortedTodayEvents[sortedTodayEvents.length - 1]?.endTime || '17:30'}
           </p>
         </div>
 
@@ -264,7 +279,7 @@ export const DashboardView: React.FC = () => {
       {/* 4. Deux Colonnes Claires : Programme & Devoirs */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Colonne Gauche : Programme du jour */}
+        {/* Colonne Gauche : Programme du jour trié chronologiquement */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-subtle">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-extrabold text-base text-slate-900">Agenda du jour</h3>
@@ -277,35 +292,41 @@ export const DashboardView: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            {todayEvents.map((evt) => {
-              const theme = getSubjectTheme(evt.subjectCode);
-              return (
-                <div
-                  key={evt.id}
-                  onClick={() => setSelectedEventModal(evt)}
-                  className="cursor-pointer group flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-200/70 transition-all"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className={`px-2 py-1 rounded-xl text-xs font-extrabold border shrink-0 ${theme.badgeClass}`}>
-                      {evt.subjectCode}
-                    </span>
+            {sortedTodayEvents.length === 0 ? (
+              <div className="p-8 text-center text-xs font-medium text-slate-400">
+                Aucun cours prévu aujourd'hui.
+              </div>
+            ) : (
+              sortedTodayEvents.map((evt) => {
+                const theme = getSubjectTheme(evt.subjectCode);
+                return (
+                  <div
+                    key={evt.id}
+                    onClick={() => setSelectedEventModal(evt)}
+                    className="cursor-pointer group flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-200/70 transition-all"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`px-2 py-1 rounded-xl text-xs font-extrabold border shrink-0 ${theme.badgeClass}`}>
+                        {evt.subjectCode}
+                      </span>
 
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
-                        {evt.subject}
-                      </p>
-                      <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                        {evt.room} • {evt.teacher}
-                      </p>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
+                          {evt.subject}
+                        </p>
+                        <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                          {evt.room} • {evt.teacher}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-xs font-bold text-slate-700">{evt.startTime} - {evt.endTime}</span>
                     </div>
                   </div>
-
-                  <div className="text-right shrink-0">
-                    <span className="text-xs font-bold text-slate-700">{evt.startTime} - {evt.endTime}</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 

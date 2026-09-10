@@ -35,7 +35,6 @@ const mapColor = (smartschoolColor?: string): string => {
 export const calculateHomeworkUrgency = (
   dueDateStr: string,
   assignmentTypeName?: string,
-  weight: number = 1,
   isCompleted: boolean = false
 ): 'high' | 'medium' | 'low' => {
   if (isCompleted) return 'low';
@@ -45,16 +44,21 @@ export const calculateHomeworkUrgency = (
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
     const [y, m, d] = dueDateStr.split('-').map(Number);
-    if (!y || !m || !d) return weight >= 2 ? 'high' : 'medium';
+    if (!y || !m || !d) return 'medium';
     
     const target = new Date(y, m - 1, d);
     const diffTime = target.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
+    // Si la date est déjà passée (retard) :
+    if (diffDays < 0) {
+      return 'low';
+    }
+
     const isTestOrExam = assignmentTypeName ? 
       /interro|examen|contr[ôo]le|ds|test|[ée]val/i.test(assignmentTypeName) : false;
 
-    // 1. Passé ou à rendre aujourd'hui / demain -> Urgent !
+    // 1. À rendre aujourd'hui ou demain (diffDays <= 1) -> Urgent !
     if (diffDays <= 1) {
       return 'high';
     }
@@ -64,19 +68,14 @@ export const calculateHomeworkUrgency = (
       return 'high';
     }
 
-    // 3. Coefficient >= 2 sous 4 jours -> Urgent !
-    if (weight >= 2 && diffDays <= 4) {
-      return 'high';
-    }
-
-    // 4. Échéance sous 4 jours ou examen plus lointain -> Medium
+    // 3. Échéance sous 4 jours ou examen plus lointain -> Medium
     if (diffDays <= 4 || isTestOrExam) {
       return 'medium';
     }
 
     return 'low';
   } catch {
-    return weight >= 2 ? 'high' : 'medium';
+    return 'medium';
   }
 };
 
@@ -189,13 +188,20 @@ export const parseSmartschoolHomework = (raw: any): Homework | null => {
     const pad = (n: number) => n.toString().padStart(2, '0');
     const dueDate = `${dueDateObj.getFullYear()}-${pad(dueDateObj.getMonth() + 1)}-${pad(dueDateObj.getDate())}`;
     const dueTime = `${pad(dueDateObj.getHours())}:${pad(dueDateObj.getMinutes())}`;
+
+    // Les devoirs dans le passé (retard) sont supprimés / invisibles
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const targetDate = new Date(dueDateObj.getFullYear(), dueDateObj.getMonth(), dueDateObj.getDate());
+    if (targetDate.getTime() < today.getTime()) {
+      return null;
+    }
     
-    const weight = raw.assignmentType?.weight || 1;
     const typeName = raw.assignmentType?.name || raw.description || '';
     const isCompleted = raw.resolvedStatus === 'resolved';
 
-    // Calcul précis de l'urgence en fonction de la date et de la nature du travail
-    const priority = calculateHomeworkUrgency(dueDate, typeName, weight, isCompleted);
+    // Calcul précis de l'urgence en fonction de la date et du type (sans coefficient)
+    const priority = calculateHomeworkUrgency(dueDate, typeName, isCompleted);
 
     return {
       id: raw.id || `hw_${dueDate}_${Math.random().toString(36).substring(2, 7)}`,

@@ -1,17 +1,139 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Filter, 
   Clock, 
   MapPin, 
   User, 
   Plus, 
-  CheckCircle2, 
   ChevronRight,
   ChevronLeft
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
 import { CourseEvent, DayOfWeek } from '../../types/school';
 import { getSubjectTheme } from '../../utils/theme';
+
+const HOUR_HEIGHT = 80;
+
+const parseMinutes = (timeStr: string): number => {
+  if (!timeStr) return 0;
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return 0;
+  const h = parseInt(parts[0], 10) || 0;
+  const m = parseInt(parts[1], 10) || 0;
+  return h * 60 + m;
+};
+
+interface PositionedEvent {
+  event: CourseEvent;
+  startMin: number;
+  endMin: number;
+  top: number;
+  height: number;
+  leftPercent: number;
+  widthPercent: number;
+}
+
+/**
+ * Calcule la disposition géométrique précise des cours d'une journée:
+ * - Hauteur proportionnelle à la durée réelle (ex: 2h = 2x plus haut qu'1h)
+ * - Position verticale calée sur l'heure exacte (top)
+ * - En cas de cours simultanés ou qui se chevauchent: division en colonnes (gauche / droite)
+ */
+const computeDayLayout = (
+  dayEvents: CourseEvent[],
+  minHour: number,
+  hourHeight: number
+): PositionedEvent[] => {
+  if (!dayEvents || dayEvents.length === 0) return [];
+
+  const parsed = dayEvents.map(evt => {
+    let s = parseMinutes(evt.startTime);
+    let e = parseMinutes(evt.endTime);
+    if (s <= 0) s = minHour * 60;
+    if (e <= s) e = s + 50;
+    return {
+      event: evt,
+      startMin: s,
+      endMin: e
+    };
+  });
+
+  // Tri par heure de début croissante, puis par durée décroissante
+  parsed.sort((a, b) => {
+    if (a.startMin !== b.startMin) return a.startMin - b.startMin;
+    return (b.endMin - b.startMin) - (a.endMin - a.startMin);
+  });
+
+  // Regroupement en clusters de chevauchement
+  const clusters: { items: typeof parsed }[] = [];
+  let currentCluster: typeof parsed = [];
+  let currentClusterEnd = 0;
+
+  parsed.forEach(item => {
+    if (currentCluster.length === 0) {
+      currentCluster.push(item);
+      currentClusterEnd = item.endMin;
+    } else if (item.startMin < currentClusterEnd) {
+      // Chevauchement avec le cluster actuel
+      currentCluster.push(item);
+      currentClusterEnd = Math.max(currentClusterEnd, item.endMin);
+    } else {
+      clusters.push({ items: currentCluster });
+      currentCluster = [item];
+      currentClusterEnd = item.endMin;
+    }
+  });
+  if (currentCluster.length > 0) {
+    clusters.push({ items: currentCluster });
+  }
+
+  const result: PositionedEvent[] = [];
+
+  // Attribution de pistes (sous-colonnes) sans superposition
+  clusters.forEach(cluster => {
+    const trackEndTimes: number[] = [];
+    const assignments: { item: (typeof cluster.items)[0]; track: number }[] = [];
+
+    cluster.items.forEach(item => {
+      let placedTrack = -1;
+      for (let t = 0; t < trackEndTimes.length; t++) {
+        if (trackEndTimes[t] <= item.startMin) {
+          placedTrack = t;
+          trackEndTimes[t] = item.endMin;
+          break;
+        }
+      }
+      if (placedTrack === -1) {
+        placedTrack = trackEndTimes.length;
+        trackEndTimes.push(item.endMin);
+      }
+      assignments.push({ item, track: placedTrack });
+    });
+
+    const totalTracks = Math.max(1, trackEndTimes.length);
+    const widthPercent = 100 / totalTracks;
+
+    assignments.forEach(({ item, track }) => {
+      const top = ((item.startMin - minHour * 60) / 60) * hourHeight;
+      const durationMin = item.endMin - item.startMin;
+      // Hauteur minimum de 42px pour assurer lisibilité et cliquabilité
+      const height = Math.max((durationMin / 60) * hourHeight, 42);
+      const leftPercent = track * widthPercent;
+
+      result.push({
+        event: item.event,
+        startMin: item.startMin,
+        endMin: item.endMin,
+        top,
+        height,
+        leftPercent,
+        widthPercent
+      });
+    });
+  });
+
+  return result;
+};
 
 export const AgendaView: React.FC = () => {
   const { 
@@ -143,10 +265,58 @@ export const AgendaView: React.FC = () => {
     return map;
   }, [filteredEvents]);
 
+  // Suivi de l'heure courante (actualisé chaque minute)
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calcul dynamique des bornes horaires de la semaine (minHour et maxHour)
+  const { minHour, maxHour, totalHours } = useMemo(() => {
+    let minH = 8;
+    let maxH = 17;
+    filteredEvents.forEach(evt => {
+      const s = parseMinutes(evt.startTime);
+      const e = parseMinutes(evt.endTime);
+      if (s > 0) minH = Math.min(minH, Math.floor(s / 60));
+      if (e > 0) maxH = Math.max(maxH, Math.ceil(e / 60));
+    });
+    minH = Math.max(7, Math.min(minH, 8));
+    maxH = Math.max(17, Math.min(maxH, 20));
+    return { minHour: minH, maxHour: maxH, totalHours: maxH - minH };
+  }, [filteredEvents]);
+
+  const hoursList = useMemo(() => {
+    const list: number[] = [];
+    for (let h = minHour; h <= maxHour; h++) {
+      list.push(h);
+    }
+    return list;
+  }, [minHour, maxHour]);
+
+  const totalGridHeight = totalHours * HOUR_HEIGHT;
+
+  // Ligne de l'heure courante (top en px)
+  const currentTimeTop = useMemo(() => {
+    const nowMin = currentTime.getHours() * 60 + currentTime.getMinutes();
+    if (nowMin < minHour * 60 || nowMin > maxHour * 60) return null;
+    return ((nowMin - minHour * 60) / 60) * HOUR_HEIGHT;
+  }, [currentTime, minHour, maxHour]);
+
+  // Disposition calculée par jour avec gestion des chevauchements (gauche/droite)
+  const layoutByDay = useMemo(() => {
+    const result: { [key: number]: PositionedEvent[] } = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+    [1, 2, 3, 4, 5].forEach(dayNum => {
+      const dayEvts = eventsByDay[dayNum] || [];
+      result[dayNum] = computeDayLayout(dayEvts, minHour, HOUR_HEIGHT);
+    });
+    return result;
+  }, [eventsByDay, minHour]);
+
   return (
     <div className="space-y-6 pb-12 max-w-6xl mx-auto">
       
-      {/* Top Bar */}
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/70 shadow-subtle">
         <div className="flex flex-wrap items-center gap-4">
@@ -274,104 +444,363 @@ export const AgendaView: React.FC = () => {
         </div>
       </div>
 
-      {/* Week Grid */}
+      {/* Week Grid (Tableau de temps proportionnel) */}
       {viewMode === 'week' ? (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {daysConfig.map((day) => {
-            const dayEvents = eventsByDay[day.dayOfWeek] || [];
-            const isToday = day.isToday;
-
-            return (
-              <div 
-                key={day.dayOfWeek}
-                className={`bg-white rounded-3xl p-4 border transition-all flex flex-col ${
-                  isToday 
-                    ? 'border-indigo-200 shadow-card' 
-                    : 'border-slate-200/70 shadow-subtle'
-                }`}
-              >
-                {/* Column Day Header */}
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <span className={`font-extrabold text-sm ${isToday ? 'text-indigo-600' : 'text-slate-800'}`}>
-                      {day.name} <span className="text-xs opacity-70 font-semibold">{day.dateNum}</span>
-                    </span>
-                    {isToday && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Aujourd'hui" />
-                    )}
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-subtle overflow-hidden">
+          <div className="overflow-x-auto">
+            <div className="min-w-[760px]">
+              {/* Header Row: Heure + 5 jours */}
+              <div className="grid grid-cols-[55px_repeat(5,1fr)] border-b border-slate-200/80 bg-slate-50/70 sticky top-0 z-20">
+                <div className="py-3 px-2 text-center text-[11px] font-bold text-slate-400 border-r border-slate-200/60 flex items-center justify-center">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                </div>
+                {daysConfig.map((day) => (
+                  <div
+                    key={day.dayOfWeek}
+                    onClick={() => setSelectedDay(day.dayOfWeek)}
+                    className={`py-3 px-2 text-center border-r last:border-r-0 border-slate-200/60 cursor-pointer transition-colors ${
+                      day.isToday ? 'bg-indigo-50/50' : 'hover:bg-slate-100/60'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span className={`text-xs font-black uppercase tracking-wider ${
+                        day.isToday ? 'text-indigo-600' : 'text-slate-800'
+                      }`}>
+                        {day.name}
+                      </span>
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                        day.isToday ? 'bg-indigo-600 text-white' : 'text-slate-500'
+                      }`}>
+                        {day.dateNum}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                      {eventsByDay[day.dayOfWeek]?.length || 0} cours
+                    </div>
                   </div>
-                  <span className="text-[11px] font-semibold text-slate-400">
-                    {dayEvents.length} cours
-                  </span>
+                ))}
+              </div>
+
+              {/* Timetable Body */}
+              <div className="grid grid-cols-[55px_repeat(5,1fr)] relative" style={{ height: `${totalGridHeight}px` }}>
+                {/* Colonne des heures */}
+                <div className="relative border-r border-slate-200/60 select-none bg-slate-50/40">
+                  {hoursList.map((h, i) => {
+                    if (i === hoursList.length - 1) return null;
+                    return (
+                      <div
+                        key={h}
+                        className="absolute right-2 text-[10px] font-bold text-slate-400 -translate-y-1/2"
+                        style={{ top: `${i * HOUR_HEIGHT}px` }}
+                      >
+                        {String(h).padStart(2, '0')}:00
+                      </div>
+                    );
+                  })}
                 </div>
 
-                {/* Events list */}
-                <div className="space-y-3 flex-1">
-                  {dayEvents.length > 0 ? (
-                    dayEvents.map((evt) => {
+                {/* 5 Colonnes de jours */}
+                {daysConfig.map((day) => {
+                  const dayLayout = layoutByDay[day.dayOfWeek] || [];
+                  return (
+                    <div
+                      key={day.dayOfWeek}
+                      className={`relative border-r last:border-r-0 border-slate-200/60 ${
+                        day.isToday ? 'bg-indigo-50/15' : ''
+                      }`}
+                    >
+                      {/* Lignes d'heures horizontales */}
+                      {hoursList.map((h, i) => (
+                        <div
+                          key={h}
+                          className="absolute left-0 right-0 border-t border-slate-100 pointer-events-none"
+                          style={{ top: `${i * HOUR_HEIGHT}px` }}
+                        />
+                      ))}
+
+                      {/* Lignes de demi-heures pointillées */}
+                      {hoursList.map((h, i) => {
+                        if (i === hoursList.length - 1) return null;
+                        return (
+                          <div
+                            key={`half-${h}`}
+                            className="absolute left-0 right-0 border-t border-slate-50/90 border-dashed pointer-events-none"
+                            style={{ top: `${i * HOUR_HEIGHT + HOUR_HEIGHT / 2}px` }}
+                          />
+                        );
+                      })}
+
+                      {/* Indicateur de l'heure courante si aujourd'hui */}
+                      {day.isToday && currentTimeTop !== null && (
+                        <div
+                          className="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
+                          style={{ top: `${currentTimeTop}px` }}
+                        >
+                          <div className="w-2 h-2 rounded-full bg-rose-500 -ml-1 shadow-sm" />
+                          <div className="h-[2px] w-full bg-rose-500 shadow-sm" />
+                        </div>
+                      )}
+
+                      {/* Cours positionnés avec précision temporelle et gestion des chevauchements (gauche/droite) */}
+                      {dayLayout.map(({ event: evt, top, height, leftPercent, widthPercent }) => {
+                        const theme = getSubjectTheme(evt.subjectCode);
+                        const isTwoHours = height >= 120;
+                        const hasHomework = evt.homeworkDue && evt.homeworkDue.length > 0;
+
+                        return (
+                          <div
+                            key={evt.id}
+                            onClick={() => setSelectedEventModal(evt)}
+                            style={{
+                              top: `${top}px`,
+                              height: `${height}px`,
+                              left: `calc(${leftPercent}% + 2px)`,
+                              width: `calc(${widthPercent}% - 4px)`
+                            }}
+                            className={`absolute rounded-xl border p-2 cursor-pointer transition-all hover:z-30 hover:shadow-md hover:ring-2 hover:ring-indigo-400/50 flex flex-col justify-between overflow-hidden group bg-white ${
+                              evt.status === 'in_progress' ? 'ring-2 ring-emerald-500 shadow-sm' : 'border-slate-200/80 shadow-xs'
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between gap-1 mb-1">
+                                <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded border leading-none ${theme.badgeClass}`}>
+                                  {evt.subjectCode}
+                                </span>
+                                {evt.status === 'in_progress' && (
+                                  <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.2 rounded">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  </span>
+                                )}
+                              </div>
+
+                              <h4 className="font-bold text-[11px] text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1 leading-tight">
+                                {evt.subject}
+                              </h4>
+
+                              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-500">
+                                <span className="font-semibold text-slate-700 flex items-center gap-0.5">
+                                  <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                                  {evt.startTime}-{evt.endTime}
+                                </span>
+                                {evt.room && (
+                                  <span className="flex items-center gap-0.5 truncate">
+                                    <MapPin className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                                    {evt.room}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Devoirs attachés sous le cours (sans bloc séparé) */}
+                            {hasHomework && (
+                              <div className="mt-1 pt-1 border-t border-slate-100 overflow-hidden">
+                                {isTwoHours ? (
+                                  <div className="space-y-1">
+                                    {evt.homeworkDue!.slice(0, 2).map(hw => {
+                                      const isUrgent = hw.priority === 'high';
+                                      return (
+                                        <div
+                                          key={hw.id}
+                                          className={`flex items-center gap-1 px-1 py-0.5 rounded text-[9px] truncate ${
+                                            hw.isCompleted
+                                              ? 'bg-slate-50 text-slate-400 line-through'
+                                              : isUrgent
+                                                ? 'bg-rose-50 text-rose-800 font-bold border border-rose-100'
+                                                : 'bg-amber-50 text-amber-800 font-medium border border-amber-100'
+                                          }`}
+                                          title={hw.description || hw.title}
+                                        >
+                                          <span className={`w-1 h-1 rounded-full shrink-0 ${
+                                            hw.isCompleted ? 'bg-slate-300' : isUrgent ? 'bg-rose-500' : 'bg-amber-500'
+                                          }`} />
+                                          <span className="truncate">{hw.title}</span>
+                                        </div>
+                                      );
+                                    })}
+                                    {evt.homeworkDue!.length > 2 && (
+                                      <div className="text-[9px] text-slate-400 font-semibold pl-0.5">
+                                        +{evt.homeworkDue!.length - 2} autre(s)
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1 px-1 py-0.2 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200/50 truncate w-fit">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                    <span className="truncate">{evt.homeworkDue!.length} devoir{evt.homeworkDue!.length > 1 ? 's' : ''}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Day View (Tableau de temps proportionnel 1 jour) */
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-subtle overflow-hidden max-w-4xl mx-auto">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900">
+                {daysConfig.find(d => d.dayOfWeek === selectedDay)?.name} <span className="opacity-70 font-semibold">{daysConfig.find(d => d.dayOfWeek === selectedDay)?.dateNum}</span>
+              </h3>
+              <p className="text-xs text-slate-400 font-medium">
+                {eventsByDay[selectedDay]?.length || 0} séances prévues
+              </p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <div className="min-w-[600px]">
+              <div className="grid grid-cols-[60px_1fr] relative" style={{ height: `${totalGridHeight}px` }}>
+                {/* Colonne des heures */}
+                <div className="relative border-r border-slate-200/60 select-none bg-slate-50/40">
+                  {hoursList.map((h, i) => {
+                    if (i === hoursList.length - 1) return null;
+                    return (
+                      <div
+                        key={h}
+                        className="absolute right-2.5 text-[10px] font-bold text-slate-400 -translate-y-1/2"
+                        style={{ top: `${i * HOUR_HEIGHT}px` }}
+                      >
+                        {String(h).padStart(2, '0')}:00
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Colonne du jour unique */}
+                <div className={`relative ${daysConfig.find(d => d.dayOfWeek === selectedDay)?.isToday ? 'bg-indigo-50/15' : ''}`}>
+                  {/* Lignes d'heures horizontales */}
+                  {hoursList.map((h, i) => (
+                    <div
+                      key={h}
+                      className="absolute left-0 right-0 border-t border-slate-100 pointer-events-none"
+                      style={{ top: `${i * HOUR_HEIGHT}px` }}
+                    />
+                  ))}
+
+                  {/* Lignes demi-heures */}
+                  {hoursList.map((h, i) => {
+                    if (i === hoursList.length - 1) return null;
+                    return (
+                      <div
+                        key={`day-half-${h}`}
+                        className="absolute left-0 right-0 border-t border-slate-50/90 border-dashed pointer-events-none"
+                        style={{ top: `${i * HOUR_HEIGHT + HOUR_HEIGHT / 2}px` }}
+                      />
+                    );
+                  })}
+
+                  {/* Indicateur de l'heure courante si aujourd'hui */}
+                  {daysConfig.find(d => d.dayOfWeek === selectedDay)?.isToday && currentTimeTop !== null && (
+                    <div
+                      className="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
+                      style={{ top: `${currentTimeTop}px` }}
+                    >
+                      <div className="w-2.5 h-2.5 rounded-full bg-rose-500 -ml-1 shadow-sm" />
+                      <div className="h-[2px] w-full bg-rose-500 shadow-sm" />
+                    </div>
+                  )}
+
+                  {/* Cours positionnés (avec gestion gauche/droite si simultanés) */}
+                  {(layoutByDay[selectedDay] || []).length > 0 ? (
+                    (layoutByDay[selectedDay] || []).map(({ event: evt, top, height, leftPercent, widthPercent }) => {
                       const theme = getSubjectTheme(evt.subjectCode);
+                      const hasHomework = evt.homeworkDue && evt.homeworkDue.length > 0;
+
                       return (
                         <div
                           key={evt.id}
                           onClick={() => setSelectedEventModal(evt)}
-                          className="cursor-pointer group p-3.5 rounded-2xl border border-slate-100/90 hover:border-indigo-200 hover:bg-slate-50/70 hover:shadow-subtle transition-all bg-white"
+                          style={{
+                            top: `${top}px`,
+                            height: `${height}px`,
+                            left: `calc(${leftPercent}% + 4px)`,
+                            width: `calc(${widthPercent}% - 8px)`
+                          }}
+                          className={`absolute rounded-2xl border p-3.5 cursor-pointer transition-all hover:z-30 hover:shadow-lg hover:ring-2 hover:ring-indigo-400/50 flex flex-col justify-between overflow-hidden group bg-white ${
+                            evt.status === 'in_progress' ? 'ring-2 ring-emerald-500 shadow-md' : 'border-slate-200/80 shadow-sm'
+                          }`}
                         >
-                          <div className="flex items-center justify-between gap-1 mb-1.5">
-                            <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-lg border ${theme.badgeClass}`}>
-                              {evt.subjectCode}
-                            </span>
-                            {evt.status === 'in_progress' && (
-                              <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                En cours
+                          <div>
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2.5 py-1 rounded-xl text-xs font-black border uppercase tracking-wider ${theme.badgeClass}`}>
+                                  {evt.subjectCode}
+                                </span>
+                                <h4 className="font-extrabold text-sm text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
+                                  {evt.subject}
+                                </h4>
+                                {evt.status === 'in_progress' && (
+                                  <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    En cours
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => startDirectMessageWithTeacher(evt.teacher)}
+                                  className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                                >
+                                  Prof
+                                </button>
+                                <button
+                                  onClick={() => setSelectedEventModal(evt)}
+                                  className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-900 hover:bg-indigo-600 text-white transition-colors"
+                                >
+                                  Détails
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                              <span className="font-bold text-slate-700 flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                {evt.startTime} - {evt.endTime}
                               </span>
-                            )}
-                          </div>
-
-                          <h4 className="font-bold text-xs text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
-                            {evt.subject}
-                          </h4>
-
-                          <div className="mt-2 text-[11px] text-slate-500 space-y-1">
-                            <div className="flex items-center gap-1.5 font-bold text-slate-700">
-                              <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                              <span>{evt.startTime} - {evt.endTime}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-slate-500">
-                              <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                              <span className="truncate">{evt.room}</span>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                                {evt.room}
+                              </span>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                <User className="w-3.5 h-3.5 text-slate-400" />
+                                {evt.teacher}
+                              </span>
                             </div>
                           </div>
 
-                          {/* Devoirs attachés sous le cours (sans case séparée) */}
-                          {evt.homeworkDue && evt.homeworkDue.length > 0 && (
-                            <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1.5">
-                              {evt.homeworkDue.map((hw) => {
+                          {/* Devoirs attachés */}
+                          {hasHomework && (
+                            <div className="mt-2 pt-2 border-t border-slate-100 flex flex-wrap gap-2">
+                              {evt.homeworkDue!.map((hw) => {
                                 const isUrgent = hw.priority === 'high';
                                 return (
                                   <div
                                     key={hw.id}
-                                    className={`flex items-start gap-1.5 px-2 py-1 rounded-xl text-[10px] leading-tight transition-colors ${
+                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs leading-none ${
                                       hw.isCompleted
                                         ? 'bg-slate-50 text-slate-400 line-through'
                                         : isUrgent
-                                          ? 'bg-rose-50/90 text-rose-800 border border-rose-100 font-semibold'
-                                          : 'bg-amber-50/80 text-amber-800 border border-amber-100 font-medium'
+                                          ? 'bg-rose-50 text-rose-800 border border-rose-200 font-bold'
+                                          : 'bg-amber-50 text-amber-800 border border-amber-200 font-semibold'
                                     }`}
-                                    title={hw.description || hw.title}
                                   >
-                                    <span
-                                      className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${
-                                        hw.isCompleted
-                                          ? 'bg-slate-300'
-                                          : isUrgent
-                                            ? 'bg-rose-500'
-                                            : 'bg-amber-500'
-                                      }`}
-                                    />
-                                    <span className="truncate flex-1 font-semibold">{hw.title}</span>
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                      hw.isCompleted ? 'bg-slate-300' : isUrgent ? 'bg-rose-500' : 'bg-amber-500'
+                                    }`} />
+                                    <span className="truncate">{hw.title}</span>
                                     {isUrgent && !hw.isCompleted && (
-                                      <span className="text-[9px] uppercase tracking-wider font-extrabold text-rose-600 bg-rose-100/90 px-1 py-0.2 rounded shrink-0">
+                                      <span className="text-[9px] uppercase tracking-wider font-extrabold text-rose-600 bg-rose-100 px-1 py-0.2 rounded">
                                         Urgent
                                       </span>
                                     )}
@@ -384,127 +813,13 @@ export const AgendaView: React.FC = () => {
                       );
                     })
                   ) : (
-                    <div className="flex-1 flex items-center justify-center py-12 text-center text-slate-400 text-xs italic">
-                      Aucun cours
+                    <div className="flex items-center justify-center h-full text-slate-400 text-xs italic">
+                      Aucun cours prévu pour ce jour
                     </div>
                   )}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        /* Day View */
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/70 shadow-subtle max-w-3xl mx-auto">
-          <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
-            <div>
-              <h3 className="text-base font-extrabold text-slate-900">
-                {daysConfig.find(d => d.dayOfWeek === selectedDay)?.name}
-              </h3>
-              <p className="text-xs text-slate-400 font-medium">
-                {eventsByDay[selectedDay]?.length || 0} séances
-              </p>
             </div>
-          </div>
-
-          <div className="space-y-3">
-            {eventsByDay[selectedDay]?.map((evt) => {
-              const theme = getSubjectTheme(evt.subjectCode);
-              return (
-                <div
-                  key={evt.id}
-                  onClick={() => setSelectedEventModal(evt)}
-                  className="cursor-pointer group flex flex-col p-4 rounded-2xl border border-slate-100 hover:border-indigo-200 hover:bg-slate-50/70 hover:shadow-subtle transition-all gap-3 bg-white"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start sm:items-center gap-4">
-                      <span className={`px-3 py-2 rounded-2xl text-xs font-black border uppercase tracking-wider shrink-0 ${theme.badgeClass}`}>
-                        {evt.subjectCode}
-                      </span>
-
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-slate-900 group-hover:text-indigo-600 transition-colors">
-                            {evt.subject}
-                          </h4>
-                          {evt.status === 'in_progress' && (
-                            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                              En cours
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-3">
-                          <span className="font-bold text-slate-700 flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-slate-400" />
-                            {evt.startTime} - {evt.endTime}
-                          </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-slate-400" />
-                            {evt.room}
-                          </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <User className="w-3 h-3 text-slate-400" />
-                            {evt.teacher}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startDirectMessageWithTeacher(evt.teacher);
-                        }}
-                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                      >
-                        Écrire au prof
-                      </button>
-                      <button
-                        onClick={() => setSelectedEventModal(evt)}
-                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-indigo-600 text-white transition-colors"
-                      >
-                        Détails
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Devoirs attachés en Day View */}
-                  {evt.homeworkDue && evt.homeworkDue.length > 0 && (
-                    <div className="pt-2.5 border-t border-slate-100 flex flex-wrap gap-2">
-                      {evt.homeworkDue.map((hw) => {
-                        const isUrgent = hw.priority === 'high';
-                        return (
-                          <div
-                            key={hw.id}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs ${
-                              hw.isCompleted
-                                ? 'bg-slate-50 text-slate-400 line-through'
-                                : isUrgent
-                                  ? 'bg-rose-50 text-rose-800 border border-rose-200/80 font-semibold'
-                                  : 'bg-amber-50 text-amber-800 border border-amber-200/80 font-medium'
-                            }`}
-                          >
-                            <span className={`w-2 h-2 rounded-full shrink-0 ${
-                              hw.isCompleted ? 'bg-slate-300' : isUrgent ? 'bg-rose-500' : 'bg-amber-500'
-                            }`} />
-                            <span>{hw.title}</span>
-                            {isUrgent && !hw.isCompleted && (
-                              <span className="text-[10px] uppercase font-bold text-rose-600 bg-rose-100 px-1.5 py-0.5 rounded">
-                                Urgent
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
           </div>
         </div>
       )}
