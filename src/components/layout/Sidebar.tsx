@@ -64,23 +64,14 @@ export const Sidebar: React.FC = () => {
 
   return (
     <>
-      {/* Spacer pour réserver la largeur dans le layout flex desktop */}
-      <div 
-        className={`hidden lg:block shrink-0 transition-all duration-200 ease-in-out ${
-          isSidebarCollapsed ? 'w-20' : 'w-64'
-        }`} 
-        aria-hidden="true" 
-      />
-
-      {/* Barre latérale desktop fixe verrouillée à l'écran */}
       <aside 
-        className={`hidden lg:flex flex-col bg-white/80 backdrop-blur-2xl border-r border-slate-200/70 fixed top-0 bottom-0 left-0 h-screen h-[100dvh] z-30 select-none justify-between transition-all duration-200 ease-in-out ${
+        className={`hidden lg:flex flex-col bg-white/80 backdrop-blur-2xl border-r border-slate-200/70 min-h-screen select-none justify-between transition-all duration-200 ease-in-out shrink-0 ${
           isSidebarCollapsed ? 'w-20 p-3 items-center' : 'w-64 p-4'
         }`}
       >
         
-        {/* Top: Logo & Navigation */}
-        <div className={`space-y-6 w-full flex-1 min-h-0 overflow-y-auto no-scrollbar pb-2 ${isSidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
+        {/* Top: Logo & Navigation (défile normalement avec la page) */}
+        <div className={`space-y-6 w-full ${isSidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
           
           {/* Header with Brand & Collapse Button */}
           <div className={`flex items-center ${isSidebarCollapsed ? 'flex-col gap-2 py-1' : 'justify-between px-2 py-1'}`}>
@@ -155,44 +146,50 @@ export const Sidebar: React.FC = () => {
 
         </div>
 
-        {/* Bottom: User Profile (Lock permanent en bas à gauche) */}
-        <div className="shrink-0 pt-3 w-full border-t border-slate-100/80">
-          <div 
-            onClick={() => setActiveTab('dashboard')}
-            className={`m3-press cursor-pointer rounded-2xl bg-slate-50/80 hover:bg-slate-100 border border-slate-200/60 transition-colors ${
-              isSidebarCollapsed ? 'p-2 flex justify-center' : 'p-2.5 flex items-center gap-3 w-full'
-            }`}
-            title={isSidebarCollapsed ? `${student?.firstName} ${student?.lastName}` : undefined}
-          >
-            <div className="relative shrink-0">
-              {student?.avatar ? (
-                <img
-                  src={student.avatar}
-                  alt="Avatar"
-                  className="w-9 h-9 rounded-xl object-cover"
-                />
-              ) : (
-                <div className="w-9 h-9 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
-                  {student?.firstName ? student.firstName.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
-                </div>
-              )}
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white" />
-            </div>
+        {/* Espace réservé en bas pour ne pas chevaucher le profil fixe */}
+        <div className="h-20 shrink-0" aria-hidden="true" />
+      </aside>
 
-            {!isSidebarCollapsed && (
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-slate-900 truncate">
-                  {student ? `${student.firstName} ${student.lastName}`.trim() || 'Élève' : 'Élève'}
-                </p>
-                <p className="text-[11px] text-slate-400 truncate">
-                  {student?.studentClass || (isDemoMode ? 'Classe' : 'Non connecté')}
-                </p>
+      {/* SEUL le profil utilisateur (avatar + nom) est verrouillé en bas à gauche */}
+      <div 
+        className={`hidden lg:block fixed bottom-4 z-40 transition-all duration-200 ease-in-out ${
+          isSidebarCollapsed ? 'left-3 w-14' : 'left-4 w-56'
+        }`}
+      >
+        <div 
+          onClick={() => setActiveTab('dashboard')}
+          className={`m3-press cursor-pointer rounded-2xl bg-white/95 backdrop-blur-xl hover:bg-slate-100 border border-slate-200/80 shadow-card transition-colors ${
+            isSidebarCollapsed ? 'p-2 flex justify-center' : 'p-2.5 flex items-center gap-3 w-full'
+          }`}
+          title={isSidebarCollapsed ? `${student?.firstName} ${student?.lastName}` : undefined}
+        >
+          <div className="relative shrink-0">
+            {student?.avatar ? (
+              <img
+                src={student.avatar}
+                alt="Avatar"
+                className="w-9 h-9 rounded-xl object-cover"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
+                {student?.firstName ? student.firstName.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
               </div>
             )}
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white" />
           </div>
-        </div>
 
-      </aside>
+          {!isSidebarCollapsed && (
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-900 truncate">
+                {student ? `${student.firstName} ${student.lastName}`.trim() || 'Élève' : 'Élève'}
+              </p>
+              <p className="text-[11px] text-slate-400 truncate">
+                {student?.studentClass || (isDemoMode ? 'Classe' : 'Non connecté')}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </>
   );
 };
