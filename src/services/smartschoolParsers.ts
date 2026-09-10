@@ -218,69 +218,27 @@ export const parseSmartschoolHomework = (raw: any): Homework | null => {
 };
 
 /**
- * Vérifie si une chaîne est un texte générique d'image (ex: "Image de profil", "Photo de profil")
- */
-export const isGenericImagePlaceholder = (str?: string | null): boolean => {
-  if (!str) return true;
-  const clean = str.trim().toLowerCase();
-  
-  const blockedTerms = [
-    'image de profil',
-    'image de profile',
-    'photo de profil',
-    'photo de profile',
-    'image',
-    'de profil',
-    'de profile',
-    'avatar',
-    'profielfoto',
-    'profile picture',
-    'profil',
-    'profile',
-    'utilisateur',
-    'user',
-    'inconnu',
-    'undefined',
-    'null',
-    'photo',
-    'picture',
-    'image de profil de l\'utilisateur',
-    'photo de profil de l\'utilisateur',
-    'profielfoto van de gebruiker'
-  ];
-
-  if (blockedTerms.includes(clean)) return true;
-  if (/^(image|photo|picture|avatar|profielfoto)\s*(de\s*profi?le?|van)?$/i.test(clean)) return true;
-  if (/^image\s*de\s*profi?le?\s*(de\s*l['’]utilisateur)?$/i.test(clean)) return true;
-  return false;
-};
-
-/**
- * Nettoie une chaîne de nom en enlevant les préfixes de balises alt / title
- */
-export const cleanProfileName = (rawName?: string | null): string => {
-  if (!rawName) return '';
-  let clean = rawName.trim();
-  
-  // Retirer les préfixes courants (ex: "Photo de profil de Lucas Dupont", "Image de profil : Lucas Dupont")
-  clean = clean.replace(/^(image|photo|picture|avatar|profielfoto)\s*(de\s*profil\s*(de\s*l['’]utilisateur|d['’]|de)?|van|of)?\s*:?\s*/i, '').trim();
-  clean = clean.replace(/^(utilisateur\s*:?|user\s*:?)\s*/i, '').trim();
-
-  if (isGenericImagePlaceholder(clean)) return '';
-  return clean;
-};
-
-/**
  * Découpe un nom complet en prénom et nom de famille
  */
 export const splitFullName = (fullName: string): { firstName: string; lastName: string } => {
-  const clean = cleanProfileName(fullName);
+  if (!fullName) return { firstName: '', lastName: '' };
+  const clean = fullName.trim();
   if (!clean) return { firstName: '', lastName: '' };
 
   const parts = clean.split(/\s+/);
   if (parts.length === 1) {
     return { firstName: parts[0], lastName: '' };
   }
+
+  // Détection si le format est "NOM Prénom" (ex: "DUPONT Jean" où le nom est en majuscules)
+  if (parts.length === 2) {
+    const isFirstUpper = parts[0] === parts[0].toUpperCase() && parts[0].length >= 2;
+    const isSecondMixed = parts[1] !== parts[1].toUpperCase();
+    if (isFirstUpper && isSecondMixed) {
+      return { firstName: parts[1], lastName: parts[0] };
+    }
+  }
+
   return {
     firstName: parts[0],
     lastName: parts.slice(1).join(' ')
@@ -328,10 +286,10 @@ export const extractMetadataFromPlanner = (
           avatar = match.pictureUrl;
         }
         if (!firstName && match.name) {
-          if (match.name.firstName && !isGenericImagePlaceholder(match.name.firstName)) {
+          if (match.name.firstName) {
             firstName = match.name.firstName;
           }
-          if (match.name.lastName && !isGenericImagePlaceholder(match.name.lastName)) {
+          if (match.name.lastName) {
             lastName = match.name.lastName;
           }
           if (!firstName && match.name.startingWithFirstName) {
@@ -353,10 +311,10 @@ export const extractMetadataFromPlanner = (
           avatar = organiser.pictureUrl;
         }
         if (!firstName && organiser.name) {
-          if (organiser.name.firstName && !isGenericImagePlaceholder(organiser.name.firstName)) {
+          if (organiser.name.firstName) {
             firstName = organiser.name.firstName;
           }
-          if (organiser.name.lastName && !isGenericImagePlaceholder(organiser.name.lastName)) {
+          if (organiser.name.lastName) {
             lastName = organiser.name.lastName;
           }
           if (!firstName && organiser.name.startingWithFirstName) {
@@ -372,10 +330,6 @@ export const extractMetadataFromPlanner = (
 
     if (schoolName && studentClass && firstName && avatar) break;
   }
-
-  // Filtrage final anti-placeholder
-  if (isGenericImagePlaceholder(firstName)) firstName = undefined;
-  if (isGenericImagePlaceholder(lastName)) lastName = undefined;
 
   return { schoolName, studentClass, firstName, lastName, avatar };
 };

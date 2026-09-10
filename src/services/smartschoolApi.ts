@@ -11,8 +11,6 @@ import {
   parseSmartschoolCourse, 
   parseSmartschoolHomework, 
   extractMetadataFromPlanner,
-  isGenericImagePlaceholder,
-  cleanProfileName,
   splitFullName
 } from './smartschoolParsers';
 
@@ -141,183 +139,31 @@ export const discoverUserId = async (): Promise<string | null> => {
 export const discoverStudentProfile = async (): Promise<Partial<Student> | null> => {
   const cached = getCachedRealStudent();
 
-  // 1. Essai d'extraction directe via eval sur la page hôte (smsc.user + DOM)
-  try {
-    const evalRes = await evalHostExpression(`
-      (function() {
-        try {
-          function isJunk(s) {
-            if (!s || typeof s !== 'string') return true;
-            var t = s.trim().toLowerCase();
-            return !t || t === 'image de profil' || t === 'image de profile' || t === 'photo de profil' ||
-                   t === 'photo de profile' || t === 'image' || t === 'de profil' || t === 'de profile' ||
-                   t === 'avatar' || t === 'profielfoto' || t === 'profile picture' || t === 'utilisateur' ||
-                   t === 'user' || t === 'profil' || t === 'profile' || t === 'inconnu';
-          }
-
-          function cleanName(s) {
-            if (!s || typeof s !== 'string') return '';
-            var c = s.trim()
-              .replace(/^(image|photo|picture|avatar|profielfoto)\\s*(de\\s*profil\\s*(de\\s*l['’]utilisateur|d['’]|de)?|van|of)?\\s*:?\\s*/i, '')
-              .replace(/^(utilisateur\\s*:?|user\\s*:?)\\s*/i, '')
-              .trim();
-            return isJunk(c) ? '' : c;
-          }
-
-          // 1. Objets globaux Smartschool
-          var u = (window.smsc && (
-            window.smsc.user || 
-            window.smsc.currentUser || 
-            window.smsc.current_user || 
-            window.smsc.account || 
-            window.smsc.profile ||
-            (window.smsc.data && window.smsc.data.user) ||
-            (window.smsc.session && window.smsc.session.user)
-          )) || (window.smscAppConfig && (window.smscAppConfig.user || window.smscAppConfig.currentUser)) || window.currentUser || null;
-
-          var firstName = u ? (u.firstname || u.voornaam || u.first_name || u.firstName || u.givenName) : null;
-          var lastName = u ? (u.lastname || u.achternaam || u.last_name || u.lastName || u.familyName || u.surname) : null;
-          var fullName = u ? (u.name || u.fullName || u.official_name || u.formatted_name || u.displayName) : null;
-          var avatar = u ? (u.pictureUrl || u.avatar || u.photo || u.picture || u.userimage) : null;
-
-          if (isJunk(firstName)) firstName = null;
-          if (isJunk(lastName)) lastName = null;
-          if (fullName) {
-            fullName = cleanName(fullName);
-            if (!fullName) fullName = null;
-          }
-
-          // 2. Recherche dans le DOM de Smartschool
-          if (!fullName) {
-            var userBtns = document.querySelectorAll('.topnav__btn--user, button.topnav__btn--user, a.topnav__btn--user, .topnav__btn--account, .topnav__user, .js-btn-avatar, .smsc-topbar__user, a[href*="/user/profile"], a[href*="/user/"]');
-            for (var i = 0; i < userBtns.length; i++) {
-              var btn = userBtns[i];
-              if (!fullName) {
-                var t = cleanName(btn.getAttribute('title') || btn.getAttribute('aria-label'));
-                if (t) fullName = t;
-              }
-              if (!fullName) {
-                var lbl = btn.querySelector('.topnav__btn__title, .topnav__btn__label, .topnav__user-name, .user-name, .js-user-name, span');
-                if (lbl) {
-                  var lt = cleanName(lbl.innerText || lbl.textContent);
-                  if (lt) fullName = lt;
-                }
-              }
-              if (!fullName) {
-                var clone = btn.cloneNode(true);
-                var subImgs = clone.querySelectorAll('img, svg, i');
-                for (var j = 0; j < subImgs.length; j++) subImgs[j].remove();
-                var dt = cleanName(clone.innerText || clone.textContent);
-                if (dt) fullName = dt;
-              }
-            }
-          }
-
-          if (!fullName) {
-            var nameSelectors = ['.js-user-name', '.topnav__user-name', '.user-name', '[data-user-name]', '[data-username]', '.profile-name', '.header__user-name', '.c-user-nav__name'];
-            for (var k = 0; k < nameSelectors.length; k++) {
-              var el = document.querySelector(nameSelectors[k]);
-              if (el) {
-                var nt = cleanName(el.innerText || el.textContent);
-                if (nt) { fullName = nt; break; }
-              }
-            }
-          }
-
-          var avatarEl = document.querySelector('img[src*="userpicture"], img[src*="Userimage"], .topnav__btn--user img, .js-btn-avatar img, .topnav__user img, .js-avatar');
-          if (!avatar && avatarEl) {
-            avatar = avatarEl.src;
-          }
-
-          if (!fullName && avatarEl) {
-            var at = cleanName(avatarEl.getAttribute('title') || avatarEl.getAttribute('alt'));
-            if (at) fullName = at;
-          }
-
-          return { 
-            firstName: firstName || null, 
-            lastName: lastName || null, 
-            fullName: fullName || null, 
-            avatar: avatar || null 
-          };
-        } catch(e) { return null; }
-      })()
-    `);
-
-    if (evalRes.ok && evalRes.result) {
-      const res = evalRes.result;
-      let firstName = cleanProfileName(res.firstName);
-      let lastName = cleanProfileName(res.lastName);
-      const avatar = res.avatar || '';
-
-      if (!firstName && res.fullName) {
-        const splitted = splitFullName(res.fullName);
-        firstName = splitted.firstName;
-        lastName = splitted.lastName;
-      }
-
-      if (firstName || avatar) {
-        const updated: Partial<Student> = {
-          ...(cached || {}),
-          ...(firstName ? { firstName } : {}),
-          ...(lastName ? { lastName } : {}),
-          ...(avatar ? { avatar } : {})
-        };
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(updated));
-        }
-        return updated;
-      }
-    }
-  } catch {}
-
-  // 2. Repli vers queryHostDOM
+  // 1. Récupération directe du DOM Smartschool via postMessage queryHostDOM
   try {
     const domRes = await queryHostDOM([
-      { key: 'avatar', selector: 'img[src*="userpicture"], img[src*="Userimage"], .js-btn-avatar img, .topnav__user img, .topnav__btn--user img', attr: 'src' },
-      { key: 'btnTitle', selector: '.topnav__btn--user, button.topnav__btn--user, a.topnav__btn--user', attr: 'title' },
-      { key: 'btnAria', selector: '.topnav__btn--user, button.topnav__btn--user, a.topnav__btn--user', attr: 'aria-label' },
-      { key: 'btnLabel', selector: '.topnav__btn--user .topnav__btn__title, .topnav__btn--user .topnav__btn__label, .topnav__btn--user span', attr: 'text' },
-      { key: 'userName', selector: '.js-user-name, .topnav__user-name, .user-name, [data-user-name]', attr: 'text' },
-      { key: 'avatarTitle', selector: 'img[src*="userpicture"], img[src*="Userimage"]', attr: 'title' },
-      { key: 'avatarAlt', selector: 'img[src*="userpicture"], img[src*="Userimage"]', attr: 'alt' }
+      { 
+        key: 'exactName', 
+        selector: 'button.js-btn-profile .hlp-vert-box > span:not(.topnav__btn__light), .topnav__btn--profile .hlp-vert-box > span:not(.topnav__btn__light), .js-btn-profile .hlp-vert-box > span:first-child', 
+        attr: 'text' 
+      },
+      { 
+        key: 'exactAvatar', 
+        selector: 'button.js-btn-profile img, .topnav__btn--profile img, .js-btn-profile img', 
+        attr: 'src' 
+      }
     ]);
 
     if (domRes.ok && domRes.results) {
-      let firstName = cleanProfileName(cached?.firstName);
-      let lastName = cleanProfileName(cached?.lastName);
+      const rawName = domRes.results.exactName ? String(domRes.results.exactName).trim() : '';
+      const avatar = domRes.results.exactAvatar || cached?.avatar || '';
 
-      const candidates = [
-        domRes.results.userName,
-        domRes.results.btnLabel,
-        domRes.results.btnTitle,
-        domRes.results.btnAria,
-        domRes.results.avatarTitle,
-        domRes.results.avatarAlt
-      ];
-
-      let detectedFullName = '';
-      for (const cand of candidates) {
-        const cleaned = cleanProfileName(cand);
-        if (cleaned) {
-          detectedFullName = cleaned;
-          break;
-        }
-      }
-
-      if (detectedFullName) {
-        const splitted = splitFullName(detectedFullName);
-        firstName = splitted.firstName;
-        lastName = splitted.lastName;
-      }
-
-      const avatar = domRes.results.avatar || cached?.avatar || '';
-
-      if (firstName || avatar) {
+      if (rawName || avatar) {
+        const splitted = rawName ? splitFullName(rawName) : { firstName: '', lastName: '' };
         const updated: Partial<Student> = {
           ...(cached || {}),
-          ...(firstName ? { firstName } : {}),
-          ...(lastName ? { lastName } : {}),
+          ...(splitted.firstName ? { firstName: splitted.firstName } : {}),
+          ...(splitted.lastName ? { lastName: splitted.lastName } : {}),
           ...(avatar ? { avatar } : {})
         };
 
@@ -331,6 +177,43 @@ export const discoverStudentProfile = async (): Promise<Partial<Student> | null>
   } catch (e) {
     console.warn('Erreur lors de la découverte du profil depuis le DOM hôte:', e);
   }
+
+  // 2. Repli via evalHostExpression sur la page hôte Smartschool
+  try {
+    const evalRes = await evalHostExpression(`
+      (function() {
+        try {
+          var btn = document.querySelector('button.js-btn-profile, .topnav__btn--profile, .js-btn-profile');
+          if (!btn) return null;
+          var s = btn.querySelector('.hlp-vert-box > span:not(.topnav__btn__light), .hlp-vert-box > span:first-child');
+          var img = btn.querySelector('img');
+          return {
+            fullName: s ? (s.innerText || s.textContent || '').trim() : null,
+            avatar: img ? img.src : null
+          };
+        } catch(e) { return null; }
+      })()
+    `);
+
+    if (evalRes.ok && evalRes.result) {
+      const rawName = evalRes.result.fullName ? String(evalRes.result.fullName).trim() : '';
+      const avatar = evalRes.result.avatar || '';
+
+      if (rawName || avatar) {
+        const splitted = rawName ? splitFullName(rawName) : { firstName: '', lastName: '' };
+        const updated: Partial<Student> = {
+          ...(cached || {}),
+          ...(splitted.firstName ? { firstName: splitted.firstName } : {}),
+          ...(splitted.lastName ? { lastName: splitted.lastName } : {}),
+          ...(avatar ? { avatar } : {})
+        };
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(updated));
+        }
+        return updated;
+      }
+    }
+  } catch {}
 
   return cached;
 };
@@ -612,29 +495,7 @@ export const getCachedRealStudent = (): Partial<Student> | null => {
   try {
     const stored = localStorage.getItem(REAL_STORAGE_KEYS.STUDENT);
     if (!stored) return null;
-    const parsed = JSON.parse(stored);
-
-    // Purger les valeurs polluées par d'anciens parsings défectueux ("Image de profil", etc.)
-    let modified = false;
-    if (isGenericImagePlaceholder(parsed.firstName)) {
-      delete parsed.firstName;
-      modified = true;
-    }
-    if (isGenericImagePlaceholder(parsed.lastName)) {
-      delete parsed.lastName;
-      modified = true;
-    }
-    if (isGenericImagePlaceholder(`${parsed.firstName || ''} ${parsed.lastName || ''}`.trim())) {
-      delete parsed.firstName;
-      delete parsed.lastName;
-      modified = true;
-    }
-
-    if (modified) {
-      localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(parsed));
-    }
-
-    return parsed;
+    return JSON.parse(stored);
   } catch {
     return null;
   }
