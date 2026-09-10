@@ -135,6 +135,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [activeMessages, setActiveMessages] = useState<Message[]>([]);
 
   const [subjectReports, setSubjectReports] = useState<SubjectReport[]>([]);
+  const [overallStats, setOverallStats] = useState<{ current: number; classAvg: number; previousTerm: number } | null>({ current: 81.5, classAvg: 66.0, previousTerm: 77.0 });
   const [overallStats, setOverallStats] = useState<{ current: number; classAvg: number; previousTerm: number } | null>(null);
   const [activePeriod, setActivePeriod] = useState<'T1' | 'T2' | 'T3'>('T1');
 
@@ -149,9 +150,11 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem('betterschool_demo_mode');
+      return stored !== null ? stored === 'true' : true;
       if (stored !== null) return stored === 'true';
       return !isInsideSmartschool();
     } catch {
+      return true;
       return !isInsideSmartschool();
     }
   });
@@ -187,6 +190,16 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const day = (curDay >= 1 && curDay <= 5) ? curDay : 1;
         setTodayEvents(res.events.filter(e => e.dayOfWeek === day));
         if (res.student) {
+          setStudent({
+            id: res.student.id || 'real_student',
+            firstName: res.student.firstName || '',
+            lastName: res.student.lastName || '',
+            email: res.student.email || '',
+            avatar: res.student.avatar || '',
+            studentClass: res.student.studentClass || '',
+            schoolName: res.student.schoolName || '',
+            academicYear: res.student.academicYear || '',
+            ineNumber: res.student.ineNumber || '',
           setStudent(prev => ({
             id: res.student?.id || prev?.id || 'real_student',
             firstName: res.student?.firstName || prev?.firstName || '',
@@ -198,6 +211,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             academicYear: res.student?.academicYear || prev?.academicYear || '',
             ineNumber: res.student?.ineNumber || prev?.ineNumber || '',
             unreadNotifications: 0
+          });
           }));
         }
       }
@@ -270,6 +284,21 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               const day = (curDay >= 1 && curDay <= 5) ? curDay : 1;
               setTodayEvents(res.events.filter(e => e.dayOfWeek === day));
               if (res.student) {
+                setStudent(prev => prev ? ({
+                  ...prev,
+                  schoolName: res.student?.schoolName || prev.schoolName,
+                  studentClass: res.student?.studentClass || prev.studentClass
+                }) : null);
+                setStudent({
+                  id: res.student.id || 'real_student',
+                  firstName: res.student.firstName || '',
+                  lastName: res.student.lastName || '',
+                  email: res.student.email || '',
+                  avatar: res.student.avatar || '',
+                  studentClass: res.student.studentClass || '',
+                  schoolName: res.student.schoolName || '',
+                  academicYear: res.student.academicYear || '',
+                  ineNumber: res.student.ineNumber || '',
                 setStudent(prev => ({
                   id: res.student?.id || prev?.id || 'real_student',
                   firstName: res.student?.firstName || prev?.firstName || '',
@@ -281,6 +310,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                   academicYear: res.student?.academicYear || prev?.academicYear || '',
                   ineNumber: res.student?.ineNumber || prev?.ineNumber || '',
                   unreadNotifications: 0
+                });
                 }));
               }
             }

@@ -6,6 +6,7 @@
  */
 
 import { CourseEvent, Homework, Student } from '../types/school';
+import { fetchSmartschool } from './smartschoolBridge';
 import { fetchSmartschool, queryHostDOM, getHostPageInfo, evalHostExpression } from './smartschoolBridge';
 import { 
   parseSmartschoolCourse, 
@@ -367,6 +368,7 @@ export const fetchRealHomeworks = async (userId?: string | null, targetDate?: Da
  * Synchronise l'ensemble des données réelles de l'élève
  */
 export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string | null): Promise<SyncResult> => {
+  const effectiveUserId = userId || getActiveUserId();
   let effectiveUserId = userId || getActiveUserId();
   if (!effectiveUserId) {
     effectiveUserId = await discoverUserId();
@@ -388,6 +390,7 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       success: false,
       events: getCachedRealEvents(),
       homeworks: getCachedRealHomeworks(),
+      student: getCachedRealStudent(),
       student: partialStudent,
       error: 'Identifiant élève non trouvé'
     };
@@ -399,6 +402,7 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       fetchRealHomeworks(effectiveUserId, targetDate)
     ]);
 
+    const partialStudent = getCachedRealStudent();
     // Re-lire le profil enrichi par fetchRealAgenda (schoolName, studentClass)
     const finalStudent = getCachedRealStudent() || partialStudent;
 
@@ -406,6 +410,7 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       success: true,
       events,
       homeworks,
+      student: partialStudent
       student: finalStudent
     };
   } catch (err: any) {
@@ -413,6 +418,7 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       success: false,
       events: getCachedRealEvents(),
       homeworks: getCachedRealHomeworks(),
+      student: getCachedRealStudent(),
       student: getCachedRealStudent() || partialStudent,
       error: err.message || 'Erreur de synchronisation'
     };
