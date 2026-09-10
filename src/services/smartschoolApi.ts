@@ -1,12 +1,12 @@
 /**
  * Service d'intégration Smartschool (Client-side)
  * 
- * Communique avec les endpoints réels découverts (/planner/api/v1/...) via le pont postMessage
- * et stocke les données réelles de l'élève en cache local.
+ * Communique avec les endpoints réels découverts (/planner/api/v1/...) via la passerelle postMessage
+ * et synchronise dynamiquement les données réelles de l'élève sans rien hardcoder.
  */
 
 import { CourseEvent, Homework, Student } from '../types/school';
-import { fetchSmartschool } from './smartschoolBridge';
+import { fetchSmartschool, queryHostDOM, getHostPageInfo } from './smartschoolBridge';
 import { 
   parseSmartschoolCourse, 
   parseSmartschoolHomework, 
@@ -21,24 +21,102 @@ const REAL_STORAGE_KEYS = {
   LAST_SYNC: 'betterschool_real_last_sync'
 };
 
-// ID par défaut extrait de la session de test (utilisé si aucun ID n'est détecté)
-const FALLBACK_USER_ID = '4907_5748_0';
-
 /**
- * Récupère l'identifiant de l'élève actif
+ * Récupère l'identifiant de l'élève actif stocké en cache (ou null si inconnu)
  */
-export const getActiveUserId = (): string => {
-  if (typeof window === 'undefined') return FALLBACK_USER_ID;
-  return localStorage.getItem(REAL_STORAGE_KEYS.USER_ID) || FALLBACK_USER_ID;
+export const getActiveUserId = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(REAL_STORAGE_KEYS.USER_ID) || null;
 };
 
 /**
  * Enregistre l'identifiant de l'élève actif
  */
 export const setActiveUserId = (userId: string): void => {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && userId) {
     localStorage.setItem(REAL_STORAGE_KEYS.USER_ID, userId);
   }
+};
+
+/**
+ * Découvre dynamiquement l'identifiant de l'élève connecté sur Smartschool
+ * sans aucune valeur en dur.
+ */
+export const discoverUserId = async (): Promise<string | null> => {
+  const stored = getActiveUserId();
+  if (stored) return stored;
+
+  try {
+    const hostInfo = await getHostPageInfo();
+    if (hostInfo.ok && hostInfo.data) {
+      const fromUrl = hostInfo.data.url?.match(/user\/([0-9]+_[0-9]+_[0-9]+)/);
+      if (fromUrl && fromUrl[1]) {
+        setActiveUserId(fromUrl[1]);
+        return fromUrl[1];
+      }
+      const fromHtml = hostInfo.data.html?.match(/\/planned-elements\/user\/([0-9]+_[0-9]+_[0-9]+)/) ||
+                       hostInfo.data.html?.match(/"userId"\s*:\s*"([0-9]+_[0-9]+_[0-9]+)"/);
+      if (fromHtml && fromHtml[1]) {
+        setActiveUserId(fromHtml[1]);
+        return fromHtml[1];
+      }
+    }
+  } catch {}
+
+  try {
+    const plannerRes = await fetchSmartschool('/planner');
+    if (plannerRes.ok && plannerRes.body) {
+      const match = plannerRes.body.match(/\/planned-elements\/user\/([0-9]+_[0-9]+_[0-9]+)/) ||
+                    plannerRes.body.match(/"userId"\s*:\s*"([0-9]+_[0-9]+_[0-9]+)"/) ||
+                    plannerRes.body.match(/user\/([0-9]+_[0-9]+_[0-9]+)/);
+      if (match && match[1]) {
+        setActiveUserId(match[1]);
+        return match[1];
+      }
+    }
+  } catch {}
+
+  return null;
+};
+
+/**
+ * Découvre dynamiquement le profil de l'élève (avatar, nom, prénom) depuis le DOM de Smartschool
+ */
+export const discoverStudentProfile = async (): Promise<Partial<Student> | null> => {
+  try {
+    const domRes = await queryHostDOM([
+      { key: 'avatar', selector: 'img[src*="userpicture"], img[src*="Userimage"], .js-btn-avatar img, .topnav__user img', attr: 'src' },
+      { key: 'fullName', selector: '.js-user-name, .topnav__user-name, [data-user-name], .user-name', attr: 'text' }
+    ]);
+
+    if (domRes.ok && domRes.results) {
+      const avatar = domRes.results.avatar || undefined;
+      const fullName = domRes.results.fullName || '';
+      
+      let firstName = '';
+      let lastName = '';
+      if (fullName) {
+        const parts = fullName.trim().split(/\s+/);
+        firstName = parts[0] || '';
+        lastName = parts.slice(1).join(' ') || '';
+      }
+
+      const existing = getCachedRealStudent() || {};
+      const updated: Partial<Student> = {
+        ...existing,
+        ...(avatar ? { avatar } : {}),
+        ...(firstName ? { firstName } : {}),
+        ...(lastName ? { lastName } : {})
+      };
+
+      if (typeof window !== 'undefined' && (avatar || firstName)) {
+        localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(updated));
+      }
+      return updated;
+    }
+  } catch {}
+
+  return getCachedRealStudent();
 };
 
 /**
@@ -53,7 +131,6 @@ const formatISODateTime = (d: Date): string => {
   const mm = pad(d.getMinutes());
   const ss = pad(d.getSeconds());
   
-  // Timezone offset
   const offset = -d.getTimezoneOffset();
   const sign = offset >= 0 ? '+' : '-';
   const offsetHours = pad(Math.floor(Math.abs(offset) / 60));
@@ -107,11 +184,16 @@ export interface SyncResult {
 }
 
 /**
- * Récupère les données d'agenda réelles depuis Smartschool via le bridge
+ * Récupère les données d'agenda réelles depuis Smartschool via la passerelle
  */
-export const fetchRealAgenda = async (userId: string = getActiveUserId()): Promise<CourseEvent[]> => {
-  const { fromISO, toISO } = getWeekRange();
-  const url = `/planner/api/v1/planned-elements/user/${userId}?from=${encodeURIComponent(fromISO)}&to=${encodeURIComponent(toISO)}&includes=icon,courses,locations,upload-folders`;
+export const fetchRealAgenda = async (userId?: string, targetDate: Date = new Date()): Promise<CourseEvent[]> => {
+  const activeId = userId || await discoverUserId();
+  if (!activeId) {
+    throw new Error('Identifiant élève introuvable pour récupérer l\'agenda.');
+  }
+
+  const { fromISO, toISO } = getWeekRange(targetDate);
+  const url = `/planner/api/v1/planned-elements/user/${activeId}?from=${encodeURIComponent(fromISO)}&to=${encodeURIComponent(toISO)}&includes=icon,courses,locations,upload-folders`;
 
   const res = await fetchSmartschool(url);
   if (!res.ok || !res.body) {
@@ -127,7 +209,7 @@ export const fetchRealAgenda = async (userId: string = getActiveUserId()): Promi
     if (evt) parsed.push(evt);
   }
 
-  // Extraction et sauvegarde immédiate des métadonnées établissement & classe
+  // Extraction et sauvegarde immédiate des métadonnées réelles établissement & classe
   const metadata = extractMetadataFromPlanner(raw);
   if (metadata.schoolName || metadata.studentClass) {
     const existingStudent = getCachedRealStudent() || {};
@@ -141,7 +223,7 @@ export const fetchRealAgenda = async (userId: string = getActiveUserId()): Promi
     }
   }
 
-  // Sauvegarder en cache
+  // Sauvegarder en cache réel
   if (typeof window !== 'undefined') {
     localStorage.setItem(REAL_STORAGE_KEYS.EVENTS, JSON.stringify(parsed));
   }
@@ -150,12 +232,17 @@ export const fetchRealAgenda = async (userId: string = getActiveUserId()): Promi
 };
 
 /**
- * Récupère les devoirs réels depuis Smartschool via le bridge
+ * Récupère les devoirs réels depuis Smartschool via la passerelle
  */
-export const fetchRealHomeworks = async (userId: string = getActiveUserId()): Promise<Homework[]> => {
-  const { fromISO, toISO } = getMonthRange();
+export const fetchRealHomeworks = async (userId?: string, targetDate: Date = new Date()): Promise<Homework[]> => {
+  const activeId = userId || await discoverUserId();
+  if (!activeId) {
+    throw new Error('Identifiant élève introuvable pour récupérer les devoirs.');
+  }
+
+  const { fromISO, toISO } = getMonthRange(targetDate);
   const types = 'planned-to-dos,planned-lesson-cluster-assignments,planned-assignments';
-  const url = `/planner/api/v1/planned-elements/user/${userId}?from=${encodeURIComponent(fromISO)}&to=${encodeURIComponent(toISO)}&includes=icon,courses,locations,upload-folders&types=${encodeURIComponent(types)}`;
+  const url = `/planner/api/v1/planned-elements/user/${activeId}?from=${encodeURIComponent(fromISO)}&to=${encodeURIComponent(toISO)}&includes=icon,courses,locations,upload-folders&types=${encodeURIComponent(types)}`;
 
   const res = await fetchSmartschool(url);
   if (!res.ok || !res.body) {
@@ -171,7 +258,7 @@ export const fetchRealHomeworks = async (userId: string = getActiveUserId()): Pr
     if (hw) parsed.push(hw);
   }
 
-  // Sauvegarder en cache
+  // Sauvegarder en cache réel
   if (typeof window !== 'undefined') {
     localStorage.setItem(REAL_STORAGE_KEYS.HOMEWORKS, JSON.stringify(parsed));
   }
@@ -180,22 +267,39 @@ export const fetchRealHomeworks = async (userId: string = getActiveUserId()): Pr
 };
 
 /**
- * Synchronise l'ensemble des données réelles de l'élève
+ * Synchronise l'ensemble des données réelles de l'élève sans aucun élément hardcodé
  */
-export const syncAllSmartschoolData = async (userId: string = getActiveUserId()): Promise<SyncResult> => {
+export const syncAllSmartschoolData = async (targetDate: Date = new Date()): Promise<SyncResult> => {
   try {
+    const userId = await discoverUserId();
+    const studentProfile = await discoverStudentProfile();
+
+    if (!userId) {
+      return {
+        success: false,
+        events: getCachedRealEvents(),
+        homeworks: getCachedRealHomeworks(),
+        student: studentProfile || getCachedRealStudent(),
+        error: 'Impossible de détecter l\'identifiant élève sur Smartschool.'
+      };
+    }
+
     const [events, homeworks] = await Promise.all([
-      fetchRealAgenda(userId),
-      fetchRealHomeworks(userId)
+      fetchRealAgenda(userId, targetDate),
+      fetchRealHomeworks(userId, targetDate)
     ]);
 
-    const partialStudent = getCachedRealStudent();
+    const updatedStudent = getCachedRealStudent();
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(REAL_STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
+    }
 
     return {
       success: true,
       events,
       homeworks,
-      student: partialStudent
+      student: updatedStudent
     };
   } catch (err: any) {
     return {
@@ -208,121 +312,35 @@ export const syncAllSmartschoolData = async (userId: string = getActiveUserId())
   }
 };
 
-// Données initiales réelles extraites de l'API Smartschool (utilisées si pas encore synchronisé)
-const INITIAL_REAL_STUDENT: Partial<Student> = {
-  schoolName: 'Collège Jean XXIII',
-  studentClass: '4T1',
-  ineNumber: '4907_5748_0',
-  firstName: 'Élève',
-  lastName: 'Jean XXIII',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
-};
-
-const INITIAL_REAL_EVENTS: CourseEvent[] = [
-  {
-    id: '025ba09b-40a9-519f-8857-305f9601e73c',
-    subject: 'Anglais',
-    subjectCode: 'ANG2',
-    teacher: 'VL Verheylewegen',
-    room: 'D21',
-    startTime: '15:30',
-    endTime: '16:20',
-    date: '2026-09-28',
-    dayOfWeek: 1,
-    type: 'cours',
-    color: 'cyan',
-    status: 'scheduled'
-  },
-  {
-    id: '0463353e-fd7a-576d-a940-4ff6e7ba8aee',
-    subject: 'Mathématique',
-    subjectCode: 'MAT4',
-    teacher: 'DI Didion',
-    room: 'D22',
-    startTime: '13:50',
-    endTime: '14:40',
-    date: '2026-09-28',
-    dayOfWeek: 1,
-    type: 'cours',
-    color: 'rose',
-    status: 'scheduled'
-  },
-  {
-    id: '0483b4f5-9dfd-5e80-9160-39610d8da6e7',
-    subject: 'Français',
-    subjectCode: 'FRA4',
-    teacher: 'RO Rouard',
-    room: 'D21',
-    startTime: '10:10',
-    endTime: '11:00',
-    date: '2026-09-30',
-    dayOfWeek: 3,
-    type: 'cours',
-    color: 'cyan',
-    status: 'scheduled'
-  },
-  {
-    id: '085c62eb-fb0a-549c-aecf-fe4d43b41701',
-    subject: 'Religion',
-    subjectCode: 'REL',
-    teacher: 'KD Kialuta',
-    room: 'D21',
-    startTime: '13:50',
-    endTime: '14:40',
-    date: '2026-10-02',
-    dayOfWeek: 5,
-    type: 'cours',
-    color: 'indigo',
-    status: 'scheduled'
-  }
-];
-
-const INITIAL_REAL_HOMEWORKS: Homework[] = [
-  {
-    id: '81c03373-9411-4a93-8ede-bdc23665af7d',
-    subject: 'Sciences Naturelles',
-    subjectCode: 'SCI3',
-    color: 'emerald',
-    title: 'Interro de calorimétrie',
-    description: 'Interrogation — Salle A52',
-    dueDate: '2026-10-08',
-    dueTime: '14:40',
-    estimatedTimeMinutes: 45,
-    isCompleted: false,
-    priority: 'high',
-    assignedDate: '2026-09-28'
-  }
-];
-
 /**
- * Récupère les données réelles mises en cache dans le localStorage (avec fallback réel initial)
+ * Récupère les données réelles mises en cache dans le localStorage (renvoie un tableau vide ou null si non synchronisé)
  */
 export const getCachedRealEvents = (): CourseEvent[] => {
-  if (typeof window === 'undefined') return INITIAL_REAL_EVENTS;
+  if (typeof window === 'undefined') return [];
   try {
     const stored = localStorage.getItem(REAL_STORAGE_KEYS.EVENTS);
-    return stored ? JSON.parse(stored) : INITIAL_REAL_EVENTS;
+    return stored ? JSON.parse(stored) : [];
   } catch {
-    return INITIAL_REAL_EVENTS;
+    return [];
   }
 };
 
 export const getCachedRealHomeworks = (): Homework[] => {
-  if (typeof window === 'undefined') return INITIAL_REAL_HOMEWORKS;
+  if (typeof window === 'undefined') return [];
   try {
     const stored = localStorage.getItem(REAL_STORAGE_KEYS.HOMEWORKS);
-    return stored ? JSON.parse(stored) : INITIAL_REAL_HOMEWORKS;
+    return stored ? JSON.parse(stored) : [];
   } catch {
-    return INITIAL_REAL_HOMEWORKS;
+    return [];
   }
 };
 
 export const getCachedRealStudent = (): Partial<Student> | null => {
-  if (typeof window === 'undefined') return INITIAL_REAL_STUDENT;
+  if (typeof window === 'undefined') return null;
   try {
     const stored = localStorage.getItem(REAL_STORAGE_KEYS.STUDENT);
-    return stored ? JSON.parse(stored) : INITIAL_REAL_STUDENT;
+    return stored ? JSON.parse(stored) : null;
   } catch {
-    return INITIAL_REAL_STUDENT;
+    return null;
   }
 };

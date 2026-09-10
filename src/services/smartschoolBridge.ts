@@ -20,7 +20,6 @@ export interface BridgeResponse {
  */
 export const fetchSmartschool = (url: string, options?: RequestInit): Promise<BridgeResponse> => {
   return new Promise((resolve) => {
-    // Si on n'est pas dans l'iframe Smartschool
     if (typeof window === 'undefined' || window.parent === window) {
       resolve({
         ok: false,
@@ -62,6 +61,108 @@ export const fetchSmartschool = (url: string, options?: RequestInit): Promise<Br
       id,
       url,
       options
+    }, '*');
+  });
+};
+
+export interface HostQuery {
+  key: string;
+  selector: string;
+  attr: string; // 'text', 'src', 'href', etc.
+}
+
+export interface DomQueryResult {
+  ok: boolean;
+  results?: Record<string, string | null>;
+  error?: string;
+}
+
+/**
+ * Interroge le DOM de la page hôte de façon générique (ex: sélecteurs de titre, avatar, nom)
+ */
+export const queryHostDOM = (queries: HostQuery[]): Promise<DomQueryResult> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || window.parent === window) {
+      resolve({ ok: false, error: 'Pas dans le contexte d\'un bookmarklet hôte.' });
+      return;
+    }
+
+    const id = 'bs_dom_' + Math.random().toString(36).substring(2, 9);
+
+    const timeout = setTimeout(() => {
+      window.removeEventListener('message', handleResponse);
+      resolve({ ok: false, error: 'Délai dépassé pour la requête DOM hôte.' });
+    }, 5000);
+
+    const handleResponse = (ev: MessageEvent) => {
+      if (ev.data && ev.data.type === 'BETTERSCHOOL_RES' && ev.data.id === id) {
+        clearTimeout(timeout);
+        window.removeEventListener('message', handleResponse);
+        resolve({
+          ok: ev.data.ok,
+          results: ev.data.results,
+          error: ev.data.error
+        });
+      }
+    };
+
+    window.addEventListener('message', handleResponse);
+
+    window.parent.postMessage({
+      type: 'BETTERSCHOOL',
+      action: 'QUERY_DOM',
+      id,
+      queries
+    }, '*');
+  });
+};
+
+export interface HostPageInfo {
+  ok: boolean;
+  data?: {
+    url: string;
+    origin: string;
+    title: string;
+    html?: string;
+  };
+  error?: string;
+}
+
+/**
+ * Récupère les métadonnées de la page hôte (URL courante, titre, origine)
+ */
+export const getHostPageInfo = (): Promise<HostPageInfo> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || window.parent === window) {
+      resolve({ ok: false, error: 'Pas dans le contexte d\'un bookmarklet hôte.' });
+      return;
+    }
+
+    const id = 'bs_info_' + Math.random().toString(36).substring(2, 9);
+
+    const timeout = setTimeout(() => {
+      window.removeEventListener('message', handleResponse);
+      resolve({ ok: false, error: 'Délai dépassé pour la requête Host Info.' });
+    }, 5000);
+
+    const handleResponse = (ev: MessageEvent) => {
+      if (ev.data && ev.data.type === 'BETTERSCHOOL_RES' && ev.data.id === id) {
+        clearTimeout(timeout);
+        window.removeEventListener('message', handleResponse);
+        resolve({
+          ok: ev.data.ok,
+          data: ev.data.data,
+          error: ev.data.error
+        });
+      }
+    };
+
+    window.addEventListener('message', handleResponse);
+
+    window.parent.postMessage({
+      type: 'BETTERSCHOOL',
+      action: 'GET_PAGE_INFO',
+      id
     }, '*');
   });
 };

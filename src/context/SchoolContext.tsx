@@ -53,6 +53,7 @@ interface SchoolContextType {
   // Résultats
   subjectReports: SubjectReport[];
   overallStats: { current: number; classAvg: number; previousTerm: number };
+  overallStats: { current: number; classAvg: number; previousTerm: number } | null;
   activePeriod: 'T1' | 'T2' | 'T3';
   setActivePeriod: (p: 'T1' | 'T2' | 'T3') => void;
   // Cours
@@ -70,6 +71,8 @@ interface SchoolContextType {
   setGlobalSearch: (s: string) => void;
   // Action de raccourci pour contacter un prof
   startDirectMessageWithTeacher: (teacherName: string) => void;
+  // Synchronisation dynamique
+  syncWeek: (date: Date) => Promise<void>;
   // Sidebar rétractable
   isSidebarCollapsed: boolean;
   toggleSidebar: () => void;
@@ -134,6 +137,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [subjectReports, setSubjectReports] = useState<SubjectReport[]>([]);
   const [overallStats, setOverallStats] = useState({ current: 81.5, classAvg: 66.0, previousTerm: 77.0 });
+  const [overallStats, setOverallStats] = useState<{ current: number; classAvg: number; previousTerm: number } | null>({ current: 81.5, classAvg: 66.0, previousTerm: 77.0 });
   const [activePeriod, setActivePeriod] = useState<'T1' | 'T2' | 'T3'>('T1');
 
   const [courses, setCourses] = useState<SubjectCourse[]>([]);
@@ -173,6 +177,34 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
 
+  // Synchronisation dynamique d'une semaine spécifique via la passerelle
+  const syncWeek = async (date: Date) => {
+    if (isInsideSmartschoolPlatform) {
+      const res = await syncAllSmartschoolData(date);
+      if (res.success) {
+        setEvents(res.events);
+        setHomeworks(res.homeworks);
+        const curDay = new Date().getDay();
+        const day = (curDay >= 1 && curDay <= 5) ? curDay : 1;
+        setTodayEvents(res.events.filter(e => e.dayOfWeek === day));
+        if (res.student) {
+          setStudent({
+            id: res.student.id || 'real_student',
+            firstName: res.student.firstName || '',
+            lastName: res.student.lastName || '',
+            email: res.student.email || '',
+            avatar: res.student.avatar || '',
+            studentClass: res.student.studentClass || '',
+            schoolName: res.student.schoolName || '',
+            academicYear: res.student.academicYear || '',
+            ineNumber: res.student.ineNumber || '',
+            unreadNotifications: 0
+          });
+        }
+      }
+    }
+  };
+
   // Raccourci clavier Ctrl+B pour rétracter/déplier la barre latérale
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -190,6 +222,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const initData = async () => {
       if (!isDemoMode) {
         // En mode Réel : chargement des données réelles Smartschool
+        // En mode Réel : chargement du cache réel
         const realEvents = getCachedRealEvents();
         const realHomeworks = getCachedRealHomeworks();
         const realStudentData = getCachedRealStudent();
@@ -205,6 +238,14 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             schoolName: realStudentData.schoolName || 'Collège Jean XXIII',
             academicYear: '2026-2027',
             ineNumber: realStudentData.ineNumber || '4907_5748_0',
+            firstName: realStudentData.firstName || '',
+            lastName: realStudentData.lastName || '',
+            email: realStudentData.email || '',
+            avatar: realStudentData.avatar || '',
+            studentClass: realStudentData.studentClass || '',
+            schoolName: realStudentData.schoolName || '',
+            academicYear: realStudentData.academicYear || '',
+            ineNumber: realStudentData.ineNumber || '',
             unreadNotifications: 0
           });
         } else {
@@ -226,6 +267,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setSubjectReports([]);
         setCourses([]);
         setNotifications([]);
+        setOverallStats(null); // Mode Réel : aucune note fictive
 
         // Si BetterSchool tourne au sein de Smartschool, synchroniser en direct
         if (isInsideSmartschoolPlatform) {
@@ -242,6 +284,18 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                   schoolName: res.student?.schoolName || prev.schoolName,
                   studentClass: res.student?.studentClass || prev.studentClass
                 }) : null);
+                setStudent({
+                  id: res.student.id || 'real_student',
+                  firstName: res.student.firstName || '',
+                  lastName: res.student.lastName || '',
+                  email: res.student.email || '',
+                  avatar: res.student.avatar || '',
+                  studentClass: res.student.studentClass || '',
+                  schoolName: res.student.schoolName || '',
+                  academicYear: res.student.academicYear || '',
+                  ineNumber: res.student.ineNumber || '',
+                  unreadNotifications: 0
+                });
               }
             }
           });
@@ -395,6 +449,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         globalSearch,
         setGlobalSearch,
         startDirectMessageWithTeacher,
+        syncWeek,
         isSidebarCollapsed,
         toggleSidebar,
         isInsideSmartschoolPlatform,

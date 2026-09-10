@@ -62,20 +62,52 @@ const overlayBookmarkletCode = `javascript:(function(){
     try {
       if (ev.source !== iframe.contentWindow) return;
       const d = ev.data;
-      if (d && d.type === 'BETTERSCHOOL') {
-        if (d.action === 'CLOSE') cleanup();
-        if (d.action === 'SET_TITLE' && d.title) document.title = d.title;
-        if (d.action === 'FETCH' && d.url) {
-          const id = d.id;
-          fetch(d.url, d.options || {})
-            .then(r => r.text().then(b => ({ ok: r.ok, status: r.status, body: b })))
-            .then(res => {
-              iframe.contentWindow.postMessage({ type: 'BETTERSCHOOL_RES', id, ...res }, '*');
-            })
-            .catch(err => {
-              iframe.contentWindow.postMessage({ type: 'BETTERSCHOOL_RES', id, ok: false, error: err.message }, '*');
+      if (!d || d.type !== 'BETTERSCHOOL') return;
+      if (d.action === 'CLOSE') cleanup();
+      if (d.action === 'SET_TITLE' && d.title) document.title = d.title;
+      if (d.action === 'FETCH' && d.url) {
+        const id = d.id;
+        fetch(d.url, d.options || {})
+          .then(r => r.text().then(b => ({ ok: r.ok, status: r.status, body: b })))
+          .then(res => {
+            iframe.contentWindow.postMessage({ type: 'BETTERSCHOOL_RES', id, ...res }, '*');
+          })
+          .catch(err => {
+            iframe.contentWindow.postMessage({ type: 'BETTERSCHOOL_RES', id, ok: false, error: err.message }, '*');
+          });
+      }
+      if (d.action === 'QUERY_DOM') {
+        const id = d.id;
+        try {
+          const results = {};
+          if (Array.isArray(d.queries)) {
+            d.queries.forEach(q => {
+              const el = document.querySelector(q.selector);
+              if (el) {
+                results[q.key] = q.attr === 'text' ? (el.innerText || el.textContent || '').trim() : (el.getAttribute(q.attr) || (el[q.attr]) || null);
+              } else {
+                results[q.key] = null;
+              }
             });
+          }
+          iframe.contentWindow.postMessage({ type: 'BETTERSCHOOL_RES', id, ok: true, results }, '*');
+        } catch(err) {
+          iframe.contentWindow.postMessage({ type: 'BETTERSCHOOL_RES', id, ok: false, error: err.message }, '*');
         }
+      }
+      if (d.action === 'GET_PAGE_INFO') {
+        const id = d.id;
+        iframe.contentWindow.postMessage({
+          type: 'BETTERSCHOOL_RES',
+          id,
+          ok: true,
+          data: {
+            url: window.location.href,
+            origin: window.location.origin,
+            title: document.title,
+            html: document.documentElement.innerHTML.substring(0, 100000)
+          }
+        }, '*');
       }
     } catch(e) {}
   };

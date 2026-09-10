@@ -14,6 +14,8 @@ import {
   LogOut,
   Bot,
   Bookmark
+  Bookmark,
+  User
 } from 'lucide-react';
 import { useSchool, TabType } from '../../context/SchoolContext';
 import { isFeatureReadyInLive } from '../../utils/featureFlags';
@@ -116,10 +118,28 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
                   alt="Avatar"
                   className="w-12 h-12 rounded-full object-cover ring-2 ring-indigo-200"
                 />
+                {student?.avatar ? (
+                  <img
+                    src={student.avatar}
+                    alt="Avatar"
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-indigo-200"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm ring-2 ring-indigo-200">
+                    {student?.firstName ? student.firstName.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
+                  </div>
+                )}
                 <div>
                   <h4 className="font-bold text-sm text-slate-900">{student?.firstName} {student?.lastName}</h4>
                   <p className="text-xs text-slate-500">{student?.studentClass}</p>
                   <p className="text-[10px] text-slate-400 font-mono mt-0.5">INE: {student?.ineNumber}</p>
+                  <h4 className="font-bold text-sm text-slate-900">
+                    {student ? `${student.firstName} ${student.lastName}`.trim() || 'Élève' : 'Élève'}
+                  </h4>
+                  <p className="text-xs text-slate-500">{student?.studentClass || (isDemoMode ? 'Classe' : 'Non connecté')}</p>
+                  {student?.ineNumber ? (
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">ID: {student.ineNumber}</p>
+                  ) : null}
                 </div>
               </div>
             </div>

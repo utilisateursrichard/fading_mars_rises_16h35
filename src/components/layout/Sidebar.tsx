@@ -8,6 +8,8 @@ import {
   GraduationCap,
   Bot,
   Bookmark
+  Bookmark,
+  User
 } from 'lucide-react';
 import { useSchool, TabType } from '../../context/SchoolContext';
 import { isFeatureReadyInLive } from '../../utils/featureFlags';
@@ -158,6 +160,17 @@ export const Sidebar: React.FC = () => {
             alt="Avatar"
             className="w-9 h-9 rounded-xl object-cover"
           />
+          {student?.avatar ? (
+            <img
+              src={student.avatar}
+              alt="Avatar"
+              className="w-9 h-9 rounded-xl object-cover"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
+              {student?.firstName ? student.firstName.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
+            </div>
+          )}
           <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white" />
         </div>
 
@@ -165,9 +178,11 @@ export const Sidebar: React.FC = () => {
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold text-slate-900 truncate">
               {student?.firstName} {student?.lastName}
+              {student ? `${student.firstName} ${student.lastName}`.trim() || 'Élève' : 'Élève'}
             </p>
             <p className="text-[11px] text-slate-400 truncate">
               {student?.studentClass || 'Élève'}
+              {student?.studentClass || (isDemoMode ? 'Classe' : 'Non connecté')}
             </p>
           </div>
         )}

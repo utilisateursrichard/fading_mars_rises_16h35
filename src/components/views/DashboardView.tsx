@@ -25,6 +25,10 @@ export const DashboardView: React.FC = () => {
     setSelectedEventModal,
     setIsNewHomeworkModalOpen,
     globalSearch
+    globalSearch,
+    isDemoMode,
+    isInsideSmartschoolPlatform,
+    events
   } = useSchool();
 
   const [homeworkFilter, setHomeworkFilter] = useState<'pending' | 'all' | 'completed'>('pending');
@@ -77,14 +81,36 @@ export const DashboardView: React.FC = () => {
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
       
+      {/* Bannière d'information si en Mode Réel autonome hors Smartschool */}
+      {!isDemoMode && events.length === 0 && !isInsideSmartschoolPlatform && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+            <p className="text-xs font-medium text-amber-800">
+              <strong>Mode Réel actif :</strong> Aucune donnée en cache. Ouvrez Smartschool et cliquez sur le favori <strong>BetterSchool</strong> pour synchroniser vos cours en direct.
+            </p>
+          </div>
+          <button
+            onClick={() => setActiveTab('book')}
+            className="shrink-0 px-3 py-1.5 bg-amber-200/70 hover:bg-amber-300/80 text-amber-900 text-xs font-bold rounded-xl transition-all self-start sm:self-auto"
+          >
+            Voir le favori
+          </button>
+        </div>
+      )}
+
       {/* 1. Header Minimaliste & Accueillant */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
             {greeting}, {student?.firstName}
+            {student?.firstName ? `${greeting}, ${student.firstName}` : greeting}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5 capitalize">
             {todayFormatted} • <span className="text-indigo-600 font-semibold">{student?.studentClass || 'Classe'}</span>
+            {todayFormatted} {student?.studentClass ? (
+              <>• <span className="text-indigo-600 font-semibold">{student.studentClass}</span></>
+            ) : null}
           </p>
         </div>
 
@@ -177,9 +203,35 @@ export const DashboardView: React.FC = () => {
               <p className={`text-[11px] font-bold mt-1 ${diffPrev >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                 {diffPrev >= 0 ? `+${diffPrev}` : diffPrev} pts{' '}
                 <span className="text-slate-400 font-normal">vs classe ({overallStats.classAvg}/100)</span>
+          {overallStats ? (
+            <>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900">{overallStats.current}</span>
+                <span className="text-xs text-slate-400 font-semibold">/ 100</span>
+              </div>
+              {(() => {
+                const diffPrev = Number((overallStats.current - overallStats.previousTerm).toFixed(1));
+                return (
+                  <p className={`text-[11px] font-bold mt-1 ${diffPrev >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {diffPrev >= 0 ? `+${diffPrev}` : diffPrev} pts{' '}
+                    <span className="text-slate-400 font-normal">vs classe ({overallStats.classAvg}/100)</span>
+                  </p>
+                );
+              })()}
+            </>
+          ) : (
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl sm:text-3xl font-black text-slate-300">--</span>
+                <span className="text-xs text-slate-400 font-semibold">/ 100</span>
+              </div>
+              <p className="text-[11px] text-amber-600 font-bold mt-1">
+                En attente du module Skore
               </p>
             );
           })()}
+            </div>
+          )}
         </div>
 
         {/* Devoirs */}
