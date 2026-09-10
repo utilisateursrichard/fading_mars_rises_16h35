@@ -48,7 +48,7 @@ export const Sidebar: React.FC = () => {
 
   const allNavItems: { id: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
     { id: 'dashboard', label: 'Accueil', icon: LayoutDashboard },
-    { id: 'agenda', label: 'Emploi du temps', icon: CalendarDays, badge: pendingHomeworksTotal > 0 ? pendingHomeworksTotal : undefined },
+    { id: 'agenda', label: 'Agenda', icon: CalendarDays, badge: pendingHomeworksTotal > 0 ? pendingHomeworksTotal : undefined },
     { id: 'messages', label: 'Messagerie', icon: MessageSquareText, badge: unreadMessagesTotal > 0 ? unreadMessagesTotal : undefined },
     { id: 'results', label: 'Notes & Résultats', icon: Award },
     { id: 'courses', label: 'Espace Cours', icon: BookOpen },

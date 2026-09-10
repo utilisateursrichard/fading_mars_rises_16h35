@@ -48,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   const getPageTitle = () => {
     switch (activeTab) {
       case 'dashboard': return "Vue d'ensemble";
-      case 'agenda': return 'Emploi du temps';
+      case 'agenda': return 'Agenda';
       case 'messages': return 'Messagerie';
       case 'results': return 'Notes & Résultats';
       case 'courses': return 'Espace Cours';

@@ -40,8 +40,8 @@ export const FEATURES_REGISTRY: Record<FeatureKey, FeatureConfig> = {
   },
   agenda: {
     id: 'agenda',
-    label: "Emploi du temps",
-    description: "Planning dynamique, cours et horaires",
+    label: "Agenda",
+    description: "Planning dynamique, cours et devoirs",
     isReadyInLive: true,
   },
   messages: {

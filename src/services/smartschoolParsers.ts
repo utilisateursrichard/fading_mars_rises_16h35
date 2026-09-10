@@ -24,10 +24,83 @@ const mapColor = (smartschoolColor?: string): string => {
 };
 
 /**
- * Convertit un élément de planning brut Smartschool en CourseEvent BetterSchool
+ * Calcule l'urgence d'un devoir ou d'une évaluation :
+ * 1. Déjà terminé -> 'low' (plus urgent du tout)
+ * 2. Échéance imminente (passée, aujourd'hui, demain <= 1 jour restant) -> URGENT ('high')
+ * 3. Épreuve programmée (interro, examen, contrôle, DS) sous 3 jours -> URGENT ('high')
+ * 4. Poids / coefficient important (weight >= 2) sous 4 jours -> URGENT ('high')
+ * 5. Échéance sous 4 jours ou examen plus lointain -> MOYEN ('medium')
+ * 6. Au-delà de 4 jours -> NORMAL ('low')
+ */
+export const calculateHomeworkUrgency = (
+  dueDateStr: string,
+  assignmentTypeName?: string,
+  weight: number = 1,
+  isCompleted: boolean = false
+): 'high' | 'medium' | 'low' => {
+  if (isCompleted) return 'low';
+
+  try {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    const [y, m, d] = dueDateStr.split('-').map(Number);
+    if (!y || !m || !d) return weight >= 2 ? 'high' : 'medium';
+    
+    const target = new Date(y, m - 1, d);
+    const diffTime = target.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const isTestOrExam = assignmentTypeName ? 
+      /interro|examen|contr[ôo]le|ds|test|[ée]val/i.test(assignmentTypeName) : false;
+
+    // 1. Passé ou à rendre aujourd'hui / demain -> Urgent !
+    if (diffDays <= 1) {
+      return 'high';
+    }
+
+    // 2. Évaluation / examen sous 3 jours -> Urgent !
+    if (isTestOrExam && diffDays <= 3) {
+      return 'high';
+    }
+
+    // 3. Coefficient >= 2 sous 4 jours -> Urgent !
+    if (weight >= 2 && diffDays <= 4) {
+      return 'high';
+    }
+
+    // 4. Échéance sous 4 jours ou examen plus lointain -> Medium
+    if (diffDays <= 4 || isTestOrExam) {
+      return 'medium';
+    }
+
+    return 'low';
+  } catch {
+    return weight >= 2 ? 'high' : 'medium';
+  }
+};
+
+/**
+ * Convertit un élément de planning brut Smartschool en CourseEvent BetterSchool.
+ * Retourne NULL pour tout devoir, interrogation, évaluation ou tâche afin
+ * de ne jamais créer une case de cours inutile dans la grille de l'agenda.
  */
 export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
   try {
+    // 1. Exclure formellement tout ce qui est devoir, évaluation, interro ou tâche personnelle
+    if (
+      raw.assignmentType || 
+      raw.plannedElementType === 'planned-assignments' || 
+      raw.plannedElementType === 'planned-to-dos' ||
+      raw.plannedElementType === 'planned-lesson-cluster-assignments' ||
+      raw.type === 'planned-assignments' ||
+      raw.type === 'planned-to-dos' ||
+      raw.period?.deadline === true ||
+      raw.resolvedStatus !== undefined
+    ) {
+      return null;
+    }
+
     const course = raw.courses?.[0];
     const rawName = raw.name || raw.title || raw.courseCluster?.name;
     const subject = course?.name || rawName || 'Cours';
@@ -68,16 +141,6 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
     const jsDay = fromDate.getDay();
     const dayOfWeek = (jsDay === 0 ? 1 : jsDay) as DayOfWeek;
 
-    // Type d'événement
-    let type: EventType = 'cours';
-    if (raw.assignmentType || raw.plannedElementType === 'planned-assignments' || raw.period?.deadline) {
-      type = 'ds';
-    } else if (subject.toLowerCase().includes('tp') || subjectCode.includes('TP')) {
-      type = 'tp';
-    } else if (subject.toLowerCase().includes('td') || subjectCode.includes('TD')) {
-      type = 'td';
-    }
-
     // Statut dynamique par rapport à l'heure actuelle
     const now = new Date();
     let status: EventStatus = 'scheduled';
@@ -97,7 +160,7 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
       endTime,
       date,
       dayOfWeek,
-      type,
+      type: 'cours',
       color: mapColor(raw.color),
       status
     };
@@ -127,12 +190,12 @@ export const parseSmartschoolHomework = (raw: any): Homework | null => {
     const dueDate = `${dueDateObj.getFullYear()}-${pad(dueDateObj.getMonth() + 1)}-${pad(dueDateObj.getDate())}`;
     const dueTime = `${pad(dueDateObj.getHours())}:${pad(dueDateObj.getMinutes())}`;
     
-    // Poids ou type pour la priorité
     const weight = raw.assignmentType?.weight || 1;
-    const priority = weight >= 2 ? 'high' : 'medium';
-    
-    // Statut résolu
+    const typeName = raw.assignmentType?.name || raw.description || '';
     const isCompleted = raw.resolvedStatus === 'resolved';
+
+    // Calcul précis de l'urgence en fonction de la date et de la nature du travail
+    const priority = calculateHomeworkUrgency(dueDate, typeName, weight, isCompleted);
 
     return {
       id: raw.id || `hw_${dueDate}_${Math.random().toString(36).substring(2, 7)}`,
@@ -235,7 +298,6 @@ export interface PlannerMetadata {
 /**
  * Extrait les métadonnées de l'élève et de l'école depuis un payload de planning
  */
-export const extractMetadataFromPlanner = (rawItems: any[]): { schoolName?: string; studentClass?: string } => {
 export const extractMetadataFromPlanner = (
   rawItems: any[], 
   effectiveUserId?: string | null
@@ -253,7 +315,6 @@ export const extractMetadataFromPlanner = (
     if (!studentClass && item.participants?.groups?.[0]?.name) {
       studentClass = item.participants.groups[0].name;
     }
-    if (schoolName && studentClass) break;
 
     // 1. Recherche directe de l'élève par son userId dans les participants ou organisateurs
     if ((!firstName || !avatar) && effectiveUserId) {
@@ -312,7 +373,6 @@ export const extractMetadataFromPlanner = (
     if (schoolName && studentClass && firstName && avatar) break;
   }
 
-  return { schoolName, studentClass };
   // Filtrage final anti-placeholder
   if (isGenericImagePlaceholder(firstName)) firstName = undefined;
   if (isGenericImagePlaceholder(lastName)) lastName = undefined;

@@ -146,14 +146,19 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications);
 
-  // État du mode démo (avec persistance locale)
+  // État du mode démo : Mode Réel par défaut (isDemoMode = false)
   const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
     try {
-      const stored = localStorage.getItem('betterschool_demo_mode');
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('demo') === 'true' || params.get('demo') === '1') return true;
+        if (params.get('demo') === 'false' || params.get('demo') === '0') return false;
+      }
+      const stored = localStorage.getItem('betterschool_demo_mode_v2');
       if (stored !== null) return stored === 'true';
-      return !isInsideSmartschool();
+      return false; // Mode Réel par défaut
     } catch {
-      return !isInsideSmartschool();
+      return false;
     }
   });
 
@@ -161,6 +166,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setIsDemoMode(prev => {
       const next = !prev;
       try {
+        localStorage.setItem('betterschool_demo_mode_v2', String(next));
         localStorage.setItem('betterschool_demo_mode', String(next));
       } catch {}
       return next;
@@ -170,6 +176,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const setDemoMode = (enabled: boolean) => {
     setIsDemoMode(enabled);
     try {
+      localStorage.setItem('betterschool_demo_mode_v2', String(enabled));
       localStorage.setItem('betterschool_demo_mode', String(enabled));
     } catch {}
   };

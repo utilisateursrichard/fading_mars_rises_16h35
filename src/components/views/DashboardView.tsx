@@ -117,7 +117,7 @@ export const DashboardView: React.FC = () => {
             className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold border border-slate-200/80 shadow-subtle transition-all flex items-center gap-1.5"
           >
             <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            <span>Emploi du temps</span>
+            <span>Agenda</span>
           </button>
 
           <button
@@ -267,7 +267,7 @@ export const DashboardView: React.FC = () => {
         {/* Colonne Gauche : Programme du jour */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-subtle">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-extrabold text-base text-slate-900">Emploi du temps du jour</h3>
+            <h3 className="font-extrabold text-base text-slate-900">Agenda du jour</h3>
             <button
               onClick={() => setActiveTab('agenda')}
               className="text-xs font-bold text-indigo-600 hover:text-indigo-800"

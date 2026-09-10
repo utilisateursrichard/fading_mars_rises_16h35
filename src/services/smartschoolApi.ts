@@ -430,9 +430,24 @@ export const fetchRealAgenda = async (userId?: string | null, targetDate?: Date)
   const items: any[] = Array.isArray(raw) ? raw : (raw?.items || raw?.elements || raw?.plannedElements || raw?.data || []);
 
   const parsed: CourseEvent[] = [];
+  const inlineHomeworks: Homework[] = [];
   for (const item of items) {
     const evt = parseSmartschoolCourse(item);
-    if (evt) parsed.push(evt);
+    if (evt) {
+      parsed.push(evt);
+    } else {
+      const hw = parseSmartschoolHomework(item);
+      if (hw) inlineHomeworks.push(hw);
+    }
+  }
+
+  // Si des devoirs ou évaluations sont présents dans le flux de planning, les fusionner au cache devoirs
+  if (inlineHomeworks.length > 0 && typeof window !== 'undefined') {
+    const existing = getCachedRealHomeworks();
+    const map = new Map<string, Homework>();
+    for (const h of existing) map.set(h.id, h);
+    for (const h of inlineHomeworks) map.set(h.id, h);
+    localStorage.setItem(REAL_STORAGE_KEYS.HOMEWORKS, JSON.stringify(Array.from(map.values())));
   }
 
   // Extraction et sauvegarde immédiate des métadonnées établissement, classe & profil élève

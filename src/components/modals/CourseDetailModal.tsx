@@ -25,17 +25,6 @@ export const CourseDetailModal: React.FC = () => {
   const event = selectedEventModal;
   const theme = getSubjectTheme(event.subjectCode);
 
-  const getEventTypeLabel = (type: string) => {
-    switch (type) {
-      case 'cours': return 'Cours magistral';
-      case 'tp': return 'Travaux Pratiques (TP)';
-      case 'td': return 'Travaux Dirigés (TD)';
-      case 'ds': return 'Devoir Surveillé (DS)';
-      case 'oral': return 'Épreuve Orale';
-      default: return 'Séance de cours';
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'in_progress':
@@ -61,9 +50,6 @@ export const CourseDetailModal: React.FC = () => {
             <div className="flex items-center gap-2 mb-1.5">
               <span className={`px-2.5 py-0.5 text-[11px] font-black rounded-lg border uppercase tracking-wider ${theme.badgeClass}`}>
                 {event.subjectCode}
-              </span>
-              <span className="text-xs font-bold text-slate-400">
-                {getEventTypeLabel(event.type)}
               </span>
             </div>
             <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">{event.subject}</h3>

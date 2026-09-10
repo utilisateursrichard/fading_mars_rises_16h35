@@ -18,8 +18,8 @@ Ce document recense l'architecture, les conventions et les mécanismes clés de 
 
 ### 2.1. Philosophie
 Pour permettre aux utilisateurs de visualiser l'ensemble de la vision du projet sans confusion avec leurs données réelles :
-1. **Mode Démo (`isDemoMode = true`, par défaut) :** Affiche l'intégralité de la maquette interactive avec les données factices (`mockData.ts`).
-2. **Mode Réel (`isDemoMode = false`) :** Masque toutes les fausses données. N'affiche que ce qui est réellement branché sur l'API Smartschool. Tant qu'un module n'est pas prêt, un état vide propre (`LiveModeEmptyState.tsx`) est affiché.
+1. **Mode Réel (`isDemoMode = false`, par défaut) :** Affiche uniquement les données réelles branchées sur l'API Smartschool. Tant qu'un module n'est pas prêt, un état vide propre (`LiveModeEmptyState.tsx`) est affiché.
+2. **Mode Démo (`isDemoMode = true`) :** Affiche l'intégralité de la maquette interactive avec les données factices (`mockData.ts`).
 
 ### 2.2. Le Bouton Toggle dans l'En-tête
 - Situé dans `src/components/layout/Header.tsx` juste à côté du bouton `+ Devoir`.
