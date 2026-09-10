@@ -6,7 +6,6 @@
  */
 
 import { CourseEvent, Homework, Student } from '../types/school';
-import { fetchSmartschool } from './smartschoolBridge';
 import { fetchSmartschool, queryHostDOM, getHostPageInfo, evalHostExpression } from './smartschoolBridge';
 import { 
   parseSmartschoolCourse, 
@@ -50,13 +49,26 @@ export const discoverUserId = async (): Promise<string | null> => {
   const cached = getActiveUserId();
   if (cached) return cached;
 
-  // 1. Essai d'évaluation globale sur l'hôte (window.smsc, window.currentUser)
+  // 1. Essai d'évaluation globale sur l'hôte (window.smsc, window.currentUser, cookies, DOM)
   try {
     const evalRes = await evalHostExpression(`
       (function() {
         try {
-          var u = (window.smsc && (window.smsc.user || window.smsc.currentUser || window.smsc.current_user)) || window.currentUser || null;
+          var u = (window.smsc && (window.smsc.user || window.smsc.currentUser || window.smsc.current_user || window.smsc.account || window.smsc.profile)) || window.currentUser || null;
           if (u && (u.id || u.user_id || u.userId)) return String(u.id || u.user_id || u.userId);
+
+          // Attributs DOM data-user-id
+          var elWithId = document.querySelector('[data-user-id], [data-userid], meta[name="user-id"]');
+          if (elWithId) {
+            var val = elWithId.getAttribute('data-user-id') || elWithId.getAttribute('data-userid') || elWithId.getAttribute('content');
+            if (val && /^[0-9]+_[0-9]+_[0-9]+$/.test(val)) return val;
+          }
+
+          // Cookie pid (identifiant Smartschool)
+          var cookieMatch = document.cookie.match(/(?:^|;\\s*)pid=([0-9]+_[0-9]+_[0-9]+)/);
+          if (cookieMatch && cookieMatch[1]) return cookieMatch[1];
+
+          // Recherche regex dans le HTML
           var m = (document.body && document.body.innerHTML) ? 
                   (document.body.innerHTML.match(/planned-elements\\/user\\/([0-9]+_[0-9]+_[0-9]+)/) ||
                    document.body.innerHTML.match(/["']([0-9]{3,5}_[0-9]{2,7}_[0-9]{1,3})["']/)) : null;
@@ -87,7 +99,9 @@ export const discoverUserId = async (): Promise<string | null> => {
 
   // 3. Essai depuis la page /planner via le bridge Same-Origin
   try {
-    const plannerRes = await fetchSmartschool('/planner');
+    const plannerRes = await fetchSmartschool('/planner', {
+      headers: { 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' }
+    });
     if (plannerRes.ok && plannerRes.body) {
       const match = plannerRes.body.match(/planned-elements\/user\/([0-9]+_[0-9]+_[0-9]+)/) ||
                     plannerRes.body.match(/user\/([0-9]+_[0-9]+_[0-9]+)/) ||
@@ -100,6 +114,20 @@ export const discoverUserId = async (): Promise<string | null> => {
   } catch (e) {
     console.warn('Découverte userId via /planner échouée:', e);
   }
+
+  // 4. Repli vers l'endpoint pinned (qui ne requiert pas de userId)
+  try {
+    const pinnedRes = await fetchSmartschool('/planner/api/v1/planned-elements/pinned?includes=icon,courses,locations,upload-folders', {
+      headers: { 'Accept': 'application/json, text/plain, */*', 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    if (pinnedRes.ok && pinnedRes.body) {
+      const match = pinnedRes.body.match(/([0-9]{3,5}_[0-9]{2,7}_[0-9]{1,3})/);
+      if (match && match[1]) {
+        setActiveUserId(match[1]);
+        return match[1];
+      }
+    }
+  } catch {}
 
   return null;
 };
@@ -295,22 +323,33 @@ export const fetchRealAgenda = async (userId?: string | null, targetDate?: Date)
   const { fromISO, toISO } = getWeekRange(targetDate || new Date());
   const url = `/planner/api/v1/planned-elements/user/${effectiveUserId}?from=${encodeURIComponent(fromISO)}&to=${encodeURIComponent(toISO)}&includes=icon,courses,locations,upload-folders`;
 
-  const res = await fetchSmartschool(url);
+  const res = await fetchSmartschool(url, {
+    headers: {
+      'Accept': 'application/json, text/plain, */*',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  });
   if (!res.ok || !res.body) {
     throw new Error(res.error || `Échec de la requête agenda (Status ${res.status})`);
   }
 
-  const raw = JSON.parse(res.body);
-  if (!Array.isArray(raw)) return [];
+  let raw: any;
+  try {
+    raw = JSON.parse(res.body);
+  } catch {
+    throw new Error('Réponse agenda invalide (format JSON attendu)');
+  }
+
+  const items: any[] = Array.isArray(raw) ? raw : (raw?.items || raw?.elements || raw?.plannedElements || raw?.data || []);
 
   const parsed: CourseEvent[] = [];
-  for (const item of raw) {
+  for (const item of items) {
     const evt = parseSmartschoolCourse(item);
     if (evt) parsed.push(evt);
   }
 
   // Extraction et sauvegarde immédiate des métadonnées établissement & classe
-  const metadata = extractMetadataFromPlanner(raw);
+  const metadata = extractMetadataFromPlanner(items);
   if (metadata.schoolName || metadata.studentClass) {
     const existingStudent = getCachedRealStudent() || {};
     const updatedStudent: Partial<Student> = {
@@ -342,16 +381,27 @@ export const fetchRealHomeworks = async (userId?: string | null, targetDate?: Da
   const types = 'planned-to-dos,planned-lesson-cluster-assignments,planned-assignments';
   const url = `/planner/api/v1/planned-elements/user/${effectiveUserId}?from=${encodeURIComponent(fromISO)}&to=${encodeURIComponent(toISO)}&includes=icon,courses,locations,upload-folders&types=${encodeURIComponent(types)}`;
 
-  const res = await fetchSmartschool(url);
+  const res = await fetchSmartschool(url, {
+    headers: {
+      'Accept': 'application/json, text/plain, */*',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  });
   if (!res.ok || !res.body) {
     throw new Error(res.error || `Échec de la requête devoirs (Status ${res.status})`);
   }
 
-  const raw = JSON.parse(res.body);
-  if (!Array.isArray(raw)) return [];
+  let raw: any;
+  try {
+    raw = JSON.parse(res.body);
+  } catch {
+    throw new Error('Réponse devoirs invalide (format JSON attendu)');
+  }
+
+  const items: any[] = Array.isArray(raw) ? raw : (raw?.items || raw?.elements || raw?.plannedElements || raw?.data || []);
 
   const parsed: Homework[] = [];
-  for (const item of raw) {
+  for (const item of items) {
     const hw = parseSmartschoolHomework(item);
     if (hw) parsed.push(hw);
   }
@@ -368,7 +418,6 @@ export const fetchRealHomeworks = async (userId?: string | null, targetDate?: Da
  * Synchronise l'ensemble des données réelles de l'élève
  */
 export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string | null): Promise<SyncResult> => {
-  const effectiveUserId = userId || getActiveUserId();
   let effectiveUserId = userId || getActiveUserId();
   if (!effectiveUserId) {
     effectiveUserId = await discoverUserId();
@@ -390,19 +439,26 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       success: false,
       events: getCachedRealEvents(),
       homeworks: getCachedRealHomeworks(),
-      student: getCachedRealStudent(),
       student: partialStudent,
       error: 'Identifiant élève non trouvé'
     };
   }
 
   try {
-    const [events, homeworks] = await Promise.all([
+    const [rawEvents, homeworks] = await Promise.all([
       fetchRealAgenda(effectiveUserId, targetDate),
       fetchRealHomeworks(effectiveUserId, targetDate)
     ]);
 
-    const partialStudent = getCachedRealStudent();
+    // Associer les devoirs aux cours correspondants
+    const events = rawEvents.map(evt => {
+      const hwForEvent = homeworks.filter(h => 
+        (h.courseEventId && h.courseEventId === evt.id) ||
+        (h.dueDate === evt.date && (h.subjectCode === evt.subjectCode || h.subject === evt.subject))
+      );
+      return hwForEvent.length > 0 ? { ...evt, homeworkDue: hwForEvent } : evt;
+    });
+
     // Re-lire le profil enrichi par fetchRealAgenda (schoolName, studentClass)
     const finalStudent = getCachedRealStudent() || partialStudent;
 
@@ -410,7 +466,6 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       success: true,
       events,
       homeworks,
-      student: partialStudent
       student: finalStudent
     };
   } catch (err: any) {
@@ -418,7 +473,6 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       success: false,
       events: getCachedRealEvents(),
       homeworks: getCachedRealHomeworks(),
-      student: getCachedRealStudent(),
       student: getCachedRealStudent() || partialStudent,
       error: err.message || 'Erreur de synchronisation'
     };
