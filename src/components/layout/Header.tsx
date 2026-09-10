@@ -7,6 +7,8 @@ import {
   MessageSquare, 
   ExternalLink, 
   PanelLeft 
+  PanelLeft,
+  User
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
 
@@ -222,6 +224,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
             alt="Avatar"
             className="w-8 h-8 rounded-full object-cover ring-2 ring-slate-200/80 hover:ring-indigo-400 transition-all"
           />
+          {student?.avatar ? (
+            <img
+              src={student.avatar}
+              alt="Avatar"
+              className="w-8 h-8 rounded-full object-cover ring-2 ring-slate-200/80 hover:ring-indigo-400 transition-all"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs ring-2 ring-slate-200/80 hover:ring-indigo-400 transition-all">
+              {student?.firstName ? student.firstName.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
+            </div>
+          )}
         </div>
 
       </div>

@@ -6,7 +6,7 @@
  */
 
 import { CourseEvent, Homework, Student } from '../types/school';
-import { fetchSmartschool } from './smartschoolBridge';
+import { fetchSmartschool, queryHostDOM, getHostPageInfo, evalHostExpression } from './smartschoolBridge';
 import { 
   parseSmartschoolCourse, 
   parseSmartschoolHomework, 
@@ -36,6 +36,187 @@ export const setActiveUserId = (userId: string): void => {
   if (typeof window !== 'undefined') {
     localStorage.setItem(REAL_STORAGE_KEYS.USER_ID, userId);
   }
+};
+
+/**
+ * Découvre dynamiquement l'identifiant de l'élève (userId) sans aucun hardcoding :
+ * 1. En vérifiant le cache local.
+ * 2. En évaluant les variables globales de session hôte (window.smsc, window.currentUser).
+ * 3. En interrogeant l'URL / titre de la page hôte via la passerelle.
+ * 4. En inspectant la réponse HTML de /planner via le bridge Same-Origin.
+ */
+export const discoverUserId = async (): Promise<string | null> => {
+  const cached = getActiveUserId();
+  if (cached) return cached;
+
+  // 1. Essai d'évaluation globale sur l'hôte (window.smsc, window.currentUser)
+  try {
+    const evalRes = await evalHostExpression(`
+      (function() {
+        try {
+          var u = (window.smsc && (window.smsc.user || window.smsc.currentUser || window.smsc.current_user)) || window.currentUser || null;
+          if (u && (u.id || u.user_id || u.userId)) return String(u.id || u.user_id || u.userId);
+          var m = (document.body && document.body.innerHTML) ? 
+                  (document.body.innerHTML.match(/planned-elements\\/user\\/([0-9]+_[0-9]+_[0-9]+)/) ||
+                   document.body.innerHTML.match(/["']([0-9]{3,5}_[0-9]{2,7}_[0-9]{1,3})["']/)) : null;
+          if (m && m[1]) return m[1];
+          return null;
+        } catch(e) { return null; }
+      })()
+    `);
+    if (evalRes.ok && evalRes.result && typeof evalRes.result === 'string') {
+      setActiveUserId(evalRes.result);
+      return evalRes.result;
+    }
+  } catch {}
+
+  // 2. Essai depuis l'URL de la page hôte
+  try {
+    const pageInfo = await getHostPageInfo();
+    if (pageInfo.ok && pageInfo.data?.url) {
+      const urlMatch = pageInfo.data.url.match(/user\/([0-9]+_[0-9]+_[0-9]+)/);
+      if (urlMatch && urlMatch[1]) {
+        setActiveUserId(urlMatch[1]);
+        return urlMatch[1];
+      }
+    }
+  } catch {
+    // Non bloquant
+  }
+
+  // 3. Essai depuis la page /planner via le bridge Same-Origin
+  try {
+    const plannerRes = await fetchSmartschool('/planner');
+    if (plannerRes.ok && plannerRes.body) {
+      const match = plannerRes.body.match(/planned-elements\/user\/([0-9]+_[0-9]+_[0-9]+)/) ||
+                    plannerRes.body.match(/user\/([0-9]+_[0-9]+_[0-9]+)/) ||
+                    plannerRes.body.match(/["']([0-9]{3,5}_[0-9]{2,7}_[0-9]{1,3})["']/);
+      if (match && match[1]) {
+        setActiveUserId(match[1]);
+        return match[1];
+      }
+    }
+  } catch (e) {
+    console.warn('Découverte userId via /planner échouée:', e);
+  }
+
+  return null;
+};
+
+/**
+ * Découvre dynamiquement le profil de l'élève (nom, prénom, avatar CDN) depuis Smartschool
+ */
+export const discoverStudentProfile = async (): Promise<Partial<Student> | null> => {
+  const cached = getCachedRealStudent();
+
+  // 1. Essai d'extraction directe via eval sur la page hôte (smsc.user + DOM)
+  try {
+    const evalRes = await evalHostExpression(`
+      (function() {
+        try {
+          var u = (window.smsc && (window.smsc.user || window.smsc.currentUser || window.smsc.current_user)) || window.currentUser || null;
+          var firstName = u ? (u.first_name || u.firstName || u.givenName) : null;
+          var lastName = u ? (u.last_name || u.lastName || u.familyName) : null;
+          var fullName = u ? (u.name || u.fullName) : null;
+          var avatar = u ? (u.pictureUrl || u.avatar || u.photo || u.picture) : null;
+
+          // Si nom ou avatar non trouvés dans l'objet global, inspecter le DOM hôte
+          var avatarEl = document.querySelector('img[src*="userpicture"], img[src*="Userimage"], .js-btn-avatar img, .topnav__btn--user img, .js-avatar');
+          if (!avatar && avatarEl) {
+            avatar = avatarEl.src;
+          }
+
+          var nameEl = document.querySelector('.js-user-name, .topnav__user-name, .user-name, [data-user-name], .js-btn-avatar span');
+          if (!fullName && nameEl) {
+            fullName = (nameEl.innerText || nameEl.textContent || '').trim();
+          }
+
+          if (!fullName && avatarEl) {
+            fullName = (avatarEl.getAttribute('title') || avatarEl.getAttribute('alt') || '').trim();
+          }
+
+          return { firstName: firstName, lastName: lastName, fullName: fullName, avatar: avatar };
+        } catch(e) { return null; }
+      })()
+    `);
+
+    if (evalRes.ok && evalRes.result) {
+      const res = evalRes.result;
+      let firstName = res.firstName || '';
+      let lastName = res.lastName || '';
+      const avatar = res.avatar || '';
+
+      if (!firstName && res.fullName) {
+        const cleanName = res.fullName.replace(/^(photo de profil de|utilisateur\s*:?)\s*/i, '').trim();
+        const parts = cleanName.split(/\s+/);
+        if (parts.length >= 2) {
+          firstName = parts[0];
+          lastName = parts.slice(1).join(' ');
+        } else if (parts.length === 1) {
+          firstName = parts[0];
+        }
+      }
+
+      if (firstName || avatar) {
+        const updated: Partial<Student> = {
+          ...(cached || {}),
+          ...(firstName ? { firstName } : {}),
+          ...(lastName ? { lastName } : {}),
+          ...(avatar ? { avatar } : {})
+        };
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(updated));
+        }
+        return updated;
+      }
+    }
+  } catch {}
+
+  // 2. Repli vers queryHostDOM
+  try {
+    const domRes = await queryHostDOM([
+      { key: 'avatar', selector: 'img[src*="userpicture"], img[src*="Userimage"], .js-btn-avatar img, .topnav__user img, .topnav__btn--user img', attr: 'src' },
+      { key: 'avatarAlt', selector: 'img[src*="userpicture"], img[src*="Userimage"], .js-btn-avatar img', attr: 'alt' },
+      { key: 'avatarTitle', selector: 'img[src*="userpicture"], img[src*="Userimage"], .js-btn-avatar img', attr: 'title' },
+      { key: 'fullName', selector: '.js-user-name, .topnav__user, .user-name, [data-user-name], .js-btn-avatar span', attr: 'text' }
+    ]);
+
+    if (domRes.ok && domRes.results) {
+      let firstName = cached?.firstName || '';
+      let lastName = cached?.lastName || '';
+
+      const rawFullName = domRes.results.fullName || domRes.results.avatarTitle || domRes.results.avatarAlt || '';
+      if (rawFullName) {
+        const clean = rawFullName.replace(/^(photo de profil de|utilisateur\s*:?)\s*/i, '').trim();
+        const parts = clean.split(/\s+/);
+        if (parts.length >= 2) {
+          firstName = parts[0];
+          lastName = parts.slice(1).join(' ');
+        } else if (parts.length === 1) {
+          firstName = parts[0];
+        }
+      }
+
+      const avatar = domRes.results.avatar || cached?.avatar || '';
+
+      const updated: Partial<Student> = {
+        ...(cached || {}),
+        ...(firstName ? { firstName } : {}),
+        ...(lastName ? { lastName } : {}),
+        ...(avatar ? { avatar } : {})
+      };
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(updated));
+      }
+
+      return updated;
+    }
+  } catch (e) {
+    console.warn('Erreur lors de la découverte du profil depuis le DOM hôte:', e);
+  }
+
+  return cached;
 };
 
 /**
@@ -186,13 +367,28 @@ export const fetchRealHomeworks = async (userId?: string | null, targetDate?: Da
  * Synchronise l'ensemble des données réelles de l'élève
  */
 export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string | null): Promise<SyncResult> => {
-  const effectiveUserId = userId || getActiveUserId();
+  let effectiveUserId = userId || getActiveUserId();
+  if (!effectiveUserId) {
+    effectiveUserId = await discoverUserId();
+  }
+
+  // Découverte préalable du profil (nom, avatar)
+  let partialStudent = getCachedRealStudent();
+  try {
+    const discovered = await discoverStudentProfile();
+    if (discovered) {
+      partialStudent = discovered;
+    }
+  } catch (e) {
+    console.warn('Erreur lors de la découverte du profil:', e);
+  }
+
   if (!effectiveUserId) {
     return {
       success: false,
       events: getCachedRealEvents(),
       homeworks: getCachedRealHomeworks(),
-      student: getCachedRealStudent(),
+      student: partialStudent,
       error: 'Identifiant élève non trouvé'
     };
   }
@@ -203,20 +399,21 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       fetchRealHomeworks(effectiveUserId, targetDate)
     ]);
 
-    const partialStudent = getCachedRealStudent();
+    // Re-lire le profil enrichi par fetchRealAgenda (schoolName, studentClass)
+    const finalStudent = getCachedRealStudent() || partialStudent;
 
     return {
       success: true,
       events,
       homeworks,
-      student: partialStudent
+      student: finalStudent
     };
   } catch (err: any) {
     return {
       success: false,
       events: getCachedRealEvents(),
       homeworks: getCachedRealHomeworks(),
-      student: getCachedRealStudent(),
+      student: getCachedRealStudent() || partialStudent,
       error: err.message || 'Erreur de synchronisation'
     };
   }

@@ -31,19 +31,40 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
     const course = raw.courses?.[0];
     const subject = course?.name || 'Cours';
     const subjectCode = course?.scheduleCodes?.[0] || subject.substring(0, 4).toUpperCase();
+    const rawName = raw.name || raw.title || raw.courseCluster?.name;
+    const subject = course?.name || rawName || 'Cours';
+    
+    // Code matière court (ex: "MATH", "ANG2")
+    const subjectCode = course?.scheduleCodes?.[0] || 
+      (course?.name ? course.name.substring(0, 4).toUpperCase() : 
+      (rawName ? rawName.substring(0, 4).toUpperCase() : subject.substring(0, 4).toUpperCase()));
     
     // Organisateur / Enseignant
     const teacherUser = raw.organisers?.users?.[0];
     const teacher = teacherUser?.name?.startingWithFirstName || 'Professeur';
+    const teacher = teacherUser?.name?.startingWithFirstName || 
+                    teacherUser?.name?.startingWithLastName || 
+                    teacherUser?.name?.formatted || 
+                    raw.organisers?.groups?.[0]?.name || 
+                    'Professeur';
     
     // Salle de classe
     const location = raw.locations?.[0];
     const room = location?.title || 'Salle indéterminée';
+    const room = location?.title || location?.name || 'Salle indéterminée';
     
     // Période et horaires
     const fromDate = new Date(raw.period?.dateTimeFrom);
     const toDate = new Date(raw.period?.dateTimeTo);
+    const fromStr = raw.period?.dateTimeFrom;
+    const toStr = raw.period?.dateTimeTo;
+    if (!fromStr) return null;
+
+    const fromDate = new Date(fromStr);
+    const toDate = toStr ? new Date(toStr) : new Date(fromDate.getTime() + 50 * 60 * 1000);
     
+    if (isNaN(fromDate.getTime())) return null;
+
     const pad = (n: number) => n.toString().padStart(2, '0');
     const startTime = `${pad(fromDate.getHours())}:${pad(fromDate.getMinutes())}`;
     const endTime = `${pad(toDate.getHours())}:${pad(toDate.getMinutes())}`;
@@ -52,9 +73,30 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
     // JS Date.getDay(): 0=Dimanche, 1=Lundi ... 6=Samedi
     const jsDay = fromDate.getDay();
     const dayOfWeek = (jsDay === 0 ? 7 : jsDay) as DayOfWeek;
+    const dayOfWeek = (jsDay === 0 ? 1 : jsDay) as DayOfWeek;
+
+    // Type d'événement
+    let type: EventType = 'cours';
+    if (raw.assignmentType || raw.plannedElementType === 'planned-assignments' || raw.period?.deadline) {
+      type = 'ds';
+    } else if (subject.toLowerCase().includes('tp') || subjectCode.includes('TP')) {
+      type = 'tp';
+    } else if (subject.toLowerCase().includes('td') || subjectCode.includes('TD')) {
+      type = 'td';
+    }
+
+    // Statut dynamique par rapport à l'heure actuelle
+    const now = new Date();
+    let status: EventStatus = 'scheduled';
+    if (now >= fromDate && now <= toDate) {
+      status = 'in_progress';
+    } else if (now > toDate) {
+      status = 'completed';
+    }
 
     return {
       id: raw.id,
+      id: raw.id || `${date}_${startTime}_${subjectCode}`,
       subject,
       subjectCode,
       teacher,
@@ -64,8 +106,10 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
       date,
       dayOfWeek,
       type: 'cours' as EventType,
+      type,
       color: mapColor(raw.color),
       status: 'scheduled' as EventStatus
+      status
     };
   } catch (err) {
     console.error('Erreur lors du parsing d\'un cours Smartschool:', err, raw);
@@ -79,11 +123,19 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
 export const parseSmartschoolHomework = (raw: any): Homework | null => {
   try {
     const title = raw.name || 'Devoir';
+    const title = raw.name || raw.title || 'Devoir';
     const course = raw.courses?.[0];
     const subject = course?.name || 'Matière';
+    const subject = course?.name || raw.courseCluster?.name || 'Matière';
     const subjectCode = course?.scheduleCodes?.[0] || subject.substring(0, 4).toUpperCase();
     
     const dueDateObj = new Date(raw.period?.dateTimeTo || raw.period?.dateTimeFrom);
+    const dateStr = raw.period?.dateTimeTo || raw.period?.dateTimeFrom;
+    if (!dateStr) return null;
+
+    const dueDateObj = new Date(dateStr);
+    if (isNaN(dueDateObj.getTime())) return null;
+
     const pad = (n: number) => n.toString().padStart(2, '0');
     const dueDate = `${dueDateObj.getFullYear()}-${pad(dueDateObj.getMonth() + 1)}-${pad(dueDateObj.getDate())}`;
     const dueTime = `${pad(dueDateObj.getHours())}:${pad(dueDateObj.getMinutes())}`;
@@ -97,11 +149,13 @@ export const parseSmartschoolHomework = (raw: any): Homework | null => {
 
     return {
       id: raw.id,
+      id: raw.id || `hw_${dueDate}_${Math.random().toString(36).substring(2, 7)}`,
       subject,
       subjectCode,
       color: mapColor(raw.color),
       title,
       description: raw.assignmentType?.name || 'Travail à réaliser',
+      description: raw.assignmentType?.name || raw.description || 'Travail à réaliser',
       dueDate,
       dueTime,
       estimatedTimeMinutes: 30,

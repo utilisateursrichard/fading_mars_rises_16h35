@@ -184,59 +184,65 @@ export const ResultsView: React.FC = () => {
               Prévois l’impact d’un prochain devoir sur ta moyenne.
             </p>
 
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Matière</label>
-                <select
-                  value={simSubject}
-                  onChange={(e) => {
-                    setSimSubject(e.target.value);
-                    setHasSimulated(true);
-                  }}
-                  className="w-full px-3 py-2 text-xs font-bold bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                >
-                  {subjectReports.map(rep => (
-                    <option key={rep.subjectCode} value={rep.subjectCode}>
-                      {rep.subject} (Coef {rep.coefficient})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
+            {subjectReports.length > 0 ? (
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Note espérée (/20)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    step="0.5"
-                    value={simGradeValue}
-                    onChange={(e) => {
-                      setSimGradeValue(Number(e.target.value));
-                      setHasSimulated(true);
-                    }}
-                    className="w-full px-3 py-2 text-xs font-black text-indigo-600 bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Coefficient</label>
+                  <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Matière</label>
                   <select
-                    value={simCoefficient}
+                    value={simSubject}
                     onChange={(e) => {
-                      setSimCoefficient(Number(e.target.value));
+                      setSimSubject(e.target.value);
                       setHasSimulated(true);
                     }}
                     className="w-full px-3 py-2 text-xs font-bold bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   >
-                    <option value={1}>Coef. 1</option>
-                    <option value={2}>Coef. 2</option>
-                    <option value={3}>Coef. 3</option>
-                    <option value={4}>Coef. 4</option>
+                    {subjectReports.map(rep => (
+                      <option key={rep.subjectCode} value={rep.subjectCode}>
+                        {rep.subject} (Coef {rep.coefficient})
+                      </option>
+                    ))}
                   </select>
                 </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Note espérée (/20)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="20"
+                      step="0.5"
+                      value={simGradeValue}
+                      onChange={(e) => {
+                        setSimGradeValue(Number(e.target.value));
+                        setHasSimulated(true);
+                      }}
+                      className="w-full px-3 py-2 text-xs font-black text-indigo-600 bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Coefficient</label>
+                    <select
+                      value={simCoefficient}
+                      onChange={(e) => {
+                        setSimCoefficient(Number(e.target.value));
+                        setHasSimulated(true);
+                      }}
+                      className="w-full px-3 py-2 text-xs font-bold bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    >
+                      <option value={1}>Coef. 1</option>
+                      <option value={2}>Coef. 2</option>
+                      <option value={3}>Coef. 3</option>
+                      <option value={4}>Coef. 4</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="py-6 text-center text-xs text-slate-400 font-medium">
+                Le simulateur sera disponible dès la publication des premières évaluations.
+              </div>
+            )}
           </div>
 
           <div className="mt-4 pt-4 border-t border-slate-100">
@@ -258,7 +264,8 @@ export const ResultsView: React.FC = () => {
             ) : (
               <button
                 onClick={() => setHasSimulated(true)}
-                className="w-full py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition-all shadow-subtle"
+                disabled={subjectReports.length === 0}
+                className="w-full py-2 bg-slate-900 hover:bg-indigo-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-subtle"
               >
                 Calculer l'impact
               </button>
@@ -274,6 +281,13 @@ export const ResultsView: React.FC = () => {
           <h3 className="font-extrabold text-base text-slate-900">Matières & Détail des évaluations</h3>
           <span className="text-xs text-slate-400 font-medium">{filteredReports.length} matières</span>
         </div>
+
+        {filteredReports.length === 0 && (
+          <div className="bg-white p-8 rounded-3xl border border-slate-200/70 text-center space-y-1.5 shadow-subtle">
+            <p className="text-sm font-bold text-slate-700">Aucun résultat scolaire disponible pour le moment</p>
+            <p className="text-xs text-slate-400">Le module Résultats (Skore) sera automatiquement synchronisé lors de la publication des bulletins.</p>
+          </div>
+        )}
 
         {filteredReports.map((report) => {
           const isExpanded = !!expandedSubjects[report.subjectCode];
