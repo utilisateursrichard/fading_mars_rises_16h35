@@ -10,8 +10,15 @@ import {
 } from '../types/school';
 import { schoolService } from '../services/api';
 import { mockNotifications } from '../data/mockData';
+import { isInsideSmartschool } from '../utils/platform';
+import { 
+  getCachedRealEvents, 
+  getCachedRealHomeworks, 
+  getCachedRealStudent, 
+  syncAllSmartschoolData 
+} from '../services/smartschoolApi';
 
-export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses';
+export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'tutor' | 'book';
 
 export interface AppNotification {
   id: string;
@@ -45,7 +52,7 @@ interface SchoolContextType {
   sendMessage: (content: string) => Promise<void>;
   // Résultats
   subjectReports: SubjectReport[];
-  overallStats: { current: number; classAvg: number; previousTerm: number };
+  overallStats: { current: number; classAvg: number; previousTerm: number } | null;
   activePeriod: 'T1' | 'T2' | 'T3';
   setActivePeriod: (p: 'T1' | 'T2' | 'T3') => void;
   // Cours
@@ -63,13 +70,60 @@ interface SchoolContextType {
   setGlobalSearch: (s: string) => void;
   // Action de raccourci pour contacter un prof
   startDirectMessageWithTeacher: (teacherName: string) => void;
+  // Synchronisation dynamique
+  syncWeek: (date: Date) => Promise<void>;
+  // Sidebar rétractable
+  isSidebarCollapsed: boolean;
+  toggleSidebar: () => void;
+  isInsideSmartschoolPlatform: boolean;
+  isDemoMode: boolean;
+  toggleDemoMode: () => void;
+  setDemoMode: (enabled: boolean) => void;
 }
 
 const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
 
 export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [student, setStudent] = useState<Student | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const isInsideSmartschoolPlatform = useMemo(() => isInsideSmartschool(), []);
+
+  const isBookPath = (path: string) => {
+    if (isInsideSmartschoolPlatform) return false;
+    const clean = path.replace(/\/+/g, '/');
+    return clean === '/book' || clean.startsWith('/book/') || clean.startsWith('/book');
+  };
+
+  const getInitialTab = (): TabType => {
+    if (typeof window !== 'undefined' && isBookPath(window.location.pathname)) {
+      return 'book';
+    }
+    return 'dashboard';
+  };
+  const [activeTab, setActiveTabState] = useState<TabType>(getInitialTab);
+
+  const setActiveTab = (tab: TabType) => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined') {
+      const targetPath = tab === 'book' ? '/book' : '/';
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState(null, '', targetPath);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window !== 'undefined') {
+        if (isBookPath(window.location.pathname)) {
+          setActiveTabState('book');
+        } else {
+          setActiveTabState('dashboard');
+        }
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
   const [events, setEvents] = useState<CourseEvent[]>([]);
   const [todayEvents, setTodayEvents] = useState<CourseEvent[]>([]);
   const [selectedEventModal, setSelectedEventModal] = useState<CourseEvent | null>(null);
@@ -81,7 +135,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [activeMessages, setActiveMessages] = useState<Message[]>([]);
 
   const [subjectReports, setSubjectReports] = useState<SubjectReport[]>([]);
-  const [overallStats, setOverallStats] = useState({ current: 16.3, classAvg: 13.2, previousTerm: 15.4 });
+  const [overallStats, setOverallStats] = useState<{ current: number; classAvg: number; previousTerm: number } | null>({ current: 81.5, classAvg: 66.0, previousTerm: 77.0 });
   const [activePeriod, setActivePeriod] = useState<'T1' | 'T2' | 'T3'>('T1');
 
   const [courses, setCourses] = useState<SubjectCourse[]>([]);
@@ -91,9 +145,149 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications);
 
-  // Initialisation des données
+  // État du mode démo (avec persistance locale)
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('betterschool_demo_mode');
+      return stored !== null ? stored === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleDemoMode = () => {
+    setIsDemoMode(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('betterschool_demo_mode', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const setDemoMode = (enabled: boolean) => {
+    setIsDemoMode(enabled);
+    try {
+      localStorage.setItem('betterschool_demo_mode', String(enabled));
+    } catch {}
+  };
+
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
+
+  // Synchronisation dynamique d'une semaine spécifique via la passerelle
+  const syncWeek = async (date: Date) => {
+    if (isInsideSmartschoolPlatform) {
+      const res = await syncAllSmartschoolData(date);
+      if (res.success) {
+        setEvents(res.events);
+        setHomeworks(res.homeworks);
+        const curDay = new Date().getDay();
+        const day = (curDay >= 1 && curDay <= 5) ? curDay : 1;
+        setTodayEvents(res.events.filter(e => e.dayOfWeek === day));
+        if (res.student) {
+          setStudent({
+            id: res.student.id || 'real_student',
+            firstName: res.student.firstName || '',
+            lastName: res.student.lastName || '',
+            email: res.student.email || '',
+            avatar: res.student.avatar || '',
+            studentClass: res.student.studentClass || '',
+            schoolName: res.student.schoolName || '',
+            academicYear: res.student.academicYear || '',
+            ineNumber: res.student.ineNumber || '',
+            unreadNotifications: 0
+          });
+        }
+      }
+    }
+  };
+
+  // Raccourci clavier Ctrl+B pour rétracter/déplier la barre latérale
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        setIsSidebarCollapsed(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Initialisation des données en fonction du mode démo
   useEffect(() => {
     const initData = async () => {
+      if (!isDemoMode) {
+        // En mode Réel : chargement du cache réel
+        const realEvents = getCachedRealEvents();
+        const realHomeworks = getCachedRealHomeworks();
+        const realStudentData = getCachedRealStudent();
+
+        if (realStudentData) {
+          setStudent({
+            id: realStudentData.id || 'real_student',
+            firstName: realStudentData.firstName || '',
+            lastName: realStudentData.lastName || '',
+            email: realStudentData.email || '',
+            avatar: realStudentData.avatar || '',
+            studentClass: realStudentData.studentClass || '',
+            schoolName: realStudentData.schoolName || '',
+            academicYear: realStudentData.academicYear || '',
+            ineNumber: realStudentData.ineNumber || '',
+            unreadNotifications: 0
+          });
+        } else {
+          setStudent(null);
+        }
+
+        setEvents(realEvents);
+        
+        // Cours du jour actif
+        const todayNum = new Date().getDay();
+        const targetDay = (todayNum >= 1 && todayNum <= 5) ? todayNum : 1;
+        setTodayEvents(realEvents.filter(e => e.dayOfWeek === targetDay));
+
+        setHomeworks(realHomeworks);
+
+        // Modules non encore branchés restent vierges en mode réel
+        setConversations([]);
+        setActiveMessages([]);
+        setSubjectReports([]);
+        setCourses([]);
+        setNotifications([]);
+        setOverallStats(null); // Mode Réel : aucune note fictive
+
+        // Si BetterSchool tourne au sein de Smartschool, synchroniser en direct
+        if (isInsideSmartschoolPlatform) {
+          syncAllSmartschoolData().then(res => {
+            if (res.success) {
+              setEvents(res.events);
+              setHomeworks(res.homeworks);
+              const curDay = new Date().getDay();
+              const day = (curDay >= 1 && curDay <= 5) ? curDay : 1;
+              setTodayEvents(res.events.filter(e => e.dayOfWeek === day));
+              if (res.student) {
+                setStudent({
+                  id: res.student.id || 'real_student',
+                  firstName: res.student.firstName || '',
+                  lastName: res.student.lastName || '',
+                  email: res.student.email || '',
+                  avatar: res.student.avatar || '',
+                  studentClass: res.student.studentClass || '',
+                  schoolName: res.student.schoolName || '',
+                  academicYear: res.student.academicYear || '',
+                  ineNumber: res.student.ineNumber || '',
+                  unreadNotifications: 0
+                });
+              }
+            }
+          });
+        }
+        return;
+      }
+
+      // En mode Démo : chargement de la maquette avec fausses données
       const [stu, evts, tEvents, hws, convs, reports, stats, crss] = await Promise.all([
         schoolService.getStudent(),
         schoolService.getAgendaEvents(),
@@ -113,6 +307,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setSubjectReports(reports);
       setOverallStats(stats);
       setCourses(crss);
+      setNotifications(mockNotifications);
 
       if (convs.length > 0) {
         const msgs = await schoolService.getMessages(convs[0].id);
@@ -121,7 +316,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     initData();
-  }, []);
+  }, [isDemoMode]);
 
   // Chargement des messages quand la conversation active change
   useEffect(() => {
@@ -157,9 +352,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Simulation d'une réponse de professeur ou camarade après 1.5 seconde
     setTimeout(() => {
       const conv = conversations.find(c => c.id === activeConversationId);
-      const autoReplyText = conv?.category === 'teachers'
-        ? `Bien reçu Alexandre, nous en rediscuterons lors de la prochaine séance.`
-        : `Parfait Alexandre ! Je note ça.`;
+      const autoReplyText = `message placeholder ${Math.floor(Math.random() * 900 + 100)}`;
 
       const replyMsg: Message = {
         id: `reply-${Date.now()}`,
@@ -239,7 +432,14 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         pendingHomeworksTotal,
         globalSearch,
         setGlobalSearch,
-        startDirectMessageWithTeacher
+        startDirectMessageWithTeacher,
+        syncWeek,
+        isSidebarCollapsed,
+        toggleSidebar,
+        isInsideSmartschoolPlatform,
+        isDemoMode,
+        toggleDemoMode,
+        setDemoMode
       }}
     >
       {children}

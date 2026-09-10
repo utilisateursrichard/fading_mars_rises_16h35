@@ -56,33 +56,36 @@ export const NewHomeworkModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-150">
       <div 
-        className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-modal border border-slate-200/80"
+        className="bg-white rounded-[32px] max-w-md w-full overflow-hidden shadow-2xl border border-indigo-100/80 animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
-              <Plus className="w-4 h-4" />
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-black">
+              <Plus className="w-5 h-5" />
             </div>
-            <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">Ajouter un devoir</h3>
+            <div>
+              <h3 className="font-black text-slate-950 text-base">Ajouter un devoir</h3>
+              <p className="text-[11px] text-slate-400 font-bold">Synchronisation automatique de l'agenda</p>
+            </div>
           </div>
           <button
             onClick={() => setIsNewHomeworkModalOpen(false)}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors m3-press"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Matière</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Matière</label>
             <select
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-bold bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full px-3.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all text-slate-800"
             >
               {subjectOptions.map(sub => (
                 <option key={sub.code} value={sub.name}>{sub.name}</option>
@@ -91,45 +94,45 @@ export const NewHomeworkModal: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Titre / Intitulé *</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Titre / Intitulé *</label>
             <input
               type="text"
               required
               placeholder="Ex : Ex 45 p. 182, Réviser les suites..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-bold bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full px-3.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Consignes ou détails</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Consignes ou détails</label>
             <textarea
               rows={2}
-              placeholder="Détails du travail à faire..."
+              placeholder="Détails du travail à préparer..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-medium bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full px-3.5 py-2 text-xs font-normal bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Pour le</label>
+              <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Pour le</label>
               <input
                 type="date"
                 required
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-bold bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full px-3.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all text-slate-800"
               />
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Temps estimé</label>
+              <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Temps estimé</label>
               <select
                 value={estimatedMinutes}
                 onChange={(e) => setEstimatedMinutes(Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs font-bold bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full px-3.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all text-slate-800"
               >
                 <option value={15}>15 minutes</option>
                 <option value={30}>30 minutes</option>
@@ -141,8 +144,9 @@ export const NewHomeworkModal: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1.5">Niveau d'urgence</label>
-            <div className="grid grid-cols-3 gap-2">
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Niveau d'urgence</label>
+            {/* M3E Segmented Priority Pills */}
+            <div className="flex gap-1.5 p-1.5 bg-slate-100/90 rounded-full border border-slate-200/50">
               {[
                 { id: 'low', label: 'Normal' },
                 { id: 'medium', label: 'Moyen' },
@@ -152,10 +156,10 @@ export const NewHomeworkModal: React.FC = () => {
                   type="button"
                   key={p.id}
                   onClick={() => setPriority(p.id as any)}
-                  className={`py-1.5 text-xs font-bold rounded-xl border transition-all ${
+                  className={`flex-1 py-2 text-xs font-black rounded-full transition-all text-center m3-press ${
                     priority === p.id 
-                      ? 'bg-slate-900 border-slate-900 text-white shadow-subtle'
-                      : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25' 
+                      : 'text-slate-600 hover:text-slate-950 hover:bg-white/70'
                   }`}
                 >
                   {p.label}
@@ -164,19 +168,19 @@ export const NewHomeworkModal: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
             <button
               type="button"
               onClick={() => setIsNewHomeworkModalOpen(false)}
-              className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors"
+              className="px-5 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors m3-press"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors shadow-subtle"
+              className="px-6 py-2.5 text-xs font-black text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-full transition-all shadow-md shadow-indigo-500/25 m3-press"
             >
-              Enregistrer
+              Enregistrer le devoir
             </button>
           </div>
         </form>

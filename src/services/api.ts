@@ -60,6 +60,17 @@ const setStoredData = <T>(key: string, data: T): void => {
 };
 
 class SchoolService {
+  // Réinitialisation des caches factices vers les données mockData de référence
+  resetMockData(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.HOMEWORKS);
+      localStorage.removeItem(STORAGE_KEYS.MESSAGES);
+      localStorage.removeItem(STORAGE_KEYS.CONVERSATIONS);
+    } catch (e) {
+      console.warn('localStorage non accessible', e);
+    }
+  }
+
   // 1. Informations de l'élève
   async getStudent(): Promise<Student> {
     // Simulation réseau (latence imperceptible pour un ressenti fluide)

@@ -19,6 +19,29 @@ export interface Student {
 export type EventType = 'cours' | 'ds' | 'tp' | 'td' | 'oral';
 export type EventStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
 
+export interface SubjectDefinition {
+  code: string;
+  name: string;
+  teacher: string;
+  defaultRoom: string;
+  color: string;
+  coefficient: number;
+  description?: string;
+}
+
+export interface TimetableSlotConfig {
+  id: string;
+  dayOfWeek: DayOfWeek;
+  startTime: string; // HH:mm
+  endTime: string;   // HH:mm
+  subjectCode: string;
+  type?: EventType;
+  room?: string;     // Override room if different from defaultRoom
+  teacher?: string;  // Override teacher if different from default teacher
+  description?: string;
+  materials?: CourseMaterial[];
+}
+
 export interface CourseMaterial {
   id: string;
   title: string;

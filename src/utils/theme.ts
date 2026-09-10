@@ -10,8 +10,18 @@ export interface SubjectTheme {
 }
 
 export const SUBJECT_THEMES: { [key: string]: SubjectTheme } = {
+  'SCI': {
+    code: 'SCI',
+    accent: '#4f46e5',
+    bgLight: '#eef2ff',
+    text: '#3730a3',
+    border: '#c7d2fe',
+    badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
+    pillClass: 'bg-indigo-50/70 text-indigo-700 hover:bg-indigo-100',
+    dotClass: 'bg-indigo-600',
+  },
   'NSI': {
-    code: 'NSI',
+    code: 'SCI',
     accent: '#4f46e5',
     bgLight: '#eef2ff',
     text: '#3730a3',
@@ -93,14 +103,14 @@ export const SUBJECT_THEMES: { [key: string]: SubjectTheme } = {
 };
 
 export const getSubjectTheme = (codeOrName: string): SubjectTheme => {
-  const upper = codeOrName.toUpperCase();
+  const upper = (codeOrName || '').toUpperCase();
   for (const key in SUBJECT_THEMES) {
     if (upper.includes(key) || key.includes(upper)) {
       return SUBJECT_THEMES[key];
     }
   }
   if (upper.includes('MATH')) return SUBJECT_THEMES['MATH'];
-  if (upper.includes('INFO') || upper.includes('NUM')) return SUBJECT_THEMES['NSI'];
+  if (upper.includes('SCI') || upper.includes('INFO') || upper.includes('NUM')) return SUBJECT_THEMES['SCI'] || SUBJECT_THEMES['NSI'];
   if (upper.includes('CHIM') || upper.includes('PHYS')) return SUBJECT_THEMES['PC'];
   if (upper.includes('PHIL')) return SUBJECT_THEMES['PHILO'];
   if (upper.includes('HIST') || upper.includes('GEO')) return SUBJECT_THEMES['HIST-GEO'];

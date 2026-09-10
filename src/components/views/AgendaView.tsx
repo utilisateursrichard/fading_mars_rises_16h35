@@ -6,7 +6,8 @@ import {
   User, 
   Plus, 
   CheckCircle2, 
-  ChevronRight
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
 import { CourseEvent, DayOfWeek } from '../../types/school';
@@ -18,21 +19,99 @@ export const AgendaView: React.FC = () => {
     setSelectedEventModal, 
     setIsNewHomeworkModalOpen, 
     startDirectMessageWithTeacher,
-    globalSearch
+    globalSearch,
+    syncWeek
   } = useSchool();
 
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
-  const [selectedDay, setSelectedDay] = useState<DayOfWeek>(2);
+  const [weekOffset, setWeekOffset] = useState<number>(0);
+
+  // Jour actuel réel (1=Lundi ... 5=Vendredi)
+  const currentRealDayNum = useMemo(() => {
+    const jsDay = new Date().getDay();
+    return (jsDay >= 1 && jsDay <= 5) ? (jsDay as DayOfWeek) : 1;
+  }, []);
+
+  const [selectedDay, setSelectedDay] = useState<DayOfWeek>(currentRealDayNum);
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
-  const daysConfig: { dayOfWeek: DayOfWeek; name: string; short: string; dateNum: string }[] = [
-    { dayOfWeek: 1, name: 'Lundi', short: 'LUN', dateNum: '07' },
-    { dayOfWeek: 2, name: 'Mardi', short: 'MAR', dateNum: '08' },
-    { dayOfWeek: 3, name: 'Mercredi', short: 'MER', dateNum: '09' },
-    { dayOfWeek: 4, name: 'Jeudi', short: 'JEU', dateNum: '10' },
-    { dayOfWeek: 5, name: 'Vendredi', short: 'VEN', dateNum: '11' },
-  ];
+  // Date cible de la semaine active
+  const targetDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + weekOffset * 7);
+    return d;
+  }, [weekOffset]);
+
+  // Calcul dynamique des dates de la semaine (Lundi -> Vendredi)
+  const weekDates = useMemo(() => {
+    const d = new Date(targetDate);
+    const day = d.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(d);
+    monday.setDate(d.getDate() + diffToMonday);
+
+    return [1, 2, 3, 4, 5].map((dow, idx) => {
+      const cur = new Date(monday);
+      cur.setDate(monday.getDate() + idx);
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      return {
+        dayOfWeek: dow as DayOfWeek,
+        dateNum: pad(cur.getDate()),
+        fullDate: `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`
+      };
+    });
+  }, [targetDate]);
+
+  const daysConfig = useMemo(() => {
+    const dayNames = [
+      { name: 'Lundi', short: 'LUN' },
+      { name: 'Mardi', short: 'MAR' },
+      { name: 'Mercredi', short: 'MER' },
+      { name: 'Jeudi', short: 'JEU' },
+      { name: 'Vendredi', short: 'VEN' }
+    ];
+    const isCurrentWeek = weekOffset === 0;
+    return weekDates.map((wd, i) => ({
+      dayOfWeek: wd.dayOfWeek,
+      name: dayNames[i].name,
+      short: dayNames[i].short,
+      dateNum: wd.dateNum,
+      fullDate: wd.fullDate,
+      isToday: isCurrentWeek && wd.dayOfWeek === currentRealDayNum
+    }));
+  }, [weekDates, weekOffset, currentRealDayNum]);
+
+  // Libellé de la semaine (ex: "21 - 25 sept.")
+  const weekLabel = useMemo(() => {
+    if (weekDates.length < 5) return 'Semaine';
+    const startDay = weekDates[0].dateNum;
+    const endDay = weekDates[4].dateNum;
+    const monthNames = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+    const month = monthNames[new Date(weekDates[0].fullDate).getMonth()];
+    return `${startDay} - ${endDay} ${month}`;
+  }, [weekDates]);
+
+  const handlePrevWeek = () => {
+    const nextOffset = weekOffset - 1;
+    setWeekOffset(nextOffset);
+    const d = new Date();
+    d.setDate(d.getDate() + nextOffset * 7);
+    syncWeek(d);
+  };
+
+  const handleNextWeek = () => {
+    const nextOffset = weekOffset + 1;
+    setWeekOffset(nextOffset);
+    const d = new Date();
+    d.setDate(d.getDate() + nextOffset * 7);
+    syncWeek(d);
+  };
+
+  const handleResetToday = () => {
+    setWeekOffset(0);
+    syncWeek(new Date());
+  };
 
   const uniqueSubjects = useMemo(() => {
     const subs = new Set<string>();
@@ -72,16 +151,45 @@ export const AgendaView: React.FC = () => {
       
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/70 shadow-subtle">
-        <div>
-          <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-3">
+          <div>
             <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Emploi du temps</h2>
-            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-slate-100 text-slate-700">
-              Semaine A
-            </span>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Séances de cours, salles, devoirs et évaluations programmées
+            </p>
           </div>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Séances de cours, salles, devoirs et évaluations programmées
-          </p>
+
+          {/* Navigation Semaine Dynamique */}
+          <div className="flex items-center gap-1.5 ml-0 sm:ml-4 bg-slate-100 p-1 rounded-2xl">
+            <button
+              onClick={handlePrevWeek}
+              className="p-1.5 rounded-xl hover:bg-white text-slate-500 hover:text-slate-900 transition-all shadow-none hover:shadow-subtle"
+              title="Semaine précédente"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <span className="px-2 text-xs font-bold text-slate-700 select-none">
+              {weekLabel}
+            </span>
+
+            <button
+              onClick={handleNextWeek}
+              className="p-1.5 rounded-xl hover:bg-white text-slate-500 hover:text-slate-900 transition-all shadow-none hover:shadow-subtle"
+              title="Semaine suivante"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {weekOffset !== 0 && (
+            <button
+              onClick={handleResetToday}
+              className="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-all"
+            >
+              Aujourd'hui
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -179,7 +287,7 @@ export const AgendaView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {daysConfig.map((day) => {
             const dayEvents = eventsByDay[day.dayOfWeek] || [];
-            const isToday = day.dayOfWeek === 2;
+            const isToday = day.isToday;
 
             return (
               <div 
@@ -194,7 +302,7 @@ export const AgendaView: React.FC = () => {
                 <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     <span className={`font-extrabold text-sm ${isToday ? 'text-indigo-600' : 'text-slate-800'}`}>
-                      {day.name}
+                      {day.name} <span className="text-xs opacity-70 font-semibold">{day.dateNum}</span>
                     </span>
                     {isToday && (
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Aujourd'hui" />

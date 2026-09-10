@@ -20,7 +20,7 @@ export const ResultsView: React.FC = () => {
   } = useSchool();
 
   const [expandedSubjects, setExpandedSubjects] = useState<{ [key: string]: boolean }>({
-    'NSI': true,
+    'SCI': true,
     'MATH': true
   });
 
@@ -65,14 +65,16 @@ export const ResultsView: React.FC = () => {
       totalCoeffs += rep.coefficient;
     });
 
-    const newOverall = totalCoeffs > 0 ? Number((totalWeighted / totalCoeffs).toFixed(2)) : overallStats.current;
-    const diff = Number((newOverall - overallStats.current).toFixed(2));
+    const currentOverall = overallStats?.current ?? 0;
+    const newOverall20 = totalCoeffs > 0 ? (totalWeighted / totalCoeffs) : (currentOverall / 5);
+    const newOverall = Number((newOverall20 * 5).toFixed(1));
+    const diff = Number((newOverall - currentOverall).toFixed(1));
 
     return {
       newOverall,
       diff
     };
-  }, [hasSimulated, simSubject, simGradeValue, simCoefficient, filteredReports, overallStats.current]);
+  }, [hasSimulated, simSubject, simGradeValue, simCoefficient, filteredReports, overallStats?.current]);
 
   return (
     <div className="space-y-6 pb-12 max-w-6xl mx-auto">
@@ -122,31 +124,48 @@ export const ResultsView: React.FC = () => {
               </span>
             </div>
 
-            <div className="mt-4 flex flex-col sm:flex-row sm:items-baseline gap-4">
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900">{overallStats.current}</span>
-                <span className="text-slate-400 text-base font-semibold">/ 20</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 w-fit">
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>+0.9 pt par rapport au trimestre précédent</span>
-              </div>
-            </div>
-          </div>
+            {overallStats ? (
+              <>
+                <div className="mt-4 flex flex-col sm:flex-row sm:items-baseline gap-4">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900">{overallStats.current}</span>
+                    <span className="text-slate-400 text-base font-semibold">/ 100</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 w-fit">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span>
+                      {overallStats.current >= overallStats.previousTerm ? '+' : ''}
+                      {Number((overallStats.current - overallStats.previousTerm).toFixed(1))} pts par rapport au trimestre précédent
+                    </span>
+                  </div>
+                </div>
 
-          <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-3 gap-4">
-            <div className="p-3 bg-slate-50/70 rounded-2xl">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Classe</p>
-              <p className="text-base font-extrabold text-slate-800 mt-0.5">{overallStats.classAvg} <span className="text-xs font-normal text-slate-400">/ 20</span></p>
-            </div>
-            <div className="p-3 bg-slate-50/70 rounded-2xl">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Plus basse</p>
-              <p className="text-base font-extrabold text-slate-800 mt-0.5">7.4 <span className="text-xs font-normal text-slate-400">/ 20</span></p>
-            </div>
-            <div className="p-3 bg-slate-50/70 rounded-2xl">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Plus haute</p>
-              <p className="text-base font-extrabold text-slate-800 mt-0.5">19.4 <span className="text-xs font-normal text-slate-400">/ 20</span></p>
-            </div>
+                <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-3 gap-4">
+                  <div className="p-3 bg-slate-50/70 rounded-2xl">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Classe</p>
+                    <p className="text-base font-extrabold text-slate-800 mt-0.5">{overallStats.classAvg} <span className="text-xs font-normal text-slate-400">/ 100</span></p>
+                  </div>
+                  <div className="p-3 bg-slate-50/70 rounded-2xl">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Plus basse</p>
+                    <p className="text-base font-extrabold text-slate-800 mt-0.5">37.0 <span className="text-xs font-normal text-slate-400">/ 100</span></p>
+                  </div>
+                  <div className="p-3 bg-slate-50/70 rounded-2xl">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Plus haute</p>
+                    <p className="text-base font-extrabold text-slate-800 mt-0.5">97.0 <span className="text-xs font-normal text-slate-400">/ 100</span></p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="mt-4 space-y-3">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl sm:text-5xl font-black tracking-tight text-slate-300">--</span>
+                  <span className="text-slate-400 text-base font-semibold">/ 100</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 w-fit">
+                  <span>En attente de connexion avec le module Skore</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -225,13 +244,13 @@ export const ResultsView: React.FC = () => {
                   <p className="text-[11px] font-bold text-indigo-900">Nouvelle moyenne :</p>
                   <div className="flex items-baseline gap-1 mt-0.5">
                     <span className="text-xl font-black text-indigo-700">{simulatedStats.newOverall}</span>
-                    <span className="text-xs text-indigo-400">/ 20</span>
+                    <span className="text-xs text-indigo-400">/ 100</span>
                   </div>
                 </div>
                 <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold ${
                   simulatedStats.diff >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                 }`}>
-                  {simulatedStats.diff >= 0 ? `+${simulatedStats.diff}` : `${simulatedStats.diff}`} pt
+                  {simulatedStats.diff >= 0 ? `+${simulatedStats.diff}` : `${simulatedStats.diff}`} pts
                 </div>
               </div>
             ) : (

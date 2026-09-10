@@ -33,17 +33,19 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
-      {/* Desktop Navigation Sidebar */}
+    <div className="flex min-h-screen m3e-canvas text-slate-900 selection:bg-indigo-600 selection:text-white relative">
+      {/* Desktop Navigation Sidebar - Floating Island Dock */}
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
+      <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-8 lg:pl-72">
         {/* Top Header */}
-        <Header onOpenMobileMenu={() => setIsMobileDrawerOpen(true)} />
+        <div className="px-3 sm:px-6 pt-3">
+          <Header onOpenMobileMenu={() => setIsMobileDrawerOpen(true)} />
+        </div>
 
         {/* View Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-in fade-in duration-200">
+        <main className="flex-1 px-3 sm:px-6 py-2 max-w-7xl w-full mx-auto animate-in fade-in duration-200">
           {renderActiveView()}
         </main>
       </div>

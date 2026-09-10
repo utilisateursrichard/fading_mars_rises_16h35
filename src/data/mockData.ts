@@ -121,272 +121,298 @@ export const mockHomeworks: Homework[] = [
   }
 ];
 
-// Emploi du temps de la semaine
-export const mockCourseEvents: CourseEvent[] = [
-  // LUNDI (dayOfWeek: 1)
+// -------------------------------------------------------------
+// CATALOGUE CENTRALISÉ DES MATIÈRES (Modifiable facilement pour de vraies données)
+// -------------------------------------------------------------
+export const SUBJECTS_CATALOG: Record<string, import('../types/school').SubjectDefinition> = {
+  MATH: {
+    code: 'MATH',
+    name: 'Mathématiques',
+    teacher: 'Imena',
+    defaultRoom: 'Salle B204',
+    color: '#0284c7',
+    coefficient: 16,
+    description: 'Analyse, limites, continuité, géométrie dans l’espace et probabilités.'
+  },
+  NSI: {
+    code: 'NSI',
+    name: 'JSP',
+    teacher: 'nootends',
+    defaultRoom: 'Labo Info 3',
+    color: '#6366f1',
+    coefficient: 16,
+    description: 'Algorithmique, structures de données, arbres binaires et SQL.'
+  },
+  PHILO: {
+    code: 'PHILO',
+    name: 'Kialuta',
+    teacher: 'Pape Kialuta',
+    defaultRoom: 'Salle B108',
+    color: '#d97706',
+    coefficient: 8,
+    description: 'Notion de Technique et Nature chez Aristote et Heidegger.'
+  },
+  PC: {
+    code: 'PC',
+    name: "j'ai pu d'inspi :/",
+    teacher: 'Dury',
+    defaultRoom: 'Labo Chimie 2',
+    color: '#059669',
+    coefficient: 6,
+    description: 'Dosages spectrophotométriques, cinétique et transferts énergétiques.'
+  },
+  'HIST-GEO': {
+    code: 'HIST-GEO',
+    name: 'Histoire-Géographie',
+    teacher: 'mere terresa nollet / derriderrr',
+    defaultRoom: 'Salle A102',
+    color: '#f97316',
+    coefficient: 3,
+    description: 'L’impact des crises économiques des années 1970 sur l’Europe.'
+  },
+  ANG: {
+    code: 'ANG',
+    name: 'Anglais LV1',
+    teacher: 'Mr. le gay',
+    defaultRoom: 'Salle C105',
+    color: '#ec4899',
+    coefficient: 3,
+    description: 'Debate: Technology, ethics, and civic engagement.'
+  },
+  EPS: {
+    code: 'EPS',
+    name: 'Éducation Physique & Sportive',
+    teacher: 'M. Bailleux qui baille bcp',
+    defaultRoom: 'Gymnase',
+    color: '#8b5cf6',
+    coefficient: 2,
+    description: 'Cycle de demi-fond et sports collectifs.'
+  },
+  'ENS-SCI': {
+    code: 'ENS-SCI',
+    name: 'Enseignement Scientifique',
+    teacher: 'M. Durand',
+    defaultRoom: 'Salle B201',
+    color: '#10b981',
+    coefficient: 2,
+    description: 'Science, climat, données et évolution du monde contemporain.'
+  }
+};
+
+// -------------------------------------------------------------
+// CRÉNEAUX HEBDOMADAIRES LÉGERS (Zéro duplication, référence le code matière)
+// -------------------------------------------------------------
+export const WEEKLY_TIMETABLE_SLOTS: import('../types/school').TimetableSlotConfig[] = [
+  // LUNDI
   {
     id: 'evt-mon-1',
-    subject: 'Mathématiques',
-    subjectCode: 'MATH',
-    teacher: 'Imena',
-    room: 'Salle B204',
+    dayOfWeek: 1,
     startTime: '08:30',
     endTime: '10:30',
-    dayOfWeek: 1,
-    date: weekDates[1],
+    subjectCode: 'MATH',
     type: 'cours',
-    color: '#0284c7',
     description: 'Chapitre 3 : Continuité et limites des fonctions composées.',
-    status: 'completed',
     materials: [
       { id: 'mat-1', title: 'Cours_Limites_Ch3.pdf', type: 'pdf', size: '1.4 Mo' }
     ]
   },
   {
     id: 'evt-mon-2',
-    subject: 'Histoire-Géographie',
-    subjectCode: 'HIST-GEO',
-    teacher: 'mere terresa nollet / derriderrr',
-    room: 'Salle A102',
+    dayOfWeek: 1,
     startTime: '10:45',
     endTime: '12:45',
-    dayOfWeek: 1,
-    date: weekDates[1],
-    type: 'cours',
-    color: '#f97316',
-    description: 'L’impact des crises économiques des années 1970 sur l’Europe.',
-    status: 'completed',
+    subjectCode: 'HIST-GEO',
+    type: 'cours'
   },
   {
     id: 'evt-mon-3',
-    subject: 'Numérique & Sc. Informatiques',
-    subjectCode: 'NSI',
-    teacher: 'nootends',
-    room: 'Labo Info 3',
+    dayOfWeek: 1,
     startTime: '14:00',
     endTime: '16:00',
-    dayOfWeek: 1,
-    date: weekDates[1],
+    subjectCode: 'NSI',
     type: 'tp',
-    color: '#6366f1',
     description: 'jsp.',
-    status: 'completed',
     materials: [
       { id: 'mat-2', title: 'tp_arbres_binaires.ipynb', type: 'code', size: '250 Ko' }
     ]
   },
   {
     id: 'evt-mon-4',
-    subject: 'Anglais LV1',
-    subjectCode: 'ANG',
-    teacher: 'Mr. le gay',
-    room: 'Salle C105',
+    dayOfWeek: 1,
     startTime: '16:15',
     endTime: '17:15',
-    dayOfWeek: 1,
-    date: weekDates[1],
-    type: 'td',
-    color: '#ec4899',
-    description: 'Debate: Technology and civic engagement.',
-    status: 'completed',
+    subjectCode: 'ANG',
+    type: 'td'
   },
 
-  // MARDI (dayOfWeek: 2)
+  // MARDI
   {
     id: 'evt-tue-1',
-    subject: 'Physique-Chimie',
-    subjectCode: 'PC',
-    teacher: 'Dury',
-    room: 'Labo Chimie 2',
+    dayOfWeek: 2,
     startTime: '08:30',
     endTime: '10:30',
-    dayOfWeek: 2,
-    date: weekDates[2],
+    subjectCode: 'PC',
     type: 'tp',
-    color: '#059669',
     description: 'TP n°2 : Dosages spectrophotométriques.',
-    status: 'in_progress',
-    homeworkDue: [mockHomeworks[1]],
     materials: [
       { id: 'mat-3', title: 'Fiche_Securite_Chimie.pdf', type: 'pdf', size: '800 Ko' }
     ]
   },
   {
     id: 'evt-tue-2',
-    subject: 'Kialuta',
-    subjectCode: 'PHILO',
-    teacher: 'Pape Kialuta',
-    room: 'Salle B108',
+    dayOfWeek: 2,
     startTime: '10:45',
     endTime: '12:45',
-    dayOfWeek: 2,
-    date: weekDates[2],
-    type: 'cours',
-    color: '#d97706',
-    description: 'Introduction à la notion de Technique et Nature chez Aristote et Heidegger.',
-    status: 'scheduled',
+    subjectCode: 'PHILO',
+    type: 'cours'
   },
   {
     id: 'evt-tue-3',
-    subject: 'Éducation Physique & Sportive',
-    subjectCode: 'EPS',
-    teacher: 'M. Bailleux qui baille bcp',
-    room: 'Gymnase ',
+    dayOfWeek: 2,
     startTime: '14:00',
     endTime: '16:00',
-    dayOfWeek: 2,
-    date: weekDates[2],
-    type: 'cours',
-    color: '#8b5cf6',
-    description: 'XXX',
-    status: 'scheduled',
+    subjectCode: 'EPS',
+    type: 'cours'
   },
 
-  // MERCREDI (dayOfWeek: 3)
+  // MERCREDI
   {
     id: 'evt-wed-1',
-    subject: 'XXX',
-    subjectCode: 'NSI',
-    teacher: 'XXX',
-    room: 'Labo Info 3',
+    dayOfWeek: 3,
     startTime: '08:30',
     endTime: '10:30',
-    dayOfWeek: 3,
-    date: weekDates[3],
-    type: 'cours',
-    color: '#6366f1',
-    description: 'XXX.',
-    status: 'scheduled',
-    homeworkDue: [mockHomeworks[0]],
+    subjectCode: 'NSI',
+    type: 'cours'
   },
   {
     id: 'evt-wed-2',
-    subject: 'Mathématiques',
-    subjectCode: 'MATH',
-    teacher: 'imena',
-    room: 'Salle B204',
+    dayOfWeek: 3,
     startTime: '10:45',
     endTime: '12:45',
-    dayOfWeek: 3,
-    date: weekDates[3],
-    type: 'ds',
-    color: '#0284c7',
-    description: 'XXX',
-    status: 'scheduled',
+    subjectCode: 'MATH',
+    type: 'ds'
   },
 
-  // JEUDI (dayOfWeek: 4)
+  // JEUDI
   {
     id: 'evt-thu-1',
-    subject: 'Enseignement Scientifique',
-    subjectCode: 'ENS-SCI',
-    teacher: 'XXX',
-    room: 'XXX',
+    dayOfWeek: 4,
     startTime: '08:30',
     endTime: '10:30',
-    dayOfWeek: 4,
-    date: weekDates[4],
-    type: 'cours',
-    color: '#10b981',
-    description: 'XXX',
-    status: 'scheduled',
+    subjectCode: 'ENS-SCI',
+    type: 'cours'
   },
   {
     id: 'evt-thu-2',
-    subject: 'Philosophie',
-    subjectCode: 'PHILO',
-    teacher: 'XXX',
-    room: 'XXX',
+    dayOfWeek: 4,
     startTime: '10:45',
     endTime: '11:45',
-    dayOfWeek: 4,
-    date: weekDates[4],
-    type: 'td',
-    color: '#d97706',
-    description: 'XXX',
-    status: 'scheduled',
-    homeworkDue: [mockHomeworks[2]],
+    subjectCode: 'PHILO',
+    type: 'td'
   },
   {
     id: 'evt-thu-3',
-    subject: 'Numérique & Sc. Informatiques',
-    subjectCode: 'NSI',
-    teacher: 'XXX',
-    room: 'XXX',
+    dayOfWeek: 4,
     startTime: '13:30',
     endTime: '15:30',
-    dayOfWeek: 4,
-    date: weekDates[4],
-    type: 'cours',
-    color: '#6366f1',
-    description: 'XXX',
-    status: 'scheduled',
+    subjectCode: 'NSI',
+    type: 'cours'
   },
   {
     id: 'evt-thu-4',
-    subject: 'Histoire-Géographie',
-    subjectCode: 'HIST-GEO',
-    teacher: 'XXX',
-    room: 'XXX',
+    dayOfWeek: 4,
     startTime: '15:45',
     endTime: '17:45',
-    dayOfWeek: 4,
-    date: weekDates[4],
-    type: 'cours',
-    color: '#f97316',
-    description: 'XXX',
-    status: 'scheduled',
+    subjectCode: 'HIST-GEO',
+    type: 'cours'
   },
 
-  // VENDREDI (dayOfWeek: 5)
+  // VENDREDI
   {
     id: 'evt-fri-1',
-    subject: 'Mathématiques',
-    subjectCode: 'MATH',
-    teacher: 'XXX',
-    room: 'XXX',
+    dayOfWeek: 5,
     startTime: '08:30',
     endTime: '10:30',
-    dayOfWeek: 5,
-    date: weekDates[5],
-    type: 'cours',
-    color: '#0284c7',
-    description: 'XXX',
-    status: 'scheduled',
+    subjectCode: 'MATH',
+    type: 'cours'
   },
   {
     id: 'evt-fri-2',
-    subject: 'Anglais LV1',
-    subjectCode: 'ANG',
-    teacher: 'XXX',
-    room: 'XXX',
+    dayOfWeek: 5,
     startTime: '10:45',
     endTime: '11:45',
-    dayOfWeek: 5,
-    date: weekDates[5],
-    type: 'oral',
-    color: '#ec4899',
-    description: 'XXX',
-    status: 'scheduled',
-    homeworkDue: [mockHomeworks[4]],
+    subjectCode: 'ANG',
+    type: 'oral'
   },
   {
     id: 'evt-fri-3',
-    subject: 'Physique-Chimie',
-    subjectCode: 'PC',
-    teacher: 'XXX',
-    room: 'XXX',
+    dayOfWeek: 5,
     startTime: '13:30',
     endTime: '15:30',
-    dayOfWeek: 5,
-    date: weekDates[5],
-    type: 'cours',
-    color: '#059669',
-    description: 'XXX',
-    status: 'scheduled',
-    homeworkDue: [mockHomeworks[3]],
+    subjectCode: 'PC',
+    type: 'cours'
   }
 ];
+
+// -------------------------------------------------------------
+// COMPILATEUR UNIFIÉ : Transforme les créneaux en CourseEvent[] complets
+// -------------------------------------------------------------
+export const compileCourseEvents = (
+  slots: import('../types/school').TimetableSlotConfig[],
+  catalog: Record<string, import('../types/school').SubjectDefinition>,
+  dates: { [key: number]: string },
+  hws: Homework[]
+): CourseEvent[] => {
+  const currentDay = new Date().getDay(); // 0: Dimanche, 1: Lundi ...
+  
+  return slots.map(slot => {
+    const subject = catalog[slot.subjectCode] || {
+      code: slot.subjectCode,
+      name: slot.subjectCode,
+      teacher: slot.teacher || 'Enseignant titulaire',
+      defaultRoom: 'Salle de cours',
+      color: '#6366f1',
+      coefficient: 1,
+      description: 'Séance de cours.'
+    };
+
+    const date = dates[slot.dayOfWeek] || '2026-09-08';
+    const homeworkDue = hws.filter(h => h.subjectCode === slot.subjectCode && h.dueDate === date);
+
+    let status: CourseEvent['status'] = 'scheduled';
+    if (slot.dayOfWeek < currentDay) {
+      status = 'completed';
+    } else if (slot.dayOfWeek === currentDay) {
+      status = 'in_progress';
+    }
+
+    return {
+      id: slot.id,
+      subject: subject.name,
+      subjectCode: slot.subjectCode,
+      teacher: slot.teacher || subject.teacher,
+      room: slot.room || subject.defaultRoom,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      dayOfWeek: slot.dayOfWeek,
+      date,
+      type: slot.type || 'cours',
+      color: subject.color,
+      description: slot.description || subject.description,
+      status,
+      homeworkDue: homeworkDue.length > 0 ? homeworkDue : undefined,
+      materials: slot.materials
+    };
+  });
+};
+
+// Emploi du temps de la semaine généré dynamiquement
+export const mockCourseEvents: CourseEvent[] = compileCourseEvents(
+  WEEKLY_TIMETABLE_SLOTS,
+  SUBJECTS_CATALOG,
+  weekDates,
+  mockHomeworks
+);
 
 // Notes & Résultats scolaires
 export const mockSubjectReports: SubjectReport[] = [
@@ -394,7 +420,7 @@ export const mockSubjectReports: SubjectReport[] = [
     subject: 'Numérique & Sc. Informatiques',
     subjectCode: 'NSI',
     color: '#6366f1',
-    teacher: 'M. David Chen',
+    teacher: 'nootends',
     coefficient: 16,
     studentAverage: 17.6,
     classAverage: 14.1,
@@ -456,7 +482,7 @@ export const mockSubjectReports: SubjectReport[] = [
     subject: 'Mathématiques',
     subjectCode: 'MATH',
     color: '#0284c7',
-    teacher: 'Mme Sophie Laurent',
+    teacher: 'Imena',
     coefficient: 16,
     studentAverage: 16.4,
     classAverage: 12.8,
@@ -499,10 +525,10 @@ export const mockSubjectReports: SubjectReport[] = [
     ]
   },
   {
-    subject: 'Physique-Chimie',
+    subject: "j'ai pu d'inspi :/",
     subjectCode: 'PC',
     color: '#059669',
-    teacher: 'M. Stéphane Garnier',
+    teacher: 'Dury',
     coefficient: 6,
     studentAverage: 15.2,
     classAverage: 13.0,
@@ -544,10 +570,10 @@ export const mockSubjectReports: SubjectReport[] = [
     ]
   },
   {
-    subject: 'Philosophie',
+    subject: 'Kialuta',
     subjectCode: 'PHILO',
     color: '#d97706',
-    teacher: 'Mme Hélène Dubois',
+    teacher: 'Pape Kialuta',
     coefficient: 8,
     studentAverage: 14.8,
     classAverage: 11.7,
@@ -592,7 +618,7 @@ export const mockSubjectReports: SubjectReport[] = [
     subject: 'Histoire-Géographie',
     subjectCode: 'HIST-GEO',
     color: '#f97316',
-    teacher: 'M. Thomas Mercier',
+    teacher: 'mere terresa nollet / derriderrr',
     coefficient: 6,
     studentAverage: 15.7,
     classAverage: 13.4,
@@ -622,7 +648,7 @@ export const mockSubjectReports: SubjectReport[] = [
     subject: 'Anglais LV1',
     subjectCode: 'ANG',
     color: '#ec4899',
-    teacher: 'Mme Claire Watson',
+    teacher: 'Mr. le gay',
     coefficient: 5,
     studentAverage: 16.8,
     classAverage: 13.9,
@@ -668,7 +694,7 @@ export const mockSubjectReports: SubjectReport[] = [
 export const mockConversations: Conversation[] = [
   {
     id: 'conv-1',
-    name: 'Mme Sophie Laurent',
+    name: 'Imena',
     role: 'Professeur Principal & Mathématiques',
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80',
     category: 'teachers',
@@ -680,8 +706,8 @@ export const mockConversations: Conversation[] = [
   },
   {
     id: 'conv-2',
-    name: 'M. David Chen',
-    role: 'Enseignant NSI',
+    name: 'nootends',
+    role: 'Enseignant NSI & Numérique',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
     category: 'teachers',
     lastMessage: 'Superbe travail sur ton implémentation en Python Richard !',
@@ -692,7 +718,7 @@ export const mockConversations: Conversation[] = [
   },
   {
     id: 'conv-3',
-    name: 'Vie Scolaire — Lycée Victor Hugo',
+    name: 'Vie Scolaire — College arabe XXIII',
     role: 'Administration & Surveillance',
     avatar: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=120&auto=format&fit=crop&q=80',
     category: 'admin',
@@ -714,8 +740,8 @@ export const mockConversations: Conversation[] = [
   },
   {
     id: 'conv-5',
-    name: 'Mme Hélène Dubois',
-    role: 'Enseignante Philosophie',
+    name: 'Pape Kialuta',
+    role: 'Enseignant Philosophie',
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80',
     category: 'teachers',
     lastMessage: 'Vous pouvez consulter les lectures complémentaires déposées dans l’espace cours.',
@@ -825,11 +851,11 @@ export const mockMessages: { [key: string]: Message[] } = {
 export const mockCourses: SubjectCourse[] = [
   {
     id: 'course-nsi',
-    subject: 'Numérique et Sciences Informatiques',
+    subject: 'JSP (Numérique & Informatique)',
     subjectCode: 'NSI',
     color: '#6366f1',
-    teacher: 'M. David Chen',
-    teacherEmail: 'david.chen@lycee-victor-hugo.fr',
+    teacher: 'nootends',
+    teacherEmail: 'nootends@college-arabe.fr',
     room: 'Labo Info 3',
     hoursPerWeek: 6,
     progressPercent: 72,
@@ -894,11 +920,11 @@ export const mockCourses: SubjectCourse[] = [
   },
   {
     id: 'course-maths',
-    subject: 'Mathématiques Spécialité',
+    subject: 'Mathématiques',
     subjectCode: 'MATH',
     color: '#0284c7',
-    teacher: 'Mme Sophie Laurent',
-    teacherEmail: 'sophie.laurent@lycee-victor-hugo.fr',
+    teacher: 'Imena',
+    teacherEmail: 'imena@college-arabe.fr',
     room: 'Salle B204',
     hoursPerWeek: 6,
     progressPercent: 68,
@@ -939,11 +965,11 @@ export const mockCourses: SubjectCourse[] = [
   },
   {
     id: 'course-philo',
-    subject: 'Philosophie',
+    subject: 'Kialuta (Philosophie)',
     subjectCode: 'PHILO',
     color: '#d97706',
-    teacher: 'Mme Hélène Dubois',
-    teacherEmail: 'helene.dubois@lycee-victor-hugo.fr',
+    teacher: 'Pape Kialuta',
+    teacherEmail: 'kialuta@college-arabe.fr',
     room: 'Salle B108',
     hoursPerWeek: 4,
     progressPercent: 55,
@@ -983,11 +1009,11 @@ export const mockCourses: SubjectCourse[] = [
   },
   {
     id: 'course-pc',
-    subject: 'Physique-Chimie',
+    subject: "j'ai pu d'inspi :/ (Physique-Chimie)",
     subjectCode: 'PC',
     color: '#059669',
-    teacher: 'M. Stéphane Garnier',
-    teacherEmail: 'stephane.garnier@lycee-victor-hugo.fr',
+    teacher: 'Dury',
+    teacherEmail: 'dury@college-arabe.fr',
     room: 'Labo Chimie 2',
     hoursPerWeek: 4,
     progressPercent: 62,

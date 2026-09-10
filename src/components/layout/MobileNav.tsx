@@ -11,9 +11,13 @@ import {
   Sparkles,
   Info,
   ShieldCheck,
-  LogOut
+  LogOut,
+  Bot,
+  Bookmark,
+  User
 } from 'lucide-react';
 import { useSchool, TabType } from '../../context/SchoolContext';
+import { isFeatureReadyInLive } from '../../utils/featureFlags';
 
 interface MobileNavProps {
   isDrawerOpen: boolean;
@@ -27,16 +31,46 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
     unreadMessagesTotal, 
     pendingHomeworksTotal,
     student,
-    setIsNewHomeworkModalOpen
+    setIsNewHomeworkModalOpen,
+    isInsideSmartschoolPlatform,
+    isDemoMode
   } = useSchool();
 
-  const navItems: { id: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
+  /**
+   * Nom de l'établissement dynamique :
+   * 
+   * 💡 GESTION DU NOM DU LYCÉE :
+   * - En Mode Démo : affiche les données factices (ex: student?.schoolName || 'Mon Lycée').
+   * - En Mode Réel :
+   *   - Si l'établissement n'est pas encore connu : affiche "Lycée : inconnu".
+   *   - Dès que le lycée sera extrait de Smartschool (ex: "Lycée Henri IV") :
+   *     afficher directement {student.schoolName} SANS le préfixe "Lycée : ".
+   */
+  const getDisplaySchoolName = () => {
+    if (isDemoMode) {
+      return student?.schoolName || 'Mon Lycée';
+    }
+    // Mode Réel
+    if (student?.schoolName && student.schoolName.trim() !== '') {
+      return student.schoolName; // Quand c'est connu : directement le nom (sans "Lycée : ")
+    }
+    return 'Lycée : inconnu'; // Quand c'est inconnu
+  };
+
+  const allNavItems: { id: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
     { id: 'dashboard', label: 'Accueil', icon: LayoutDashboard },
     { id: 'agenda', label: 'Agenda', icon: CalendarDays, badge: pendingHomeworksTotal > 0 ? pendingHomeworksTotal : undefined },
     { id: 'messages', label: 'Messages', icon: MessageSquareText, badge: unreadMessagesTotal > 0 ? unreadMessagesTotal : undefined },
     { id: 'results', label: 'Notes', icon: Award },
     { id: 'courses', label: 'Cours', icon: BookOpen },
+    { id: 'tutor', label: 'Tuteur IA', icon: Bot },
   ];
+
+  // En Mode Réel : les modules non faits (ex: Tuteur IA) sont invisibles dans le menu
+  const navItems = allNavItems.filter(item => {
+    if (isDemoMode) return true;
+    return isFeatureReadyInLive(item.id) || item.id === 'dashboard';
+  });
 
   const handleSelectTab = (tab: TabType) => {
     setActiveTab(tab);
@@ -64,8 +98,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
                 </div>
                 <div>
                   <span className="font-bold text-base text-slate-900">Better<span className="text-indigo-600">School</span></span>
-                  <p className="text-[11px] text-slate-400 font-medium">Lycée Victor Hugo</p>
-                  <p className="text-[11px] text-slate-400 font-medium truncate">{student?.schoolName || 'Mon Lycée'}</p>
+                  <p className="text-[11px] text-slate-400 font-medium truncate">{getDisplaySchoolName()}</p>
                 </div>
               </div>
               <button
@@ -79,15 +112,25 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
             {/* Student card in drawer */}
             <div className="p-4 bg-slate-50/90 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <img
-                  src={student?.avatar}
-                  alt="Avatar"
-                  className="w-12 h-12 rounded-full object-cover ring-2 ring-indigo-200"
-                />
+                {student?.avatar ? (
+                  <img
+                    src={student.avatar}
+                    alt="Avatar"
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-indigo-200"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm ring-2 ring-indigo-200">
+                    {student?.firstName ? student.firstName.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
+                  </div>
+                )}
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900">{student?.firstName} {student?.lastName}</h4>
-                  <p className="text-xs text-slate-500">{student?.studentClass}</p>
-                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">INE: {student?.ineNumber}</p>
+                  <h4 className="font-bold text-sm text-slate-900">
+                    {student ? `${student.firstName} ${student.lastName}`.trim() || 'Élève' : 'Élève'}
+                  </h4>
+                  <p className="text-xs text-slate-500">{student?.studentClass || (isDemoMode ? 'Classe' : 'Non connecté')}</p>
+                  {student?.ineNumber ? (
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">ID: {student.ineNumber}</p>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -104,18 +147,18 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
                   <button
                     key={item.id}
                     onClick={() => handleSelectTab(item.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                    className={`m3-press w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all ${
                       isActive 
-                        ? 'bg-indigo-50 text-indigo-700 font-semibold'
-                        : 'text-slate-600 hover:bg-slate-50'
+                        ? 'bg-indigo-50 text-indigo-700 font-black border border-indigo-200/80 shadow-sm'
+                        : 'text-slate-600 hover:bg-slate-100/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600 stroke-[2.5]' : 'text-slate-400'}`} />
                       <span>{item.label}</span>
                     </div>
                     {item.badge !== undefined && (
-                      <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-indigo-600 text-white">
+                      <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-indigo-600 text-white">
                         {item.badge}
                       </span>
                     )}
@@ -123,7 +166,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
                 );
               })}
 
-              <div className="pt-4 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="pt-4 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
                 Actions rapides
               </div>
               <button
@@ -131,18 +174,27 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
                   onCloseDrawer();
                   setIsNewHomeworkModalOpen(true);
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="m3-press w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-100/80 bg-slate-50 border border-slate-200/60"
               >
-                <Plus className="w-4 h-4 text-indigo-600" />
+                <Plus className="w-4 h-4 text-indigo-600 stroke-[2.5]" />
                 <span>Ajouter un devoir</span>
               </button>
               <button
                 onClick={() => handleSelectTab('results')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="m3-press w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-100/80 bg-slate-50 border border-slate-200/60 mt-1.5"
               >
                 <Sparkles className="w-4 h-4 text-amber-500" />
                 <span>Simulateur de moyenne</span>
               </button>
+              {!isInsideSmartschoolPlatform && (
+                <button
+                  onClick={() => handleSelectTab('book')}
+                  className="m3-press w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-100/80 bg-slate-50 border border-slate-200/60 mt-1.5"
+                >
+                  <Bookmark className="w-4 h-4 text-indigo-600" />
+                  <span>Bookmark Smartschool</span>
+                </button>
+              )}
             </div>
 
             {/* Footer */}
