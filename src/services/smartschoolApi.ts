@@ -1,12 +1,12 @@
 /**
  * Service d'intégration Smartschool (Client-side)
  * 
- * Communique avec les endpoints réels découverts (/planner/api/v1/...) via la passerelle postMessage
- * et synchronise dynamiquement les données réelles de l'élève sans rien hardcoder.
+ * Communique avec les endpoints réels découverts (/planner/api/v1/...) via le pont postMessage
+ * et stocke les données réelles de l'élève en cache local.
  */
 
 import { CourseEvent, Homework, Student } from '../types/school';
-import { fetchSmartschool, queryHostDOM, getHostPageInfo } from './smartschoolBridge';
+import { fetchSmartschool } from './smartschoolBridge';
 import { 
   parseSmartschoolCourse, 
   parseSmartschoolHomework, 
@@ -22,101 +22,20 @@ const REAL_STORAGE_KEYS = {
 };
 
 /**
- * Récupère l'identifiant de l'élève actif stocké en cache (ou null si inconnu)
+ * Récupère l'identifiant de l'élève actif (stocké lors de l'initialisation Smartschool)
  */
 export const getActiveUserId = (): string | null => {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(REAL_STORAGE_KEYS.USER_ID) || null;
+  return localStorage.getItem(REAL_STORAGE_KEYS.USER_ID);
 };
 
 /**
  * Enregistre l'identifiant de l'élève actif
  */
 export const setActiveUserId = (userId: string): void => {
-  if (typeof window !== 'undefined' && userId) {
+  if (typeof window !== 'undefined') {
     localStorage.setItem(REAL_STORAGE_KEYS.USER_ID, userId);
   }
-};
-
-/**
- * Découvre dynamiquement l'identifiant de l'élève connecté sur Smartschool
- * sans aucune valeur en dur.
- */
-export const discoverUserId = async (): Promise<string | null> => {
-  const stored = getActiveUserId();
-  if (stored) return stored;
-
-  try {
-    const hostInfo = await getHostPageInfo();
-    if (hostInfo.ok && hostInfo.data) {
-      const fromUrl = hostInfo.data.url?.match(/user\/([0-9]+_[0-9]+_[0-9]+)/);
-      if (fromUrl && fromUrl[1]) {
-        setActiveUserId(fromUrl[1]);
-        return fromUrl[1];
-      }
-      const fromHtml = hostInfo.data.html?.match(/\/planned-elements\/user\/([0-9]+_[0-9]+_[0-9]+)/) ||
-                       hostInfo.data.html?.match(/"userId"\s*:\s*"([0-9]+_[0-9]+_[0-9]+)"/);
-      if (fromHtml && fromHtml[1]) {
-        setActiveUserId(fromHtml[1]);
-        return fromHtml[1];
-      }
-    }
-  } catch {}
-
-  try {
-    const plannerRes = await fetchSmartschool('/planner');
-    if (plannerRes.ok && plannerRes.body) {
-      const match = plannerRes.body.match(/\/planned-elements\/user\/([0-9]+_[0-9]+_[0-9]+)/) ||
-                    plannerRes.body.match(/"userId"\s*:\s*"([0-9]+_[0-9]+_[0-9]+)"/) ||
-                    plannerRes.body.match(/user\/([0-9]+_[0-9]+_[0-9]+)/);
-      if (match && match[1]) {
-        setActiveUserId(match[1]);
-        return match[1];
-      }
-    }
-  } catch {}
-
-  return null;
-};
-
-/**
- * Découvre dynamiquement le profil de l'élève (avatar, nom, prénom) depuis le DOM de Smartschool
- */
-export const discoverStudentProfile = async (): Promise<Partial<Student> | null> => {
-  try {
-    const domRes = await queryHostDOM([
-      { key: 'avatar', selector: 'img[src*="userpicture"], img[src*="Userimage"], .js-btn-avatar img, .topnav__user img', attr: 'src' },
-      { key: 'fullName', selector: '.js-user-name, .topnav__user-name, [data-user-name], .user-name', attr: 'text' }
-    ]);
-
-    if (domRes.ok && domRes.results) {
-      const avatar = domRes.results.avatar || undefined;
-      const fullName = domRes.results.fullName || '';
-      
-      let firstName = '';
-      let lastName = '';
-      if (fullName) {
-        const parts = fullName.trim().split(/\s+/);
-        firstName = parts[0] || '';
-        lastName = parts.slice(1).join(' ') || '';
-      }
-
-      const existing = getCachedRealStudent() || {};
-      const updated: Partial<Student> = {
-        ...existing,
-        ...(avatar ? { avatar } : {}),
-        ...(firstName ? { firstName } : {}),
-        ...(lastName ? { lastName } : {})
-      };
-
-      if (typeof window !== 'undefined' && (avatar || firstName)) {
-        localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(updated));
-      }
-      return updated;
-    }
-  } catch {}
-
-  return getCachedRealStudent();
 };
 
 /**
@@ -131,6 +50,7 @@ const formatISODateTime = (d: Date): string => {
   const mm = pad(d.getMinutes());
   const ss = pad(d.getSeconds());
   
+  // Timezone offset
   const offset = -d.getTimezoneOffset();
   const sign = offset >= 0 ? '+' : '-';
   const offsetHours = pad(Math.floor(Math.abs(offset) / 60));
@@ -184,16 +104,14 @@ export interface SyncResult {
 }
 
 /**
- * Récupère les données d'agenda réelles depuis Smartschool via la passerelle
+ * Récupère les données d'agenda réelles depuis Smartschool via le bridge
  */
-export const fetchRealAgenda = async (userId?: string, targetDate: Date = new Date()): Promise<CourseEvent[]> => {
-  const activeId = userId || await discoverUserId();
-  if (!activeId) {
-    throw new Error('Identifiant élève introuvable pour récupérer l\'agenda.');
-  }
+export const fetchRealAgenda = async (userId?: string | null, targetDate?: Date): Promise<CourseEvent[]> => {
+  const effectiveUserId = userId || getActiveUserId();
+  if (!effectiveUserId) return [];
 
-  const { fromISO, toISO } = getWeekRange(targetDate);
-  const url = `/planner/api/v1/planned-elements/user/${activeId}?from=${encodeURIComponent(fromISO)}&to=${encodeURIComponent(toISO)}&includes=icon,courses,locations,upload-folders`;
+  const { fromISO, toISO } = getWeekRange(targetDate || new Date());
+  const url = `/planner/api/v1/planned-elements/user/${effectiveUserId}?from=${encodeURIComponent(fromISO)}&to=${encodeURIComponent(toISO)}&includes=icon,courses,locations,upload-folders`;
 
   const res = await fetchSmartschool(url);
   if (!res.ok || !res.body) {
@@ -209,7 +127,7 @@ export const fetchRealAgenda = async (userId?: string, targetDate: Date = new Da
     if (evt) parsed.push(evt);
   }
 
-  // Extraction et sauvegarde immédiate des métadonnées réelles établissement & classe
+  // Extraction et sauvegarde immédiate des métadonnées établissement & classe
   const metadata = extractMetadataFromPlanner(raw);
   if (metadata.schoolName || metadata.studentClass) {
     const existingStudent = getCachedRealStudent() || {};
@@ -223,7 +141,7 @@ export const fetchRealAgenda = async (userId?: string, targetDate: Date = new Da
     }
   }
 
-  // Sauvegarder en cache réel
+  // Sauvegarder en cache
   if (typeof window !== 'undefined') {
     localStorage.setItem(REAL_STORAGE_KEYS.EVENTS, JSON.stringify(parsed));
   }
@@ -232,17 +150,15 @@ export const fetchRealAgenda = async (userId?: string, targetDate: Date = new Da
 };
 
 /**
- * Récupère les devoirs réels depuis Smartschool via la passerelle
+ * Récupère les devoirs réels depuis Smartschool via le bridge
  */
-export const fetchRealHomeworks = async (userId?: string, targetDate: Date = new Date()): Promise<Homework[]> => {
-  const activeId = userId || await discoverUserId();
-  if (!activeId) {
-    throw new Error('Identifiant élève introuvable pour récupérer les devoirs.');
-  }
+export const fetchRealHomeworks = async (userId?: string | null, targetDate?: Date): Promise<Homework[]> => {
+  const effectiveUserId = userId || getActiveUserId();
+  if (!effectiveUserId) return [];
 
-  const { fromISO, toISO } = getMonthRange(targetDate);
+  const { fromISO, toISO } = getMonthRange(targetDate || new Date());
   const types = 'planned-to-dos,planned-lesson-cluster-assignments,planned-assignments';
-  const url = `/planner/api/v1/planned-elements/user/${activeId}?from=${encodeURIComponent(fromISO)}&to=${encodeURIComponent(toISO)}&includes=icon,courses,locations,upload-folders&types=${encodeURIComponent(types)}`;
+  const url = `/planner/api/v1/planned-elements/user/${effectiveUserId}?from=${encodeURIComponent(fromISO)}&to=${encodeURIComponent(toISO)}&includes=icon,courses,locations,upload-folders&types=${encodeURIComponent(types)}`;
 
   const res = await fetchSmartschool(url);
   if (!res.ok || !res.body) {
@@ -258,7 +174,7 @@ export const fetchRealHomeworks = async (userId?: string, targetDate: Date = new
     if (hw) parsed.push(hw);
   }
 
-  // Sauvegarder en cache réel
+  // Sauvegarder en cache
   if (typeof window !== 'undefined') {
     localStorage.setItem(REAL_STORAGE_KEYS.HOMEWORKS, JSON.stringify(parsed));
   }
@@ -267,39 +183,33 @@ export const fetchRealHomeworks = async (userId?: string, targetDate: Date = new
 };
 
 /**
- * Synchronise l'ensemble des données réelles de l'élève sans aucun élément hardcodé
+ * Synchronise l'ensemble des données réelles de l'élève
  */
-export const syncAllSmartschoolData = async (targetDate: Date = new Date()): Promise<SyncResult> => {
+export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string | null): Promise<SyncResult> => {
+  const effectiveUserId = userId || getActiveUserId();
+  if (!effectiveUserId) {
+    return {
+      success: false,
+      events: getCachedRealEvents(),
+      homeworks: getCachedRealHomeworks(),
+      student: getCachedRealStudent(),
+      error: 'Identifiant élève non trouvé'
+    };
+  }
+
   try {
-    const userId = await discoverUserId();
-    const studentProfile = await discoverStudentProfile();
-
-    if (!userId) {
-      return {
-        success: false,
-        events: getCachedRealEvents(),
-        homeworks: getCachedRealHomeworks(),
-        student: studentProfile || getCachedRealStudent(),
-        error: 'Impossible de détecter l\'identifiant élève sur Smartschool.'
-      };
-    }
-
     const [events, homeworks] = await Promise.all([
-      fetchRealAgenda(userId, targetDate),
-      fetchRealHomeworks(userId, targetDate)
+      fetchRealAgenda(effectiveUserId, targetDate),
+      fetchRealHomeworks(effectiveUserId, targetDate)
     ]);
 
-    const updatedStudent = getCachedRealStudent();
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(REAL_STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
-    }
+    const partialStudent = getCachedRealStudent();
 
     return {
       success: true,
       events,
       homeworks,
-      student: updatedStudent
+      student: partialStudent
     };
   } catch (err: any) {
     return {

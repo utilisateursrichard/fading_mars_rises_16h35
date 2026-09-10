@@ -35,7 +35,7 @@ https://userpicture20.smartschool.be/User/Userimage/hashimage/hash/{pictureHash}
 * **Hôte CDN :** `userpicture20.smartschool.be` (cluster de stockage d'images Smartschool).
 * **`{pictureHash}` :** Identifiant unique du fichier image :
   - **Avec photo personnalisée :** `{platformId}_{UUIDv4}`  
-    Exemple générique : `4907_a1b2c3d4-e5f6-4a8b-9c1d-1234567890ab`
+    Exemple élève : `4907_a1b2c3d4-e5f6-4a8b-9c1d-1234567890ab`
   - **Sans photo (avatar initiales généré) :** `initials_{Lettres}`  
     Exemples profs : `initials_VD` (Véronique Dury), `initials_VV` (VL Verheylewegen), `initials_DD` (DI Didion).
 * **`/plain/1` :** Format brut (PNG / JPEG sans wrapper HTML).
@@ -45,7 +45,7 @@ https://userpicture20.smartschool.be/User/Userimage/hashimage/hash/{pictureHash}
 
 ### 3.2. Comment obtenir la photo de n'importe quel élève ou professeur ?
 
-Le hash d'image étant un UUID aléatoire, il ne peut pas être deviné. En revanche, **Smartschool le fournit automatiquement dans toutes ses réponses d'API** dès qu'un utilisateur est mentionné :
+Le hash d'image (`705e859f-...`) étant un UUID aléatoire, il ne peut pas être deviné. En revanche, **Smartschool le fournit automatiquement dans toutes ses réponses d'API** dès qu'un utilisateur est mentionné :
 
 1. **Pour l'élève connecté (Toi-même) :**
    - **Méthode instantanée DOM :** Le bandeau supérieur de Smartschool contient une balise `<img src="https://userpicture20.smartschool.be/...">`. Notre bookmarklet peut lire `document.querySelector('img[src*="userpicture"]')?.src` en 1 milliseconde.

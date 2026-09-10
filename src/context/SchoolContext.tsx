@@ -52,7 +52,6 @@ interface SchoolContextType {
   sendMessage: (content: string) => Promise<void>;
   // Résultats
   subjectReports: SubjectReport[];
-  overallStats: { current: number; classAvg: number; previousTerm: number };
   overallStats: { current: number; classAvg: number; previousTerm: number } | null;
   activePeriod: 'T1' | 'T2' | 'T3';
   setActivePeriod: (p: 'T1' | 'T2' | 'T3') => void;
@@ -136,7 +135,6 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [activeMessages, setActiveMessages] = useState<Message[]>([]);
 
   const [subjectReports, setSubjectReports] = useState<SubjectReport[]>([]);
-  const [overallStats, setOverallStats] = useState({ current: 81.5, classAvg: 66.0, previousTerm: 77.0 });
   const [overallStats, setOverallStats] = useState<{ current: number; classAvg: number; previousTerm: number } | null>({ current: 81.5, classAvg: 66.0, previousTerm: 77.0 });
   const [activePeriod, setActivePeriod] = useState<'T1' | 'T2' | 'T3'>('T1');
 
@@ -230,14 +228,6 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (realStudentData) {
           setStudent({
             id: realStudentData.id || 'real_student',
-            firstName: realStudentData.firstName || 'Élève',
-            lastName: realStudentData.lastName || 'Jean XXIII',
-            email: '',
-            avatar: realStudentData.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-            studentClass: realStudentData.studentClass || '4T1',
-            schoolName: realStudentData.schoolName || 'Collège Jean XXIII',
-            academicYear: '2026-2027',
-            ineNumber: realStudentData.ineNumber || '4907_5748_0',
             firstName: realStudentData.firstName || '',
             lastName: realStudentData.lastName || '',
             email: realStudentData.email || '',

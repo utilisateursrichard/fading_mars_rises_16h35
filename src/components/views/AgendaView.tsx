@@ -6,7 +6,6 @@ import {
   User, 
   Plus, 
   CheckCircle2, 
-  ChevronRight
   ChevronRight,
   ChevronLeft
 } from 'lucide-react';
@@ -20,13 +19,11 @@ export const AgendaView: React.FC = () => {
     setSelectedEventModal, 
     setIsNewHomeworkModalOpen, 
     startDirectMessageWithTeacher,
-    globalSearch
     globalSearch,
     syncWeek
   } = useSchool();
 
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
-  const [selectedDay, setSelectedDay] = useState<DayOfWeek>(2);
   const [weekOffset, setWeekOffset] = useState<number>(0);
 
   // Jour actuel réel (1=Lundi ... 5=Vendredi)
@@ -38,14 +35,6 @@ export const AgendaView: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(currentRealDayNum);
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-
-  const daysConfig: { dayOfWeek: DayOfWeek; name: string; short: string; dateNum: string }[] = [
-    { dayOfWeek: 1, name: 'Lundi', short: 'LUN', dateNum: '07' },
-    { dayOfWeek: 2, name: 'Mardi', short: 'MAR', dateNum: '08' },
-    { dayOfWeek: 3, name: 'Mercredi', short: 'MER', dateNum: '09' },
-    { dayOfWeek: 4, name: 'Jeudi', short: 'JEU', dateNum: '10' },
-    { dayOfWeek: 5, name: 'Vendredi', short: 'VEN', dateNum: '11' },
-  ];
   // Date cible de la semaine active
   const targetDate = useMemo(() => {
     const d = new Date();
@@ -161,13 +150,14 @@ export const AgendaView: React.FC = () => {
       
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/70 shadow-subtle">
-        <div>
-          <div className="flex items-center gap-2.5">
         <div className="flex flex-wrap items-center gap-3">
           <div>
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Emploi du temps</h2>
-            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-slate-100 text-slate-700">
-              Semaine A
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Emploi du temps</h2>
+              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-slate-100 text-slate-700">
+                Semaine
+              </span>
+            </div>
             <p className="text-xs text-slate-400 font-medium mt-0.5">
               Séances de cours, salles, devoirs et évaluations programmées
             </p>
@@ -195,9 +185,6 @@ export const AgendaView: React.FC = () => {
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Séances de cours, salles, devoirs et évaluations programmées
-          </p>
 
           {weekOffset !== 0 && (
             <button
@@ -304,7 +291,6 @@ export const AgendaView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {daysConfig.map((day) => {
             const dayEvents = eventsByDay[day.dayOfWeek] || [];
-            const isToday = day.dayOfWeek === 2;
             const isToday = day.isToday;
 
             return (
@@ -320,7 +306,6 @@ export const AgendaView: React.FC = () => {
                 <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     <span className={`font-extrabold text-sm ${isToday ? 'text-indigo-600' : 'text-slate-800'}`}>
-                      {day.name}
                       {day.name} <span className="text-xs opacity-70 font-semibold">{day.dateNum}</span>
                     </span>
                     {isToday && (
