@@ -293,7 +293,7 @@ const installerHtml = `<!DOCTYPE html>
       <span class="badge">Draft Bookmarklet</span>
     </h1>
     <p>
-      Transformez l'interface Smartschool en l'interface <strong>BetterSchool (Design M3E Pro)</strong> en un seul clic, avec toutes les fausses données préchargées !
+      Transformez l'interface Smartschool en l'interface <strong>BetterSchool (Design M3E Pro)</strong> en un seul clic, connectée directement à votre session en direct !
     </p>
 
     <div class="drag-zone">

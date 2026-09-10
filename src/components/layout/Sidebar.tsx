@@ -7,7 +7,6 @@ import {
   BookOpen, 
   GraduationCap,
   Bot,
-  Bookmark
   Bookmark,
   User
 } from 'lucide-react';
@@ -155,11 +154,6 @@ export const Sidebar: React.FC = () => {
         title={isSidebarCollapsed ? `${student?.firstName} ${student?.lastName}` : undefined}
       >
         <div className="relative shrink-0">
-          <img
-            src={student?.avatar}
-            alt="Avatar"
-            className="w-9 h-9 rounded-xl object-cover"
-          />
           {student?.avatar ? (
             <img
               src={student.avatar}
@@ -177,11 +171,9 @@ export const Sidebar: React.FC = () => {
         {!isSidebarCollapsed && (
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold text-slate-900 truncate">
-              {student?.firstName} {student?.lastName}
               {student ? `${student.firstName} ${student.lastName}`.trim() || 'Élève' : 'Élève'}
             </p>
             <p className="text-[11px] text-slate-400 truncate">
-              {student?.studentClass || 'Élève'}
               {student?.studentClass || (isDemoMode ? 'Classe' : 'Non connecté')}
             </p>
           </div>

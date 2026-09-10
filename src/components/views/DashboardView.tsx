@@ -24,7 +24,6 @@ export const DashboardView: React.FC = () => {
     setActiveTab,
     setSelectedEventModal,
     setIsNewHomeworkModalOpen,
-    globalSearch
     globalSearch,
     isDemoMode,
     isInsideSmartschoolPlatform,
@@ -103,11 +102,9 @@ export const DashboardView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-            {greeting}, {student?.firstName}
             {student?.firstName ? `${greeting}, ${student.firstName}` : greeting}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5 capitalize">
-            {todayFormatted} • <span className="text-indigo-600 font-semibold">{student?.studentClass || 'Classe'}</span>
             {todayFormatted} {student?.studentClass ? (
               <>• <span className="text-indigo-600 font-semibold">{student.studentClass}</span></>
             ) : null}
@@ -193,16 +190,6 @@ export const DashboardView: React.FC = () => {
             <span className="text-xs font-bold text-slate-500">Moyenne générale</span>
             <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-black text-slate-900">{overallStats.current}</span>
-            <span className="text-xs text-slate-400 font-semibold">/ 100</span>
-          </div>
-          {(() => {
-            const diffPrev = Number((overallStats.current - overallStats.previousTerm).toFixed(1));
-            return (
-              <p className={`text-[11px] font-bold mt-1 ${diffPrev >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {diffPrev >= 0 ? `+${diffPrev}` : diffPrev} pts{' '}
-                <span className="text-slate-400 font-normal">vs classe ({overallStats.classAvg}/100)</span>
           {overallStats ? (
             <>
               <div className="flex items-baseline gap-1.5">
@@ -228,8 +215,6 @@ export const DashboardView: React.FC = () => {
               <p className="text-[11px] text-amber-600 font-bold mt-1">
                 En attente du module Skore
               </p>
-            );
-          })()}
             </div>
           )}
         </div>

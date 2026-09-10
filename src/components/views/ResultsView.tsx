@@ -125,6 +125,11 @@ export const ResultsView: React.FC = () => {
               <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700">
                 Mention Très Bien estimée
               </span>
+              {overallStats && (
+                <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700">
+                  Mention Très Bien estimée
+                </span>
+              )}
             </div>
 
             <div className="mt-4 flex flex-col sm:flex-row sm:items-baseline gap-4">

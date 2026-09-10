@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   LogOut,
   Bot,
-  Bookmark
   Bookmark,
   User
 } from 'lucide-react';
@@ -113,11 +112,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
             {/* Student card in drawer */}
             <div className="p-4 bg-slate-50/90 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <img
-                  src={student?.avatar}
-                  alt="Avatar"
-                  className="w-12 h-12 rounded-full object-cover ring-2 ring-indigo-200"
-                />
                 {student?.avatar ? (
                   <img
                     src={student.avatar}
@@ -130,9 +124,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
                   </div>
                 )}
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900">{student?.firstName} {student?.lastName}</h4>
-                  <p className="text-xs text-slate-500">{student?.studentClass}</p>
-                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">INE: {student?.ineNumber}</p>
                   <h4 className="font-bold text-sm text-slate-900">
                     {student ? `${student.firstName} ${student.lastName}`.trim() || 'Élève' : 'Élève'}
                   </h4>
