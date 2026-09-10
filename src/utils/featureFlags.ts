@@ -36,13 +36,13 @@ export const FEATURES_REGISTRY: Record<FeatureKey, FeatureConfig> = {
     id: 'dashboard',
     label: "Vue d'ensemble",
     description: "Tableau de bord principal, prochain cours et devoirs urgents",
-    isReadyInLive: false, // À passer à true quand l'API Smartschool est connectée
+    isReadyInLive: true,
   },
   agenda: {
     id: 'agenda',
     label: "Emploi du temps",
     description: "Planning dynamique, cours et horaires",
-    isReadyInLive: false,
+    isReadyInLive: true,
   },
   messages: {
     id: 'messages',

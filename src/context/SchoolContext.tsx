@@ -11,6 +11,12 @@ import {
 import { schoolService } from '../services/api';
 import { mockNotifications } from '../data/mockData';
 import { isInsideSmartschool } from '../utils/platform';
+import { 
+  getCachedRealEvents, 
+  getCachedRealHomeworks, 
+  getCachedRealStudent, 
+  syncAllSmartschoolData 
+} from '../services/smartschoolApi';
 
 export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'tutor' | 'book';
 
@@ -183,16 +189,63 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     const initData = async () => {
       if (!isDemoMode) {
-        // En mode Réel (sans API Smartschool connectée pour l'instant) : aucune fausse donnée
-        setStudent(null);
-        setEvents([]);
-        setTodayEvents([]);
-        setHomeworks([]);
+        // En mode Réel : chargement des données réelles Smartschool
+        const realEvents = getCachedRealEvents();
+        const realHomeworks = getCachedRealHomeworks();
+        const realStudentData = getCachedRealStudent();
+
+        if (realStudentData) {
+          setStudent({
+            id: realStudentData.id || 'real_student',
+            firstName: realStudentData.firstName || 'Élève',
+            lastName: realStudentData.lastName || 'Jean XXIII',
+            email: '',
+            avatar: realStudentData.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+            studentClass: realStudentData.studentClass || '4T1',
+            schoolName: realStudentData.schoolName || 'Collège Jean XXIII',
+            academicYear: '2026-2027',
+            ineNumber: realStudentData.ineNumber || '4907_5748_0',
+            unreadNotifications: 0
+          });
+        } else {
+          setStudent(null);
+        }
+
+        setEvents(realEvents);
+        
+        // Cours du jour actif
+        const todayNum = new Date().getDay();
+        const targetDay = (todayNum >= 1 && todayNum <= 5) ? todayNum : 1;
+        setTodayEvents(realEvents.filter(e => e.dayOfWeek === targetDay));
+
+        setHomeworks(realHomeworks);
+
+        // Modules non encore branchés restent vierges en mode réel
         setConversations([]);
         setActiveMessages([]);
         setSubjectReports([]);
         setCourses([]);
         setNotifications([]);
+
+        // Si BetterSchool tourne au sein de Smartschool, synchroniser en direct
+        if (isInsideSmartschoolPlatform) {
+          syncAllSmartschoolData().then(res => {
+            if (res.success) {
+              setEvents(res.events);
+              setHomeworks(res.homeworks);
+              const curDay = new Date().getDay();
+              const day = (curDay >= 1 && curDay <= 5) ? curDay : 1;
+              setTodayEvents(res.events.filter(e => e.dayOfWeek === day));
+              if (res.student) {
+                setStudent(prev => prev ? ({
+                  ...prev,
+                  schoolName: res.student?.schoolName || prev.schoolName,
+                  studentClass: res.student?.studentClass || prev.studentClass
+                }) : null);
+              }
+            }
+          });
+        }
         return;
       }
 
