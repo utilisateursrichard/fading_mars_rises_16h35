@@ -65,8 +65,8 @@ export const FEATURES_REGISTRY: Record<FeatureKey, FeatureConfig> = {
   tutor: {
     id: 'tutor',
     label: "Tuteur IA",
-    description: "Assistant d'apprentissage contextuel",
-    isReadyInLive: false,
+    description: "Assistant d'apprentissage contextuel et méthodologique",
+    isReadyInLive: true,
   },
   book: {
     id: 'book',
