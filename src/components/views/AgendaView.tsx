@@ -148,22 +148,38 @@ export const AgendaView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
   const [weekOffset, setWeekOffset] = useState<number>(0);
 
-  // Jour actuel réel (1=Lundi ... 5=Vendredi)
+  // Jour actuel réel (1=Lundi ... 6=Samedi, si Dimanche -> 1 pour préparer la semaine à venir)
   const currentRealDayNum = useMemo(() => {
     const jsDay = new Date().getDay();
-    return (jsDay >= 1 && jsDay <= 5) ? (jsDay as DayOfWeek) : 1;
+    return (jsDay >= 1 && jsDay <= 6) ? (jsDay as DayOfWeek) : (1 as DayOfWeek);
   }, []);
 
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(currentRealDayNum);
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
+
   // Date cible de la semaine active
+  // Le dimanche par convention pour les agendas scolaires, on bascule par défaut sur la semaine de demain (lundi)
   const targetDate = useMemo(() => {
     const d = new Date();
-    d.setDate(d.getDate() + weekOffset * 7);
+    if (d.getDay() === 0 && weekOffset === 0) {
+      d.setDate(d.getDate() + 1);
+    } else {
+      d.setDate(d.getDate() + weekOffset * 7);
+    }
     return d;
   }, [weekOffset]);
 
-  // Calcul dynamique des dates de la semaine (Lundi -> Vendredi)
+  // Configuration des jours de la semaine (Lundi -> Samedi)
+  const DAY_NAMES = useMemo(() => [
+    { dow: 1 as DayOfWeek, name: 'Lundi', short: 'LUN' },
+    { dow: 2 as DayOfWeek, name: 'Mardi', short: 'MAR' },
+    { dow: 3 as DayOfWeek, name: 'Mercredi', short: 'MER' },
+    { dow: 4 as DayOfWeek, name: 'Jeudi', short: 'JEU' },
+    { dow: 5 as DayOfWeek, name: 'Vendredi', short: 'VEN' },
+    { dow: 6 as DayOfWeek, name: 'Samedi', short: 'SAM' }
+  ], []);
+
+  // Calcul dynamique des dates de la semaine (Lundi -> Samedi)
   const weekDates = useMemo(() => {
     const d = new Date(targetDate);
     const day = d.getDay();
@@ -171,66 +187,85 @@ export const AgendaView: React.FC = () => {
     const monday = new Date(d);
     monday.setDate(d.getDate() + diffToMonday);
 
-    return [1, 2, 3, 4, 5].map((dow, idx) => {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    return DAY_NAMES.map((item, idx) => {
       const cur = new Date(monday);
       cur.setDate(monday.getDate() + idx);
-      const pad = (n: number) => n.toString().padStart(2, '0');
       return {
-        dayOfWeek: dow as DayOfWeek,
+        dayOfWeek: item.dow,
+        name: item.name,
+        short: item.short,
         dateNum: pad(cur.getDate()),
         fullDate: `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`
       };
     });
-  }, [targetDate]);
+  }, [targetDate, DAY_NAMES]);
+
+  // Suivi de l'heure courante (actualisé chaque 30 secondes pour une précision parfaite de la barre)
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Date du jour actuel (YYYY-MM-DD)
+  const todayDateStr = useMemo(() => {
+    const now = currentTime;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  }, [currentTime]);
 
   const daysConfig = useMemo(() => {
-    const dayNames = [
-      { name: 'Lundi', short: 'LUN' },
-      { name: 'Mardi', short: 'MAR' },
-      { name: 'Mercredi', short: 'MER' },
-      { name: 'Jeudi', short: 'JEU' },
-      { name: 'Vendredi', short: 'VEN' }
-    ];
-    const isCurrentWeek = weekOffset === 0;
-    return weekDates.map((wd, i) => ({
+    return weekDates.map((wd) => ({
       dayOfWeek: wd.dayOfWeek,
-      name: dayNames[i].name,
-      short: dayNames[i].short,
+      name: wd.name,
+      short: wd.short,
       dateNum: wd.dateNum,
       fullDate: wd.fullDate,
-      isToday: isCurrentWeek && wd.dayOfWeek === currentRealDayNum
+      isToday: wd.fullDate === todayDateStr
     }));
-  }, [weekDates, weekOffset, currentRealDayNum]);
+  }, [weekDates, todayDateStr]);
 
-  // Libellé de la semaine (ex: "21 - 25 sept.")
+  // Libellé de la semaine (ex: "07 - 12 sept.")
   const weekLabel = useMemo(() => {
-    if (weekDates.length < 5) return 'Semaine';
+    if (weekDates.length === 0) return 'Semaine';
     const startDay = weekDates[0].dateNum;
-    const endDay = weekDates[4].dateNum;
+    const endDay = weekDates[weekDates.length - 1].dateNum;
     const monthNames = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
     const month = monthNames[new Date(weekDates[0].fullDate).getMonth()];
     return `${startDay} - ${endDay} ${month}`;
   }, [weekDates]);
 
+  // Type de semaine A ou B
+  const weekType = useMemo(() => {
+    const d = new Date(Date.UTC(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return weekNo % 2 === 0 ? 'Semaine B' : 'Semaine A';
+  }, [targetDate]);
+
+  // Synchronisation automatique des données de la semaine
+  useEffect(() => {
+    syncWeek(targetDate);
+  }, [targetDate]);
+
   const handlePrevWeek = () => {
-    const nextOffset = weekOffset - 1;
-    setWeekOffset(nextOffset);
-    const d = new Date();
-    d.setDate(d.getDate() + nextOffset * 7);
-    syncWeek(d);
+    setWeekOffset(prev => prev - 1);
   };
 
   const handleNextWeek = () => {
-    const nextOffset = weekOffset + 1;
-    setWeekOffset(nextOffset);
-    const d = new Date();
-    d.setDate(d.getDate() + nextOffset * 7);
-    syncWeek(d);
+    setWeekOffset(prev => prev + 1);
   };
 
   const handleResetToday = () => {
     setWeekOffset(0);
-    syncWeek(new Date());
+    const now = new Date();
+    const jsDay = now.getDay();
+    const day = (jsDay >= 1 && jsDay <= 6) ? (jsDay as DayOfWeek) : (1 as DayOfWeek);
+    setSelectedDay(day);
   };
 
   const uniqueSubjects = useMemo(() => {
@@ -253,24 +288,18 @@ export const AgendaView: React.FC = () => {
   }, [events, subjectFilter, globalSearch]);
 
   const eventsByDay = useMemo(() => {
-    const map: { [key: number]: CourseEvent[] } = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+    const map: { [key: number]: CourseEvent[] } = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
     filteredEvents.forEach(evt => {
-      if (map[evt.dayOfWeek]) {
-        map[evt.dayOfWeek].push(evt);
+      if (!map[evt.dayOfWeek]) {
+        map[evt.dayOfWeek] = [];
       }
+      map[evt.dayOfWeek].push(evt);
     });
     Object.keys(map).forEach(key => {
       map[Number(key)].sort((a, b) => a.startTime.localeCompare(b.startTime));
     });
     return map;
   }, [filteredEvents]);
-
-  // Suivi de l'heure courante (actualisé chaque minute)
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
-  useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Calcul dynamique des bornes horaires de la semaine (minHour et maxHour)
   const { minHour, maxHour, totalHours } = useMemo(() => {
@@ -282,10 +311,19 @@ export const AgendaView: React.FC = () => {
       if (s > 0) minH = Math.min(minH, Math.floor(s / 60));
       if (e > 0) maxH = Math.max(maxH, Math.ceil(e / 60));
     });
+    // Si la semaine affichée contient aujourd'hui, s'assurer que l'heure courante est incluse dans la grille
+    const hasToday = daysConfig.some(d => d.isToday);
+    if (hasToday) {
+      const currentHour = currentTime.getHours();
+      if (currentHour >= 7 && currentHour <= 20) {
+        minH = Math.min(minH, currentHour);
+        maxH = Math.max(maxH, currentHour + 1);
+      }
+    }
     minH = Math.max(7, Math.min(minH, 8));
     maxH = Math.max(17, Math.min(maxH, 20));
     return { minHour: minH, maxHour: maxH, totalHours: maxH - minH };
-  }, [filteredEvents]);
+  }, [filteredEvents, daysConfig, currentTime]);
 
   const hoursList = useMemo(() => {
     const list: number[] = [];
@@ -306,8 +344,8 @@ export const AgendaView: React.FC = () => {
 
   // Disposition calculée par jour avec gestion des chevauchements (gauche/droite)
   const layoutByDay = useMemo(() => {
-    const result: { [key: number]: PositionedEvent[] } = { 1: [], 2: [], 3: [], 4: [], 5: [] };
-    [1, 2, 3, 4, 5].forEach(dayNum => {
+    const result: { [key: number]: PositionedEvent[] } = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+    [1, 2, 3, 4, 5, 6].forEach(dayNum => {
       const dayEvts = eventsByDay[dayNum] || [];
       result[dayNum] = computeDayLayout(dayEvts, minHour, HOUR_HEIGHT);
     });
@@ -323,8 +361,8 @@ export const AgendaView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2.5">
               <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Agenda</h2>
-              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-slate-100 text-slate-700">
-                Semaine A
+              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                {weekType}
               </span>
             </div>
             <p className="text-xs text-slate-400 font-medium mt-0.5">
@@ -448,9 +486,9 @@ export const AgendaView: React.FC = () => {
       {viewMode === 'week' ? (
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-subtle overflow-hidden">
           <div className="overflow-x-auto">
-            <div className="min-w-[760px]">
-              {/* Header Row: Heure + 5 jours */}
-              <div className="grid grid-cols-[55px_repeat(5,1fr)] border-b border-slate-200/80 bg-slate-50/70 sticky top-0 z-20">
+            <div className="min-w-[860px]">
+              {/* Header Row: Heure + 6 jours (Lundi à Samedi) */}
+              <div className="grid grid-cols-[55px_repeat(6,1fr)] border-b border-slate-200/80 bg-slate-50/70 sticky top-0 z-20">
                 <div className="py-3 px-2 text-center text-[11px] font-bold text-slate-400 border-r border-slate-200/60 flex items-center justify-center">
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
                 </div>
@@ -482,7 +520,7 @@ export const AgendaView: React.FC = () => {
               </div>
 
               {/* Timetable Body */}
-              <div className="grid grid-cols-[55px_repeat(5,1fr)] relative" style={{ height: `${totalGridHeight}px` }}>
+              <div className="grid grid-cols-[55px_repeat(6,1fr)] relative" style={{ height: `${totalGridHeight}px` }}>
                 {/* Colonne des heures */}
                 <div className="relative border-r border-slate-200/60 select-none bg-slate-50/40">
                   {hoursList.map((h, i) => {
@@ -497,9 +535,19 @@ export const AgendaView: React.FC = () => {
                       </div>
                     );
                   })}
+
+                  {/* Badge heure courante dans l'axe horaire */}
+                  {daysConfig.some(d => d.isToday) && currentTimeTop !== null && (
+                    <div
+                      className="absolute right-1 z-30 -translate-y-1/2 px-1.5 py-0.5 rounded-md bg-rose-500 text-white text-[9px] font-black shadow-sm tracking-tight"
+                      style={{ top: `${currentTimeTop}px` }}
+                    >
+                      {String(currentTime.getHours()).padStart(2, '0')}:{String(currentTime.getMinutes()).padStart(2, '0')}
+                    </div>
+                  )}
                 </div>
 
-                {/* 5 Colonnes de jours */}
+                {/* 6 Colonnes de jours */}
                 {daysConfig.map((day) => {
                   const dayLayout = layoutByDay[day.dayOfWeek] || [];
                   return (
@@ -536,7 +584,7 @@ export const AgendaView: React.FC = () => {
                           className="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
                           style={{ top: `${currentTimeTop}px` }}
                         >
-                          <div className="w-2 h-2 rounded-full bg-rose-500 -ml-1 shadow-sm" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-rose-500 -ml-1.5 shadow-sm ring-2 ring-white" />
                           <div className="h-[2px] w-full bg-rose-500 shadow-sm" />
                         </div>
                       )}
@@ -672,6 +720,16 @@ export const AgendaView: React.FC = () => {
                       </div>
                     );
                   })}
+
+                  {/* Badge heure courante dans l'axe horaire de la vue jour */}
+                  {daysConfig.find(d => d.dayOfWeek === selectedDay)?.isToday && currentTimeTop !== null && (
+                    <div
+                      className="absolute right-1 z-30 -translate-y-1/2 px-1.5 py-0.5 rounded-md bg-rose-500 text-white text-[9px] font-black shadow-sm tracking-tight"
+                      style={{ top: `${currentTimeTop}px` }}
+                    >
+                      {String(currentTime.getHours()).padStart(2, '0')}:{String(currentTime.getMinutes()).padStart(2, '0')}
+                    </div>
+                  )}
                 </div>
 
                 {/* Colonne du jour unique */}
@@ -703,7 +761,7 @@ export const AgendaView: React.FC = () => {
                       className="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
                       style={{ top: `${currentTimeTop}px` }}
                     >
-                      <div className="w-2.5 h-2.5 rounded-full bg-rose-500 -ml-1 shadow-sm" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-rose-500 -ml-1.5 shadow-sm ring-2 ring-white" />
                       <div className="h-[2px] w-full bg-rose-500 shadow-sm" />
                     </div>
                   )}

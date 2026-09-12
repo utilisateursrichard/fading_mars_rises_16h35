@@ -19,7 +19,8 @@ import {
   Conversation,
   Message,
   SubjectCourse,
-  Grade
+  Grade,
+  EventStatus
 } from '../types/school';
 
 import {
@@ -59,6 +60,38 @@ const setStoredData = <T>(key: string, data: T): void => {
   }
 };
 
+// Synchronisation dynamique du statut des cours selon la date et l'heure actuelle
+export const syncEventStatuses = (evts: CourseEvent[]): CourseEvent[] => {
+  const now = new Date();
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  return evts.map(evt => {
+    let status: EventStatus = evt.status;
+    if (evt.date < todayStr) {
+      status = 'completed';
+    } else if (evt.date > todayStr) {
+      status = 'scheduled';
+    } else {
+      const parseMin = (str: string) => {
+        const parts = str.split(':').map(p => parseInt(p, 10));
+        return (parts[0] || 0) * 60 + (parts[1] || 0);
+      };
+      const s = parseMin(evt.startTime);
+      const e = parseMin(evt.endTime);
+      if (nowMin >= s && nowMin <= e) {
+        status = 'in_progress';
+      } else if (nowMin > e) {
+        status = 'completed';
+      } else {
+        status = 'scheduled';
+      }
+    }
+    return { ...evt, status };
+  });
+};
+
 class SchoolService {
   // 1. Informations de l'élève
   async getStudent(): Promise<Student> {
@@ -66,16 +99,16 @@ class SchoolService {
     return Promise.resolve({ ...mockStudent });
   }
 
-  // 2. Agenda & Emploi du temps
+  // 2. Agenda & Emploi du temps (à jour avec statuts dynamiques et Samedi inclus)
   async getAgendaEvents(): Promise<CourseEvent[]> {
-    return Promise.resolve([...mockCourseEvents]);
+    return Promise.resolve(syncEventStatuses(mockCourseEvents));
   }
 
   async getTodayEvents(): Promise<CourseEvent[]> {
-    const todayNum = new Date().getDay(); // 0 is Sunday, 1 is Monday...
-    // Si dimanche ou samedi hors cours, on simule la journée de mardi ou jeudi pour avoir une vue démonstrative
-    const targetDay = (todayNum >= 1 && todayNum <= 5) ? todayNum : 2;
-    const events = mockCourseEvents.filter(evt => evt.dayOfWeek === targetDay);
+    const todayNum = new Date().getDay(); // 0 is Sunday, 1 is Monday... 6 is Saturday
+    // Si dimanche, on prépare la journée de lundi (1) ; sinon jour courant exact (1 à 6)
+    const targetDay = (todayNum >= 1 && todayNum <= 6) ? todayNum : 1;
+    const events = syncEventStatuses(mockCourseEvents).filter(evt => evt.dayOfWeek === targetDay);
     return Promise.resolve(events);
   }
 

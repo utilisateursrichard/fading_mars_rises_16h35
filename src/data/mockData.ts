@@ -110,7 +110,7 @@ export const mockStudent: Student = {
   unreadNotifications: 3,
 };
 
-// Obtenir la date du lundi de la semaine courante
+// Obtenir la date du lundi de la semaine courante (dates locales sans décalage UTC)
 const getCurrentWeekDates = () => {
   const now = new Date();
   const currentDay = now.getDay(); // 0 is Sunday, 1 is Monday...
@@ -118,11 +118,12 @@ const getCurrentWeekDates = () => {
   const monday = new Date(now);
   monday.setDate(now.getDate() + distanceToMonday);
 
+  const pad = (n: number) => n.toString().padStart(2, '0');
   const dates: { [key: number]: string } = {};
   for (let i = 1; i <= 6; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + (i - 1));
-    dates[i] = d.toISOString().split('T')[0];
+    dates[i] = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
   return dates;
 };
@@ -472,6 +473,41 @@ export const mockCourseEvents: CourseEvent[] = [
     description: 'Manipulation et analyse de spectres, avec exploitation de la loi de Beer-Lambert.',
     status: 'scheduled',
     homeworkDue: [mockHomeworks[3]],
+  },
+
+  // SAMEDI (dayOfWeek: 6)
+  {
+    id: 'evt-sat-1',
+    subject: 'Mathématiques',
+    subjectCode: 'MATH',
+    teacher: TEACHERS.MATH.name,
+    room: TEACHERS.MATH.room,
+    startTime: '08:30',
+    endTime: '11:30',
+    dayOfWeek: 6,
+    date: weekDates[6],
+    type: 'ds',
+    color: '#0284c7',
+    description: 'Devoir Surveillé n°1 : Continuité, limites et fonctions composées.',
+    status: 'scheduled',
+    materials: [
+      { id: 'mat-sat-1', title: 'Sujet_DS1_Maths.pdf', type: 'pdf', size: '420 Ko' }
+    ]
+  },
+  {
+    id: 'evt-sat-2',
+    subject: 'Physique-Chimie',
+    subjectCode: 'PC',
+    teacher: TEACHERS.PC.name,
+    room: TEACHERS.PC.room,
+    startTime: '11:45',
+    endTime: '12:45',
+    dayOfWeek: 6,
+    date: weekDates[6],
+    type: 'td',
+    color: '#059669',
+    description: 'Correction du TP n°2 et analyse méthodologique.',
+    status: 'scheduled',
   }
 ];
 

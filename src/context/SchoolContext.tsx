@@ -191,7 +191,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setEvents(res.events);
         setHomeworks(res.homeworks);
         const curDay = new Date().getDay();
-        const day = (curDay >= 1 && curDay <= 5) ? curDay : 1;
+        const day = (curDay >= 1 && curDay <= 6) ? curDay : 1;
         setTodayEvents(res.events.filter(e => e.dayOfWeek === day).sort((a, b) => a.startTime.localeCompare(b.startTime)));
         if (res.student) {
           setStudent(prev => ({
@@ -254,7 +254,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         
         // Cours du jour actif
         const todayNum = new Date().getDay();
-        const targetDay = (todayNum >= 1 && todayNum <= 5) ? todayNum : 1;
+        const targetDay = (todayNum >= 1 && todayNum <= 6) ? todayNum : 1;
         setTodayEvents(realEvents.filter(e => e.dayOfWeek === targetDay).sort((a, b) => a.startTime.localeCompare(b.startTime)));
 
         setHomeworks(realHomeworks);
@@ -274,7 +274,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               setEvents(res.events);
               setHomeworks(res.homeworks);
               const curDay = new Date().getDay();
-              const day = (curDay >= 1 && curDay <= 5) ? curDay : 1;
+              const day = (curDay >= 1 && curDay <= 6) ? curDay : 1;
               setTodayEvents(res.events.filter(e => e.dayOfWeek === day).sort((a, b) => a.startTime.localeCompare(b.startTime)));
               if (res.student) {
                 setStudent(prev => ({
