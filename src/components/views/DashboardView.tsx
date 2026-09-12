@@ -14,6 +14,15 @@ import {
 import { useSchool } from '../../context/SchoolContext';
 import { getSubjectTheme } from '../../utils/theme';
 
+const parseMinutes = (timeStr: string): number => {
+  if (!timeStr) return 0;
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return 0;
+  const h = parseInt(parts[0], 10) || 0;
+  const m = parseInt(parts[1], 10) || 0;
+  return h * 60 + m;
+};
+
 export const DashboardView: React.FC = () => {
   const { 
     student, 
@@ -77,10 +86,83 @@ export const DashboardView: React.FC = () => {
     return [...todayEvents].sort((a, b) => a.startTime.localeCompare(b.startTime));
   }, [todayEvents]);
 
-  // Current or next class
-  const nextEvent = useMemo(() => {
-    return sortedTodayEvents.find(e => e.status === 'in_progress' || e.status === 'scheduled') || sortedTodayEvents[0];
-  }, [sortedTodayEvents]);
+  // Détermination intelligente du cours en cours ou du prochain cours :
+  // 1. Cours en cours actuellement
+  // 2. Prochain cours plus tard aujourd'hui
+  // 3. Prochain cours du prochain jour de cours (ex: lundi si fin de journée ou week-end)
+  const nextClassSpotlight = useMemo(() => {
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const currentJsDay = now.getDay(); // 0=Dimanche, 1=Lundi ... 6=Samedi
+
+    // 1. Cours en cours aujourd'hui
+    const inProgress = sortedTodayEvents.find(e => {
+      const s = parseMinutes(e.startTime);
+      const end = parseMinutes(e.endTime);
+      return (e.status === 'in_progress') || (nowMinutes >= s && nowMinutes <= end);
+    });
+    if (inProgress) {
+      return {
+        event: inProgress,
+        badgeText: '● En cours',
+        badgeClass: 'text-emerald-600 bg-emerald-50 border-emerald-200/60',
+        timeLabel: `En cours (jusqu'à ${inProgress.endTime})`,
+        dayHeader: "Aujourd'hui"
+      };
+    }
+
+    // 2. Prochain cours plus tard aujourd'hui
+    const upcomingToday = sortedTodayEvents.find(e => {
+      const s = parseMinutes(e.startTime);
+      return s > nowMinutes;
+    });
+    if (upcomingToday) {
+      const diffMin = parseMinutes(upcomingToday.startTime) - nowMinutes;
+      const countdown = diffMin < 60 ? `dans ${diffMin} min` : `à ${upcomingToday.startTime}`;
+      return {
+        event: upcomingToday,
+        badgeText: "Aujourd'hui",
+        badgeClass: 'text-indigo-600 bg-indigo-50 border-indigo-200/60',
+        timeLabel: `${upcomingToday.startTime} (${countdown})`,
+        dayHeader: "Aujourd'hui"
+      };
+    }
+
+    // 3. Tous les cours d'aujourd'hui sont terminés ou journée sans cours (ex: samedi après-midi / dimanche) :
+    // On cherche le tout prochain cours sur les jours suivants de la semaine
+    const allEvents = events.length > 0 ? events : sortedTodayEvents;
+    const dayNames: Record<number, string> = {
+      1: 'Lundi',
+      2: 'Mardi',
+      3: 'Mercredi',
+      4: 'Jeudi',
+      5: 'Vendredi',
+      6: 'Samedi'
+    };
+
+    for (let offset = 1; offset <= 7; offset++) {
+      const nextDow = ((currentJsDay + offset) % 7);
+      if (nextDow === 0) continue; // Pas d'école le dimanche
+      
+      const dayEvts = allEvents
+        .filter(e => e.dayOfWeek === nextDow)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+      if (dayEvts.length > 0) {
+        const nextEvt = dayEvts[0];
+        const dayName = offset === 1 ? 'Demain' : (dayNames[nextDow] || 'Prochain jour');
+        return {
+          event: nextEvt,
+          badgeText: `Prochain cours • ${dayName}`,
+          badgeClass: 'text-indigo-600 bg-indigo-50 border-indigo-200/60',
+          timeLabel: `${dayName} à ${nextEvt.startTime}`,
+          dayHeader: dayName
+        };
+      }
+    }
+
+    return null;
+  }, [sortedTodayEvents, events]);
 
   const pendingHomeworksCount = useMemo(() => {
     return homeworks.filter(h => !h.isCompleted && (!h.dueDate || h.dueDate >= todayDateStr)).length;
@@ -89,8 +171,6 @@ export const DashboardView: React.FC = () => {
   const urgentHomeworksCount = useMemo(() => {
     return homeworks.filter(h => !h.isCompleted && h.priority === 'high' && (!h.dueDate || h.dueDate >= todayDateStr)).length;
   }, [homeworks, todayDateStr]);
-
-  const nextTheme = nextEvent ? getSubjectTheme(nextEvent.subjectCode) : null;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
@@ -146,41 +226,46 @@ export const DashboardView: React.FC = () => {
       </div>
 
       {/* 2. Spotlight Prochain Cours — Carte Épurée Apple/M3 */}
-      {nextEvent && (
+      {nextClassSpotlight ? (
         <div
-          onClick={() => setSelectedEventModal(nextEvent)}
+          onClick={() => setSelectedEventModal(nextClassSpotlight.event)}
           className="cursor-pointer group relative bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-subtle hover:shadow-card hover:border-indigo-200 transition-all duration-200"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex flex-col items-center justify-center shrink-0">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Début</span>
-                <span className="text-sm font-black">{nextEvent.startTime}</span>
+              <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex flex-col items-center justify-center shrink-0">
+                <span className="text-[9px] uppercase font-bold text-slate-400">
+                  {nextClassSpotlight.dayHeader === "Aujourd'hui" ? 'Début' : nextClassSpotlight.dayHeader}
+                </span>
+                <span className="text-sm font-black">{nextClassSpotlight.event.startTime}</span>
               </div>
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold border ${nextTheme?.badgeClass || 'bg-slate-100'}`}>
-                    {nextEvent.subjectCode}
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold border ${getSubjectTheme(nextClassSpotlight.event.subjectCode)?.badgeClass || 'bg-slate-100'}`}>
+                    {nextClassSpotlight.event.subjectCode}
                   </span>
-                  <span className={`text-[10px] font-bold ${
-                    nextEvent.status === 'in_progress' ? 'text-emerald-600' : 'text-slate-400'
-                  }`}>
-                    {nextEvent.status === 'in_progress' ? '● En cours' : 'Prochaine séance'}
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${nextClassSpotlight.badgeClass}`}>
+                    {nextClassSpotlight.badgeText}
                   </span>
                 </div>
 
                 <h2 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
-                  {nextEvent.subject}
+                  {nextClassSpotlight.event.subject}
                 </h2>
 
                 <p className="text-xs text-slate-500 font-medium flex items-center gap-2 mt-0.5">
                   <span className="flex items-center gap-1 font-semibold text-slate-700">
-                    <MapPin className="w-3 h-3 text-slate-400" />
-                    {nextEvent.room}
+                    <Clock className="w-3 h-3 text-slate-400" />
+                    {nextClassSpotlight.timeLabel}
                   </span>
                   <span className="text-slate-300">•</span>
-                  <span>{nextEvent.teacher}</span>
+                  <span className="flex items-center gap-1 font-semibold text-slate-700">
+                    <MapPin className="w-3 h-3 text-slate-400" />
+                    {nextClassSpotlight.event.room}
+                  </span>
+                  <span className="text-slate-300">•</span>
+                  <span>{nextClassSpotlight.event.teacher}</span>
                 </p>
               </div>
             </div>
@@ -189,6 +274,16 @@ export const DashboardView: React.FC = () => {
               <span>Voir les détails</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-subtle flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 font-bold">
+            ✓
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">Tous les cours sont terminés</h3>
+            <p className="text-xs text-slate-400 font-medium">Aucun autre cours programmé pour le moment.</p>
           </div>
         </div>
       )}
