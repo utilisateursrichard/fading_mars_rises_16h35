@@ -9,27 +9,18 @@ import {
   Calculator, 
   Feather, 
   Lightbulb,
-  Cpu,
   Layers,
-  CheckCircle2,
-  AlertTriangle,
-  ExternalLink,
   ChevronRight,
   ChevronDown,
-  X,
-  Key,
   ShieldCheck,
   Zap,
-  Info,
-  Ban
+  AlertTriangle
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
 import { 
   AITutorService, 
   LLM_PROVIDERS_REGISTRY, 
-  LLMProviderConfig, 
   isProviderConfigured,
-  getProviderApiKey,
   StudentContextData,
   LLMTier
 } from '../../services/aiTutorService';
@@ -54,8 +45,6 @@ export const TutorView: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [activeProviderName, setActiveProviderName] = useState<string>('');
-  const [isProvidersModalOpen, setIsProvidersModalOpen] = useState(false);
-  const [customKeyInputs, setCustomKeyInputs] = useState<Record<string, string>>({});
   const [expandedFallbackId, setExpandedFallbackId] = useState<string | null>(null);
 
   // Initialisation ou restauration de l'historique de discussion
@@ -112,7 +101,7 @@ export const TutorView: React.FC = () => {
     }))
   }), [student, courses, homeworks]);
 
-  // Suggestions dynamiques basées sur les vrais devoirs et matières
+  // Suggestions dynamiques basées sur les devoirs réels et les matières
   const suggestions = useMemo(() => {
     const list = [];
     const pendingHw = homeworks?.find(h => !h.isCompleted);
@@ -134,17 +123,12 @@ export const TutorView: React.FC = () => {
     return list.slice(0, 4);
   }, [homeworks]);
 
-  // Statistiques sur les providers
-  const configuredProvidersCount = useMemo(() => {
-    return LLM_PROVIDERS_REGISTRY.filter(p => isProviderConfigured(p)).length;
-  }, [isProvidersModalOpen, customKeyInputs]);
-
-  // Premier provider actif dans la cascade
+  // Premier provider actif dans la cascade (calculé de manière sécurisée)
   const topActiveProvider = useMemo(() => {
     return LLM_PROVIDERS_REGISTRY
       .filter(p => isProviderConfigured(p))
       .sort((a, b) => a.reputationRank - b.reputationRank)[0] || null;
-  }, [isProvidersModalOpen, customKeyInputs]);
+  }, []);
 
   const handleSendMessage = async (textToSend?: string) => {
     const content = (textToSend || inputText).trim();
@@ -165,7 +149,7 @@ export const TutorView: React.FC = () => {
     setActiveProviderName(topActiveProvider?.name || 'Moteur de repli');
 
     try {
-      // Construction de la chaîne de messages pour le LLM
+      // Construction de l'historique complet pour le LLM
       const historyForLLM = [...messages, userMessage].map(m => ({
         role: (m.sender === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
         content: m.text
@@ -189,11 +173,11 @@ export const TutorView: React.FC = () => {
 
       setMessages(prev => [...prev, tutorReply]);
     } catch (err: any) {
-      // Filet de sécurité absolu (ne devrait jamais survenir grâce au fallback local)
+      // Secours ultime sans downtime
       const errorReply: TutorMessage = {
         id: `tutor-err-${Date.now()}`,
         sender: 'tutor',
-        text: "Une erreur temporaire est survenue lors de l'accès au réseau. N'hésite pas à reposer ta question !",
+        text: "Une coupure réseau est survenue. N'hésite pas à reposer ta question !",
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         providerName: 'Secours Local',
         isZeroDowntimeFallback: true
@@ -294,9 +278,8 @@ export const TutorView: React.FC = () => {
     );
   };
 
-  // Helper pour formater gras, code inline et italique
+  // Helper pour formater le gras et le code inline
   const renderInlineFormatting = (content: string) => {
-    // Découpage simple pour **gras** et `code`
     const parts = content.split(/(\*\*.*?\*\*|`.*?`)/g);
 
     return parts.map((part, i) => {
@@ -340,27 +323,14 @@ export const TutorView: React.FC = () => {
               {topActiveProvider ? (
                 <span>Connecté à <strong className="text-slate-600 font-semibold">{topActiveProvider.name}</strong> ({topActiveProvider.model})</span>
               ) : (
-                <span>Moteur résilient actif • 31 providers configurables</span>
+                <span>Moteur pédagogique de secours actif</span>
               )}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Bouton Fournisseurs & Fallback */}
-          <button
-            onClick={() => setIsProvidersModalOpen(true)}
-            className="m3-press inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 border border-slate-200/70 text-slate-700 text-xs font-semibold transition-colors"
-            title="Consulter les 31 API et l'état du fallback"
-          >
-            <Cpu className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="hidden sm:inline">Fournisseurs</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-white text-slate-600 border border-slate-200">
-              {configuredProvidersCount}/31
-            </span>
-          </button>
-
-          {/* Bouton Réinitialiser */}
+        <div className="flex items-center gap-2">
+          {/* Bouton Réinitialiser la discussion */}
           <button
             onClick={handleResetChat}
             className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
@@ -379,7 +349,7 @@ export const TutorView: React.FC = () => {
           <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3.5 py-1.5 bg-white border border-slate-200/60 rounded-full text-[11px] font-medium text-slate-600 shadow-xs">
             <span className="inline-flex items-center gap-1 text-indigo-600 font-bold">
               <Zap className="w-3.5 h-3.5" />
-              <span>Orchestrateur Multi-Providers</span>
+              <span>Orchestrateur Résilient</span>
             </span>
             <span className="text-slate-300">•</span>
             <span>Cascade de réputation active</span>
@@ -410,14 +380,14 @@ export const TutorView: React.FC = () => {
                   ? 'bg-slate-900 text-white rounded-br-xs shadow-subtle font-medium text-xs sm:text-sm'
                   : 'bg-white text-slate-800 border border-slate-200/70 rounded-bl-xs shadow-subtle'
               }`}>
-                {/* Contenu message */}
+                {/* Contenu du message */}
                 {isUser ? (
                   <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
                 ) : (
                   renderFormattedContent(msg.text)
                 )}
 
-                {/* Métadonnées Tuteur (Provider, Latence, Repli) */}
+                {/* Métadonnées Tuteur (Fournisseur, modèle, latence) */}
                 {!isUser && (
                   <div className="pt-2 mt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-400 font-medium">
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -435,12 +405,12 @@ export const TutorView: React.FC = () => {
                         </span>
                       )}
 
-                      {/* Indicateur de repli si la requête a dû sauter un provider tombé en panne */}
+                      {/* Indicateur de repli transparent si un provider a dû être sauté */}
                       {hasFallback && (
                         <button
                           onClick={() => setExpandedFallbackId(isExpanded ? null : msg.id)}
                           className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold border border-indigo-100 transition-colors cursor-pointer"
-                          title="Voir la chaîne de fallback"
+                          title="Voir la chaîne de repli"
                         >
                           <Layers className="w-2.5 h-2.5" />
                           <span>Repli ({msg.fallbackChain?.length})</span>
@@ -565,175 +535,6 @@ export const TutorView: React.FC = () => {
           <Send className="w-4 h-4" />
         </button>
       </form>
-
-      {/* MODALE FOURNISSEURS & ÉTAT DE FALLBACK */}
-      {isProvidersModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-            
-            {/* Header Modale */}
-            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-subtle">
-                  <Cpu className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-base text-slate-900">
-                    Annuaire des 31 Fournisseurs LLM
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium">
-                    Ordre de réputation et statut du système de repli zéro-downtime
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setIsProvidersModalOpen(false)}
-                className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Corps Modale */}
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-4">
-              
-              {/* Notice explicative .env.api */}
-              <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 text-xs text-indigo-950 space-y-1.5">
-                <div className="font-bold flex items-center gap-1.5 text-indigo-900">
-                  <Info className="w-4 h-4 text-indigo-600" />
-                  <span>Configuration centralisée via `.env.api`</span>
-                </div>
-                <p className="leading-relaxed text-indigo-900/80">
-                  Votre fichier <code className="px-1 py-0.5 bg-white rounded font-mono font-bold text-indigo-700">.env.api</code> à la racine contient l'ensemble des 31 clés. Il vous suffit de renseigner vos clés API gratuites pour les activer.
-                  Vous pouvez également saisir ou écraser une clé directement ci-dessous pour tester dans le navigateur.
-                </p>
-              </div>
-
-              {/* Liste des Providers par Tiers */}
-              <div className="space-y-3">
-                <div className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                  Chaîne de Fallback Pédagogique (Classée par Réputation)
-                </div>
-
-                <div className="space-y-2">
-                  {LLM_PROVIDERS_REGISTRY.map((provider) => {
-                    const isConfigured = isProviderConfigured(provider);
-                    const apiKey = getProviderApiKey(provider);
-                    const rawEnv = ((import.meta as any).env || {})[provider.envKeyName];
-                    const isExplicitlyDisabled = 
-                      (typeof rawEnv === 'string' && rawEnv.trim().toUpperCase() === 'FALSE') ||
-                      (customKeyInputs[provider.id]?.trim().toUpperCase() === 'FALSE');
-
-                    return (
-                      <div 
-                        key={provider.id}
-                        className={`p-3 rounded-2xl border transition-all ${
-                          isConfigured 
-                            ? 'bg-emerald-50/40 border-emerald-200/80' 
-                            : isExplicitlyDisabled
-                              ? 'bg-slate-50/80 border-slate-200 opacity-60'
-                              : 'bg-white border-slate-200/70'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-extrabold flex items-center justify-center shrink-0">
-                              {provider.reputationRank}
-                            </span>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className={`font-bold text-xs sm:text-sm truncate ${isExplicitlyDisabled ? 'line-through text-slate-400' : 'text-slate-900'}`}>
-                                  {provider.name}
-                                </span>
-                                <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-extrabold uppercase ${
-                                  provider.tier === 1 ? 'bg-indigo-100 text-indigo-800' :
-                                  provider.tier === 2 ? 'bg-blue-100 text-blue-800' :
-                                  provider.tier === 3 ? 'bg-slate-100 text-slate-700' :
-                                  'bg-emerald-100 text-emerald-800'
-                                }`}>
-                                  Tier {provider.tier}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-slate-400 font-mono truncate">
-                                Modèle : {provider.model} • {provider.rateLimit}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2 shrink-0">
-                            {isConfigured ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-[11px] font-bold">
-                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                                <span className="hidden sm:inline">Actif</span>
-                              </span>
-                            ) : isExplicitlyDisabled ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-50 text-rose-700 text-[11px] font-bold border border-rose-200/70">
-                                <Ban className="w-3 h-3 text-rose-500" />
-                                <span>Skipped (FALSE)</span>
-                              </span>
-                            ) : (
-                              <a
-                                href={provider.websiteUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold transition-colors"
-                              >
-                                <span>Clé gratuite</span>
-                                <ExternalLink className="w-2.5 h-2.5" />
-                              </a>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Champ de test direct de clé API */}
-                        <div className="mt-2 pt-2 border-t border-slate-100/80 flex items-center gap-2">
-                          <Key className="w-3 h-3 text-slate-400 shrink-0" />
-                          <input
-                            type="password"
-                            placeholder={isConfigured ? 'Clé configurée (masquée) — saisir pour remplacer' : `Clé ${provider.envKeyName}...`}
-                            value={customKeyInputs[provider.id] ?? (apiKey ? '••••••••••••••••' : '')}
-                            onFocus={() => {
-                              if (customKeyInputs[provider.id] === undefined && apiKey) {
-                                setCustomKeyInputs(prev => ({ ...prev, [provider.id]: '' }));
-                              }
-                            }}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setCustomKeyInputs(prev => ({ ...prev, [provider.id]: val }));
-                              AITutorService.saveCustomKey(provider.id, val);
-                            }}
-                            className="flex-1 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white"
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-            </div>
-
-            {/* Footer Modale */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-              <div className="text-xs text-slate-500 font-medium">
-                {configuredProvidersCount > 0 ? (
-                  <span className="text-emerald-700 font-bold">✓ {configuredProvidersCount} fournisseur(s) prêt(s) à répondre</span>
-                ) : (
-                  <span className="text-amber-700 font-semibold">ℹ️ Mode secours local actif (zéro interruption)</span>
-                )}
-              </div>
-              <button
-                onClick={() => setIsProvidersModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-bold transition-colors shadow-subtle"
-              >
-                Fermer
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
 
     </div>
   );

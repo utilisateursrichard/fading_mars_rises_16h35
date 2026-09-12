@@ -99,9 +99,9 @@ export const LLM_PROVIDERS_REGISTRY: LLMProviderConfig[] = [
     tier: 1,
     reputationRank: 2,
     baseUrl: 'https://api.groq.com/openai/v1',
-    model: 'llama-3.3-70b-versatile', // Issu du Quick Start & 262K context
+    model: 'groq/compound', // Modèle actif et validé du tableau Groq (131K context)
     envKeyName: 'VITE_GROQ_API_KEY',
-    rateLimit: '30 RPM, 14,400 RPD',
+    rateLimit: '30 RPM, 250 RPD',
     websiteUrl: 'https://console.groq.com/keys',
     requiresKey: true,
     isOpenAICompatible: true
@@ -518,6 +518,43 @@ export const LLM_PROVIDERS_REGISTRY: LLMProviderConfig[] = [
   }
 ];
 
+// Mapping statique explicite pour que le compilateur Vite remplace chaque clé en production (AST Replacement)
+const STATIC_ENV_KEYS: Record<string, string | undefined> = {
+  VITE_NVIDIA_NIM_API_KEY: import.meta.env.VITE_NVIDIA_NIM_API_KEY,
+  VITE_MODELSCOPE_API_KEY: import.meta.env.VITE_MODELSCOPE_API_KEY,
+  VITE_CLOUDFLARE_API_KEY: import.meta.env.VITE_CLOUDFLARE_API_KEY,
+  VITE_CLOUDFLARE_ACCOUNT_ID: import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID,
+  VITE_OPENROUTER_API_KEY: import.meta.env.VITE_OPENROUTER_API_KEY,
+  VITE_GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY,
+  VITE_LLM7_API_KEY: import.meta.env.VITE_LLM7_API_KEY,
+  VITE_OLLAMA_CLOUD_API_KEY: import.meta.env.VITE_OLLAMA_CLOUD_API_KEY,
+  VITE_GITHUB_MODELS_API_KEY: import.meta.env.VITE_GITHUB_MODELS_API_KEY,
+  VITE_MISTRAL_API_KEY: import.meta.env.VITE_MISTRAL_API_KEY,
+  VITE_KILO_API_KEY: import.meta.env.VITE_KILO_API_KEY,
+  VITE_OVHCLOUD_API_KEY: import.meta.env.VITE_OVHCLOUD_API_KEY,
+  VITE_OPENCODE_API_KEY: import.meta.env.VITE_OPENCODE_API_KEY,
+  VITE_GROQ_API_KEY: import.meta.env.VITE_GROQ_API_KEY,
+  VITE_COHERE_API_KEY: import.meta.env.VITE_COHERE_API_KEY,
+  VITE_AION_API_KEY: import.meta.env.VITE_AION_API_KEY,
+  VITE_ZHIPU_API_KEY: import.meta.env.VITE_ZHIPU_API_KEY,
+  VITE_HUGGINGFACE_API_KEY: import.meta.env.VITE_HUGGINGFACE_API_KEY,
+  VITE_CEREBRAS_API_KEY: import.meta.env.VITE_CEREBRAS_API_KEY,
+  VITE_CLINE_API_KEY: import.meta.env.VITE_CLINE_API_KEY,
+  VITE_AGNES_API_KEY: import.meta.env.VITE_AGNES_API_KEY,
+  VITE_ALIBABA_DASHSCOPE_API_KEY: import.meta.env.VITE_ALIBABA_DASHSCOPE_API_KEY,
+  VITE_SAMBANOVA_API_KEY: import.meta.env.VITE_SAMBANOVA_API_KEY,
+  VITE_SILICONFLOW_API_KEY: import.meta.env.VITE_SILICONFLOW_API_KEY,
+  VITE_XAI_API_KEY: import.meta.env.VITE_XAI_API_KEY,
+  VITE_CHUTES_API_KEY: import.meta.env.VITE_CHUTES_API_KEY,
+  VITE_GLHF_API_KEY: import.meta.env.VITE_GLHF_API_KEY,
+  VITE_GROK_XAI_API_KEY: import.meta.env.VITE_GROK_XAI_API_KEY,
+  VITE_AI21_API_KEY: import.meta.env.VITE_AI21_API_KEY,
+  VITE_DEEPSEEK_API_KEY: import.meta.env.VITE_DEEPSEEK_API_KEY,
+  VITE_NSCALE_API_KEY: import.meta.env.VITE_NSCALE_API_KEY,
+  VITE_NEBIUS_API_KEY: import.meta.env.VITE_NEBIUS_API_KEY,
+  VITE_LOCAL_OLLAMA_URL: import.meta.env.VITE_LOCAL_OLLAMA_URL,
+};
+
 // Validation stricte des clés API (ignore les chaînes vides, 'FALSE', 'null', 'undefined', etc.)
 export const isInvalidApiKey = (val: unknown): boolean => {
   if (typeof val !== 'string') return true;
@@ -529,46 +566,24 @@ export const isInvalidApiKey = (val: unknown): boolean => {
   return false;
 };
 
-// Helper pour récupérer la clé API valide d'un provider
+// Helper pour récupérer la clé API valide d'un provider (chargée de manière statique et sécurisée)
 export const getProviderApiKey = (provider: LLMProviderConfig): string => {
-  // 1. Clé stockée dans localStorage si modifiée en direct dans l'interface
-  try {
-    const customKeys = JSON.parse(localStorage.getItem('betterschool_tutor_api_keys') || '{}');
-    const customVal = customKeys[provider.id];
-    if (!isInvalidApiKey(customVal)) {
-      return customVal.trim();
-    }
-  } catch {
-    // Ignore localStorage parse errors
-  }
-
-  // 2. Clé importée depuis .env.api via import.meta.env
-  const envObj = (import.meta as any).env || {};
-  const envVal = envObj[provider.envKeyName];
+  const envVal = STATIC_ENV_KEYS[provider.envKeyName];
   if (!isInvalidApiKey(envVal)) {
-    return envVal.trim();
+    return (envVal as string).trim();
   }
-
   return '';
 };
 
 // Vérifie si un provider est prêt à être interrogé (skip si clé vide ou égale à "FALSE")
 export const isProviderConfigured = (provider: LLMProviderConfig): boolean => {
   if (provider.id === 'local-ollama') {
-    const envObj = (import.meta as any).env || {};
-    const localUrl = envObj.VITE_LOCAL_OLLAMA_URL;
-    if (isInvalidApiKey(localUrl)) {
-      return false;
-    }
-    return true;
+    const localUrl = STATIC_ENV_KEYS.VITE_LOCAL_OLLAMA_URL;
+    return !isInvalidApiKey(localUrl);
   }
 
   const key = getProviderApiKey(provider);
-  if (isInvalidApiKey(key)) {
-    return false;
-  }
-
-  return true;
+  return !isInvalidApiKey(key);
 };
 
 // ==============================================================================
@@ -840,23 +855,6 @@ export class AITutorService {
       return content;
     } finally {
       clearTimeout(timeoutId);
-    }
-  }
-
-  /**
-   * Sauvegarde une clé pour un provider dans le navigateur (pour tests immédiats)
-   */
-  static saveCustomKey(providerId: string, key: string): void {
-    try {
-      const keys = JSON.parse(localStorage.getItem('betterschool_tutor_api_keys') || '{}');
-      if (!key.trim()) {
-        delete keys[providerId];
-      } else {
-        keys[providerId] = key.trim();
-      }
-      localStorage.setItem('betterschool_tutor_api_keys', JSON.stringify(keys));
-    } catch (err) {
-      console.error('Erreur de sauvegarde locale de la clé API:', err);
     }
   }
 }
