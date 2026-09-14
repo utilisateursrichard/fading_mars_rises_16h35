@@ -13,6 +13,21 @@ import {
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
 import { getSubjectTheme } from '../../utils/theme';
+import { calculateHomeworkImportance } from '../../utils/homeworkImportance';
+
+const importanceClasses = [
+  'bg-white border-slate-200/70 hover:border-slate-300',
+  'bg-red-50/30 border-red-100 hover:bg-red-50/50',
+  'bg-red-50/50 border-red-100 hover:bg-red-50/70',
+  'bg-red-50/80 border-red-200 hover:bg-red-100/70',
+  'bg-red-100/70 border-red-200 hover:bg-red-100',
+  'bg-red-100 border-red-300 hover:bg-red-200/80',
+  'bg-red-200/70 border-red-300 hover:bg-red-200',
+  'bg-red-200 border-red-400 hover:bg-red-300/80',
+  'bg-red-300/70 border-red-400 hover:bg-red-300',
+  'bg-red-300 border-red-500 hover:bg-red-400/80',
+  'bg-red-400/80 border-red-500 hover:bg-red-400'
+];
 
 const parseMinutes = (timeStr: string): number => {
   if (!timeStr) return 0;
@@ -169,7 +184,9 @@ export const DashboardView: React.FC = () => {
   }, [homeworks, todayDateStr]);
 
   const urgentHomeworksCount = useMemo(() => {
-    return homeworks.filter(h => !h.isCompleted && h.priority === 'high' && (!h.dueDate || h.dueDate >= todayDateStr)).length;
+    return homeworks.filter(h =>
+      calculateHomeworkImportance(h.dueDate, h.description, h.isCompleted) >= 5
+    ).length;
   }, [homeworks, todayDateStr]);
 
   return (
@@ -467,19 +484,28 @@ export const DashboardView: React.FC = () => {
               </div>
             ) : (
               filteredHomeworks.map((hw) => {
-                const theme = getSubjectTheme(hw.subjectCode);
+                const importance = calculateHomeworkImportance(
+                  hw.dueDate,
+                  hw.description,
+                  hw.isCompleted
+                );
+                const isUrgent = importance >= 5;
                 return (
                   <div
                     key={hw.id}
                     className={`p-3 rounded-2xl border transition-all flex items-start gap-3 ${
                       hw.isCompleted
                         ? 'bg-slate-50/50 border-slate-100 opacity-60'
-                      : 'bg-red-50/80 border-red-200/80 hover:bg-red-50 hover:border-red-300'
+                        : importanceClasses[importance]
                     }`}
                   >
                     <button
                       onClick={() => toggleHomework(hw.id)}
-                      className="mt-0.5 text-slate-300 hover:text-indigo-600 transition-colors shrink-0"
+                      className={`mt-0.5 transition-colors shrink-0 ${
+                        hw.isCompleted
+                          ? 'text-slate-300 hover:text-indigo-600'
+                          : isUrgent ? 'text-red-500 hover:text-red-800' : 'text-slate-300 hover:text-indigo-600'
+                      }`}
                     >
                       {hw.isCompleted ? (
                         <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -490,20 +516,30 @@ export const DashboardView: React.FC = () => {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-1">
-                        <span className={`text-[10px] font-bold uppercase ${theme.text}`}>
+                        <span className={`text-[10px] font-bold uppercase ${hw.isCompleted ? 'text-slate-500' : isUrgent ? 'text-red-800' : 'text-slate-700'}`}>
                           {hw.subjectCode}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-400">
-                          {new Date(hw.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[10px] font-bold ${hw.isCompleted ? 'text-slate-400' : isUrgent ? 'text-red-800' : 'text-slate-400'}`}>
+                            {new Date(hw.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                          </span>
+                          <span
+                            title={`Importance : ${importance} sur 10`}
+                            className={`min-w-5 px-1 py-0.5 rounded-md text-center text-[10px] font-black ${
+                              importance >= 7 ? 'bg-red-600 text-white' : importance >= 4 ? 'bg-red-200 text-red-800' : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {importance}/10
+                          </span>
+                        </div>
                       </div>
 
-                      <p className={`text-xs font-bold mt-0.5 ${hw.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                      <p className={`text-xs font-bold mt-0.5 ${hw.isCompleted ? 'line-through text-slate-400' : isUrgent ? 'text-red-950' : 'text-slate-900'}`}>
                         {hw.title}
                       </p>
                       
                       {hw.description && (
-                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                        <p className={`text-[11px] mt-0.5 line-clamp-1 ${hw.isCompleted ? 'text-slate-500' : isUrgent ? 'text-red-900' : 'text-slate-500'}`}>
                           {hw.description}
                         </p>
                       )}

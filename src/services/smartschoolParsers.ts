@@ -6,6 +6,7 @@
  */
 
 import { CourseEvent, Homework, DayOfWeek, EventType, EventStatus } from '../types/school';
+import { calculateHomeworkImportance, getHomeworkPriority } from '../utils/homeworkImportance';
 
 // Palette de correspondance des couleurs Smartschool vers BetterSchool
 const COLOR_MAP: Record<string, string> = {
@@ -24,59 +25,17 @@ const mapColor = (smartschoolColor?: string): string => {
 };
 
 /**
- * Calcule l'urgence d'un devoir ou d'une évaluation :
- * 1. Déjà terminé -> 'low' (plus urgent du tout)
- * 2. Échéance imminente (passée, aujourd'hui, demain <= 1 jour restant) -> URGENT ('high')
- * 3. Épreuve programmée (interro, examen, contrôle, DS) sous 3 jours -> URGENT ('high')
- * 4. Poids / coefficient important (weight >= 2) sous 4 jours -> URGENT ('high')
- * 5. Échéance sous 4 jours ou examen plus lointain -> MOYEN ('medium')
- * 6. Au-delà de 4 jours -> NORMAL ('low')
+ * Traduit le score d'importance cumulatif en niveau compatible avec les
+ * composants existants : élevé à partir de 5/10, moyen au-dessus de 0.
  */
 export const calculateHomeworkUrgency = (
   dueDateStr: string,
   assignmentTypeName?: string,
   isCompleted: boolean = false
 ): 'high' | 'medium' | 'low' => {
-  if (isCompleted) return 'low';
-
-  try {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    const [y, m, d] = dueDateStr.split('-').map(Number);
-    if (!y || !m || !d) return 'medium';
-    
-    const target = new Date(y, m - 1, d);
-    const diffTime = target.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    // Si la date est déjà passée (retard) :
-    if (diffDays < 0) {
-      return 'low';
-    }
-
-    const isTestOrExam = assignmentTypeName ? 
-      /interro|examen|contr[ôo]le|ds|test|[ée]val/i.test(assignmentTypeName) : false;
-
-    // 1. À rendre aujourd'hui ou demain (diffDays <= 1) -> Urgent !
-    if (diffDays <= 1) {
-      return 'high';
-    }
-
-    // 2. Évaluation / examen sous 3 jours -> Urgent !
-    if (isTestOrExam && diffDays <= 3) {
-      return 'high';
-    }
-
-    // 3. Échéance sous 4 jours ou examen plus lointain -> Medium
-    if (diffDays <= 4 || isTestOrExam) {
-      return 'medium';
-    }
-
-    return 'low';
-  } catch {
-    return 'medium';
-  }
+  return getHomeworkPriority(
+    calculateHomeworkImportance(dueDateStr, assignmentTypeName, isCompleted)
+  );
 };
 
 /**
@@ -199,8 +158,8 @@ export const parseSmartschoolHomework = (raw: any): Homework | null => {
     
     const typeName = raw.assignmentType?.name || raw.description || '';
     const isCompleted = raw.resolvedStatus === 'resolved';
+    const estimatedTimeMinutes = Number(raw.estimatedTimeMinutes || raw.estimatedDuration || 30);
 
-    // Calcul précis de l'urgence en fonction de la date et du type (sans coefficient)
     const priority = calculateHomeworkUrgency(dueDate, typeName, isCompleted);
 
     return {
@@ -212,7 +171,7 @@ export const parseSmartschoolHomework = (raw: any): Homework | null => {
       description: raw.assignmentType?.name || raw.description || 'Travail à réaliser',
       dueDate,
       dueTime,
-      estimatedTimeMinutes: 30,
+      estimatedTimeMinutes,
       isCompleted,
       priority,
       assignedDate: dueDate
