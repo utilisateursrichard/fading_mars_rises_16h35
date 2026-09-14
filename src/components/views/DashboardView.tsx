@@ -81,19 +81,31 @@ export const DashboardView: React.FC = () => {
 
   // Filtered homeworks (les devoirs passés / en retard sont supprimés et invisibles)
   const filteredHomeworks = useMemo(() => {
-    return homeworks.filter(hw => {
-      // Ignorer tout devoir dans le passé
-      if (hw.dueDate && hw.dueDate < todayDateStr) return false;
+    return homeworks
+      .filter(hw => {
+        // Ignorer tout devoir dans le passé
+        if (hw.dueDate && hw.dueDate < todayDateStr) return false;
 
-      if (globalSearch) {
-        const match = hw.title.toLowerCase().includes(globalSearch.toLowerCase()) ||
-                      hw.subject.toLowerCase().includes(globalSearch.toLowerCase());
-        if (!match) return false;
-      }
-      if (homeworkFilter === 'pending') return !hw.isCompleted;
-      if (homeworkFilter === 'completed') return hw.isCompleted;
-      return true;
-    });
+        if (globalSearch) {
+          const match = hw.title.toLowerCase().includes(globalSearch.toLowerCase()) ||
+                        hw.subject.toLowerCase().includes(globalSearch.toLowerCase());
+          if (!match) return false;
+        }
+        if (homeworkFilter === 'pending') return !hw.isCompleted;
+        if (homeworkFilter === 'completed') return hw.isCompleted;
+        return true;
+      })
+      .sort((first, second) => {
+        const firstImportance = calculateHomeworkImportance(
+          first.dueDate, first.description, first.isCompleted
+        );
+        const secondImportance = calculateHomeworkImportance(
+          second.dueDate, second.description, second.isCompleted
+        );
+
+        // Les tâches les plus importantes d'abord, puis l'échéance la plus proche.
+        return secondImportance - firstImportance || first.dueDate.localeCompare(second.dueDate);
+      });
   }, [homeworks, homeworkFilter, globalSearch, todayDateStr]);
 
   // Tri chronologique strict des cours du jour par heure de début
