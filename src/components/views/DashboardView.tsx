@@ -81,7 +81,7 @@ export const DashboardView: React.FC = () => {
 
   // Filtered homeworks (les devoirs passés / en retard sont supprimés et invisibles)
   const filteredHomeworks = useMemo(() => {
-    return homeworks
+    const visibleHomeworks = homeworks
       .filter(hw => {
         // Ignorer tout devoir dans le passé
         if (hw.dueDate && hw.dueDate < todayDateStr) return false;
@@ -94,17 +94,23 @@ export const DashboardView: React.FC = () => {
         if (homeworkFilter === 'pending') return !hw.isCompleted;
         if (homeworkFilter === 'completed') return hw.isCompleted;
         return true;
-      })
-      .sort((first, second) => {
-        const firstImportance = calculateHomeworkImportance(
-          first.dueDate, first.description, first.isCompleted
-        );
-        const secondImportance = calculateHomeworkImportance(
-          second.dueDate, second.description, second.isCompleted
-        );
+      });
 
+    // Le même score sert au tri et à l'affichage : impossible d'afficher 10/10
+    // derrière un devoir moins important à cause de deux calculs différents.
+    return visibleHomeworks
+      .map(homework => ({
+        homework,
+        importance: calculateHomeworkImportance(
+          homework.dueDate,
+          homework.description,
+          homework.isCompleted
+        )
+      }))
+      .sort((first, second) => {
         // Les tâches les plus importantes d'abord, puis l'échéance la plus proche.
-        return secondImportance - firstImportance || first.dueDate.localeCompare(second.dueDate);
+        return second.importance - first.importance ||
+          first.homework.dueDate.localeCompare(second.homework.dueDate);
       });
   }, [homeworks, homeworkFilter, globalSearch, todayDateStr]);
 
@@ -495,12 +501,7 @@ export const DashboardView: React.FC = () => {
                 Aucun devoir dans cette vue.
               </div>
             ) : (
-              filteredHomeworks.map((hw) => {
-                const importance = calculateHomeworkImportance(
-                  hw.dueDate,
-                  hw.description,
-                  hw.isCompleted
-                );
+              filteredHomeworks.map(({ homework: hw, importance }) => {
                 const isUrgent = importance >= 5;
                 return (
                   <div
