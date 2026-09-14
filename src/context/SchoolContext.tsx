@@ -15,7 +15,8 @@ import {
   getCachedRealEvents, 
   getCachedRealHomeworks, 
   getCachedRealStudent, 
-  syncAllSmartschoolData 
+  syncAllSmartschoolData,
+  toggleCachedRealHomework
 } from '../services/smartschoolApi';
 
 export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'tutor' | 'book';
@@ -338,6 +339,16 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Actions
   const toggleHomework = async (id: string) => {
+    if (!isDemoMode) {
+      // En mode réel, ne jamais appeler schoolService : il lit la liste de démo
+      // et remplacerait les devoirs Smartschool affichés par celle-ci.
+      toggleCachedRealHomework(id);
+      setHomeworks(prev => prev.map(homework =>
+        homework.id === id ? { ...homework, isCompleted: !homework.isCompleted } : homework
+      ));
+      return;
+    }
+
     const updated = await schoolService.toggleHomework(id);
     setHomeworks(updated);
   };
@@ -463,4 +474,3 @@ export const useSchool = () => {
   }
   return context;
 };
-

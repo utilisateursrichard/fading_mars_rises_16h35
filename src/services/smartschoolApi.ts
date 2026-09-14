@@ -495,6 +495,33 @@ export const getCachedRealHomeworks = (): Homework[] => {
   }
 };
 
+/**
+ * Bascule l'état d'un devoir du cache Smartschool sans le remplacer par les
+ * données de démonstration. Renvoie false lorsqu'aucun cache réel n'est présent.
+ */
+export const toggleCachedRealHomework = (homeworkId: string): boolean => {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    const stored = localStorage.getItem(REAL_STORAGE_KEYS.HOMEWORKS);
+    if (!stored) return false;
+
+    const homeworks: Homework[] = JSON.parse(stored);
+    let found = false;
+    const updated = homeworks.map(homework => {
+      if (homework.id !== homeworkId) return homework;
+      found = true;
+      return { ...homework, isCompleted: !homework.isCompleted };
+    });
+
+    if (!found) return false;
+    localStorage.setItem(REAL_STORAGE_KEYS.HOMEWORKS, JSON.stringify(updated));
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const getCachedRealStudent = (): Partial<Student> | null => {
   if (typeof window === 'undefined') return null;
   try {
