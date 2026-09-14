@@ -3,12 +3,19 @@
 @tailwind utilities;
 
 @layer base {
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
   html {
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-tap-highlight-color: transparent;
   }
 
   body {
+    @apply bg-[#F8FAFC] text-slate-800 overflow-x-hidden antialiased;
     @apply bg-[#F8FAFC] text-slate-800 min-h-screen overflow-x-hidden antialiased;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
