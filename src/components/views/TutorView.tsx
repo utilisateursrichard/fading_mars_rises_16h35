@@ -227,7 +227,7 @@ export const TutorView: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-140px)] min-h-[600px] bg-white rounded-3xl border border-slate-200/70 shadow-subtle overflow-hidden flex flex-col max-w-5xl mx-auto">
+    <div className="flex-1 min-h-0 h-full bg-white rounded-2xl sm:rounded-3xl border border-slate-200/70 shadow-subtle overflow-hidden flex flex-col max-w-5xl mx-auto w-full">
       
       {/* Top Header */}
       <div className="p-3.5 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-white z-10">
@@ -284,7 +284,7 @@ export const TutorView: React.FC = () => {
       </div>
 
       {/* Chat Messages Body */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-50/40">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4 bg-slate-50/40">
         
         {/* Info banner */}
         <div className="text-center my-1">

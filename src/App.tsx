@@ -45,8 +45,10 @@ const MainLayout: React.FC = () => {
     }
   };
 
+  const isTutor = activeTab === 'tutor';
+
   return (
-    <div className="relative flex min-h-screen bg-[#F8FAFC] text-slate-900 selection:bg-indigo-600 selection:text-white antialiased overflow-x-hidden">
+    <div className={`relative flex ${isTutor ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-[#F8FAFC] text-slate-900 selection:bg-indigo-600 selection:text-white antialiased overflow-x-hidden`}>
       {/* Ambient background glows for M3E / Apple Glass refraction */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute -top-32 right-1/4 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl" />
@@ -58,12 +60,16 @@ const MainLayout: React.FC = () => {
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="relative z-10 flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
+      <div className={`relative z-10 flex-1 flex flex-col min-w-0 ${isTutor ? 'h-full overflow-hidden pb-16 lg:pb-0' : 'pb-16 lg:pb-0'}`}>
         {/* Top Header */}
         <Header onOpenMobileMenu={() => setIsMobileDrawerOpen(true)} />
 
         {/* View Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-in fade-in duration-200">
+        <main className={`flex-1 max-w-7xl w-full mx-auto animate-in fade-in duration-200 ${
+          isTutor 
+            ? 'p-2 sm:p-4 lg:p-6 overflow-hidden flex flex-col min-h-0' 
+            : 'p-4 sm:p-6 lg:p-8'
+        }`}>
           {renderActiveView()}
         </main>
       </div>
