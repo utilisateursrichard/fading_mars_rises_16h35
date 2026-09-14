@@ -77,7 +77,7 @@ export const TutorView: React.FC = () => {
     ];
   });
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Sauvegarde automatique des messages
   useEffect(() => {
@@ -88,9 +88,14 @@ export const TutorView: React.FC = () => {
     }
   }, [messages]);
 
-  // Défilement automatique vers le bas
+  // Défilement automatique interne des messages vers le bas (sans scroller la fenêtre globale)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }, [messages, isThinking]);
 
   // Contexte élève injecté dans le prompt système
@@ -227,7 +232,7 @@ export const TutorView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 min-h-0 h-full bg-white rounded-2xl sm:rounded-3xl border border-slate-200/70 shadow-subtle overflow-hidden flex flex-col max-w-5xl mx-auto w-full">
+    <div className="h-[calc(100vh-140px)] bg-white rounded-2xl sm:rounded-3xl border border-slate-200/70 shadow-subtle overflow-hidden flex flex-col max-w-5xl mx-auto w-full">
       
       {/* Top Header */}
       <div className="p-3.5 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-white z-10">
@@ -284,7 +289,10 @@ export const TutorView: React.FC = () => {
       </div>
 
       {/* Chat Messages Body */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4 bg-slate-50/40">
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4 bg-slate-50/40"
+      >
         
         {/* Info banner */}
         <div className="text-center my-1">
@@ -430,8 +438,6 @@ export const TutorView: React.FC = () => {
             </div>
           </div>
         )}
-
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Suggestions Pills */}

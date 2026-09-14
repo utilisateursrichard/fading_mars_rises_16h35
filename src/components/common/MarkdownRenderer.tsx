@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 
 interface MarkdownRendererProps {
   content: string;
@@ -6,85 +8,26 @@ interface MarkdownRendererProps {
 }
 
 /**
- * Détecte si la librairie KaTeX CDN est chargée sur window
- */
-function useKatex(): boolean {
-  const [isReady, setIsReady] = useState<boolean>(() => {
-    return typeof window !== 'undefined' && Boolean((window as any).katex);
-  });
-
-  useEffect(() => {
-    if (isReady) return;
-
-    // Si KaTeX est déjà dispo
-    if (typeof window !== 'undefined' && (window as any).katex) {
-      setIsReady(true);
-      return;
-    }
-
-    // Injection dynamique défensive si index.html ne l'avait pas encore
-    if (typeof document !== 'undefined') {
-      if (!document.getElementById('katex-cdn-css')) {
-        const link = document.createElement('link');
-        link.id = 'katex-cdn-css';
-        link.rel = 'stylesheet';
-        link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css';
-        link.crossOrigin = 'anonymous';
-        document.head.appendChild(link);
-      }
-
-      if (!document.getElementById('katex-cdn-js')) {
-        const script = document.createElement('script');
-        script.id = 'katex-cdn-js';
-        script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js';
-        script.crossOrigin = 'anonymous';
-        script.onload = () => setIsReady(true);
-        document.head.appendChild(script);
-      } else {
-        const script = document.getElementById('katex-cdn-js') as HTMLScriptElement;
-        if (script) {
-          script.addEventListener('load', () => setIsReady(true));
-        }
-      }
-    }
-
-    // Intervalle de vérification rapide
-    const interval = setInterval(() => {
-      if (typeof window !== 'undefined' && (window as any).katex) {
-        setIsReady(true);
-        clearInterval(interval);
-      }
-    }, 250);
-
-    return () => clearInterval(interval);
-  }, [isReady]);
-
-  return isReady;
-}
-
-/**
- * Rend une expression mathématique LaTeX via KaTeX si présent, ou fallback stylisé
+ * Rend une expression mathématique LaTeX via KaTeX (importé localement) ou fallback stylisé
  */
 function renderKatexString(expr: string, displayMode: boolean, key: string | number): React.ReactNode {
   const trimmed = expr.trim();
   if (!trimmed) return null;
 
-  if (typeof window !== 'undefined' && (window as any).katex) {
-    try {
-      const html = (window as any).katex.renderToString(trimmed, {
-        displayMode,
-        throwOnError: false
-      });
-      return (
-        <span
-          key={key}
-          className={displayMode ? "block my-2 overflow-x-auto text-center py-1" : "inline-block px-0.5 align-baseline"}
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
-      );
-    } catch {
-      // Ignorer erreur et utiliser fallback
-    }
+  try {
+    const html = katex.renderToString(trimmed, {
+      displayMode,
+      throwOnError: false
+    });
+    return (
+      <span
+        key={key}
+        className={displayMode ? "block my-2 overflow-x-auto text-center py-1" : "inline-block px-0.5 align-baseline"}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
+  } catch {
+    // Ignorer erreur et utiliser fallback propre
   }
 
   // Fallback propre et élégant sans crash
@@ -106,7 +49,7 @@ function renderKatexString(expr: string, displayMode: boolean, key: string | num
 /**
  * Découpe et formate le texte en ligne (gras, italique, code, liens, LaTeX inline)
  */
-function renderInlineContent(text: string, katexReady: boolean): React.ReactNode[] {
+function renderInlineContent(text: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   let remaining = text;
   let keyIdx = 0;
@@ -162,7 +105,7 @@ function renderInlineContent(text: string, katexReady: boolean): React.ReactNode
     else if (matchedStr.startsWith('**') && matchedStr.endsWith('**')) {
       nodes.push(
         <strong key={key} className="font-bold text-slate-900">
-          {renderInlineContent(matchedStr.slice(2, -2), katexReady)}
+          {renderInlineContent(matchedStr.slice(2, -2))}
         </strong>
       );
     }
@@ -170,7 +113,7 @@ function renderInlineContent(text: string, katexReady: boolean): React.ReactNode
     else if (matchedStr.startsWith('*') && matchedStr.endsWith('*')) {
       nodes.push(
         <em key={key} className="italic text-slate-800">
-          {renderInlineContent(matchedStr.slice(1, -1), katexReady)}
+          {renderInlineContent(matchedStr.slice(1, -1))}
         </em>
       );
     }
@@ -246,8 +189,6 @@ function parseMarkdownTable(lines: string[]): { headers: string[]; rows: string[
  * Composant de rendu Markdown et LaTeX Zero-External-Dependency
  */
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className = '' }) => {
-  const katexReady = useKatex();
-
   if (!content) return null;
 
   const lines = content.split('\n');
@@ -345,7 +286,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                       key={colIdx}
                       className={`px-3.5 py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-700 text-${parsedTable.alignments[colIdx] || 'left'}`}
                     >
-                      {renderInlineContent(h, katexReady)}
+                      {renderInlineContent(h)}
                     </th>
                   ))}
                 </tr>
@@ -358,7 +299,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                         key={cellIdx}
                         className={`px-3.5 py-2 text-slate-700 align-top border-t border-slate-100 text-${parsedTable.alignments[cellIdx] || 'left'}`}
                       >
-                        {renderInlineContent(cell, katexReady)}
+                        {renderInlineContent(cell)}
                       </td>
                     ))}
                   </tr>
@@ -375,7 +316,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
     if (trimmed.startsWith('#### ')) {
       elements.push(
         <h5 key={`block-${elementKey++}`} className="text-xs sm:text-sm font-semibold text-slate-800 mt-2.5 mb-1">
-          {renderInlineContent(trimmed.slice(5), katexReady)}
+          {renderInlineContent(trimmed.slice(5))}
         </h5>
       );
       i++;
@@ -386,7 +327,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       elements.push(
         <h4 key={`block-${elementKey++}`} className="text-xs sm:text-base font-bold text-slate-900 mt-3 mb-1 flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 inline-block shrink-0" />
-          <span>{renderInlineContent(trimmed.slice(4), katexReady)}</span>
+          <span>{renderInlineContent(trimmed.slice(4))}</span>
         </h4>
       );
       i++;
@@ -396,7 +337,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
     if (trimmed.startsWith('## ')) {
       elements.push(
         <h3 key={`block-${elementKey++}`} className="text-sm sm:text-base font-extrabold text-slate-900 mt-3.5 mb-1.5 pb-1 border-b border-slate-100">
-          {renderInlineContent(trimmed.slice(3), katexReady)}
+          {renderInlineContent(trimmed.slice(3))}
         </h3>
       );
       i++;
@@ -406,7 +347,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
     if (trimmed.startsWith('# ')) {
       elements.push(
         <h2 key={`block-${elementKey++}`} className="text-base sm:text-lg font-extrabold text-slate-900 mt-4 mb-2 pb-1 border-b border-slate-100">
-          {renderInlineContent(trimmed.slice(2), katexReady)}
+          {renderInlineContent(trimmed.slice(2))}
         </h2>
       );
       i++;
@@ -424,7 +365,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       i = j;
       elements.push(
         <blockquote key={`block-${elementKey++}`} className="border-l-3 border-indigo-500 bg-indigo-50/40 px-3.5 py-2 my-2 rounded-r-xl text-slate-700 italic leading-relaxed">
-          {renderInlineContent(quoteLines.join(' '), katexReady)}
+          {renderInlineContent(quoteLines.join(' '))}
         </blockquote>
       );
       continue;
@@ -444,7 +385,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
           {listItems.map((item, idx) => (
             <li key={idx} className="flex items-start gap-2 text-slate-800 leading-relaxed">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0 mt-2" />
-              <div className="flex-1">{renderInlineContent(item, katexReady)}</div>
+              <div className="flex-1">{renderInlineContent(item)}</div>
             </li>
           ))}
         </ul>
@@ -474,7 +415,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
               <span className="px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold text-[10px] shrink-0 mt-0.5 border border-indigo-100">
                 {item.num}
               </span>
-              <div className="flex-1">{renderInlineContent(item.text, katexReady)}</div>
+              <div className="flex-1">{renderInlineContent(item.text)}</div>
             </li>
           ))}
         </ol>
@@ -491,7 +432,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
     // 10. Paragraphe régulier
     elements.push(
       <p key={`block-${elementKey++}`} className="leading-relaxed text-slate-800">
-        {renderInlineContent(line, katexReady)}
+        {renderInlineContent(line)}
       </p>
     );
     i++;
