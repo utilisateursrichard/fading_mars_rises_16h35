@@ -58,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   };
 
   return (
-    <header className="sticky top-0 z-20 h-14 sm:h-16 bg-white/75 backdrop-blur-xl border-b border-slate-200/70 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 transition-all">
+    <header className="sticky top-0 z-20 h-14 sm:h-16 bg-white/75 backdrop-blur-xl border-b border-slate-200/70 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 transition-all shrink-0">
       
       {/* Left: Sidebar Toggle & Breadcrumb Title */}
       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
