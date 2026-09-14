@@ -14,16 +14,21 @@ import {
   ChevronDown,
   ShieldCheck,
   Zap,
-  AlertTriangle
+  AlertTriangle,
+  Clock
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
 import { 
   AITutorService, 
   LLM_PROVIDERS_REGISTRY, 
   isProviderConfigured,
+  isProviderAvailable,
+  clearAllProviderFailures,
+  getActiveCooldowns,
   StudentContextData,
   LLMTier
 } from '../../services/aiTutorService';
+import { MarkdownRenderer } from '../common/MarkdownRenderer';
 
 interface TutorMessage {
   id: string;
@@ -126,9 +131,19 @@ export const TutorView: React.FC = () => {
   // Premier provider actif dans la cascade (calculé de manière sécurisée)
   const topActiveProvider = useMemo(() => {
     return LLM_PROVIDERS_REGISTRY
-      .filter(p => isProviderConfigured(p))
+      .filter(p => isProviderAvailable(p))
       .sort((a, b) => a.reputationRank - b.reputationRank)[0] || null;
-  }, []);
+  }, [messages, isThinking]);
+
+  // Liste des providers ou modèles en pause de cooldown dans localStorage
+  const activeCooldowns = useMemo(() => {
+    return getActiveCooldowns();
+  }, [messages, isThinking]);
+
+  const handleClearCooldowns = () => {
+    clearAllProviderFailures();
+    setMessages(prev => [...prev]);
+  };
 
   const handleSendMessage = async (textToSend?: string) => {
     const content = (textToSend || inputText).trim();
@@ -155,7 +170,7 @@ export const TutorView: React.FC = () => {
         content: m.text
       }));
 
-      // Appel au moteur d'orchestration avec cascade de fallback
+      // Appel au moteur d'orchestration avec cascade de fallback et circuit-breaker
       const response = await AITutorService.queryTutor(historyForLLM, studentContext);
 
       const tutorReply: TutorMessage = {
@@ -190,7 +205,8 @@ export const TutorView: React.FC = () => {
   };
 
   const handleResetChat = () => {
-    if (window.confirm('Voulez-vous réinitialiser l’historique de la conversation ?')) {
+    if (window.confirm('Voulez-vous réinitialiser l’historique de la conversation et réactiver tous les services en pause ?')) {
+      clearAllProviderFailures();
       const resetMsg: TutorMessage = {
         id: `msg-${Date.now()}`,
         sender: 'tutor',
@@ -208,93 +224,6 @@ export const TutorView: React.FC = () => {
         // Ignore
       }
     }
-  };
-
-  // Formateur de texte Markdown simplifié pour les messages du Tuteur
-  const renderFormattedContent = (text: string) => {
-    const lines = text.split('\n');
-
-    return (
-      <div className="space-y-2 text-xs sm:text-sm leading-relaxed font-normal">
-        {lines.map((line, idx) => {
-          const trimmed = line.trim();
-
-          // Titre niveau 3 ###
-          if (trimmed.startsWith('### ')) {
-            return (
-              <h4 key={idx} className="text-sm sm:text-base font-bold text-slate-900 mt-3 mb-1 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 inline-block" />
-                {trimmed.replace('### ', '')}
-              </h4>
-            );
-          }
-
-          // Titre niveau 2 ##
-          if (trimmed.startsWith('## ')) {
-            return (
-              <h3 key={idx} className="text-base sm:text-lg font-extrabold text-slate-900 mt-3.5 mb-1.5 pb-1 border-b border-slate-100">
-                {trimmed.replace('## ', '')}
-              </h3>
-            );
-          }
-
-          // Puces listes à tirets
-          if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-            const rawContent = trimmed.slice(2);
-            return (
-              <div key={idx} className="flex items-start gap-2 pl-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0 mt-1.5" />
-                <span>{renderInlineFormatting(rawContent)}</span>
-              </div>
-            );
-          }
-
-          // Liste numérotée (ex: 1. 2.)
-          const numMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
-          if (numMatch) {
-            return (
-              <div key={idx} className="flex items-start gap-2.5 pl-2">
-                <span className="px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold text-[10px] shrink-0 mt-0.5 border border-indigo-100">
-                  {numMatch[1]}
-                </span>
-                <span>{renderInlineFormatting(numMatch[2])}</span>
-              </div>
-            );
-          }
-
-          // Ligne vide (paragraphe)
-          if (!trimmed) {
-            return <div key={idx} className="h-1.5" />;
-          }
-
-          // Paragraphe normal avec inline bold / italic / code
-          return (
-            <p key={idx}>
-              {renderInlineFormatting(line)}
-            </p>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // Helper pour formater le gras et le code inline
-  const renderInlineFormatting = (content: string) => {
-    const parts = content.split(/(\*\*.*?\*\*|`.*?`)/g);
-
-    return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
-      }
-      if (part.startsWith('`') && part.endsWith('`')) {
-        return (
-          <code key={i} className="px-1.5 py-0.5 rounded bg-slate-100 text-indigo-700 font-mono text-[11px] border border-slate-200/80">
-            {part.slice(1, -1)}
-          </code>
-        );
-      }
-      return part;
-    });
   };
 
   return (
@@ -330,6 +259,19 @@ export const TutorView: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Badge & action des providers en cooldown si applicable */}
+          {activeCooldowns.length > 0 && (
+            <button
+              onClick={handleClearCooldowns}
+              className="hidden sm:inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/90 items-center gap-1.5 hover:bg-amber-100 transition-colors shadow-xs"
+              title="Cliquer pour réactiver immédiatement les modèles ou providers en pause"
+            >
+              <Clock className="w-3 h-3 text-amber-600 animate-pulse" />
+              <span>{activeCooldowns.length} suspendu{activeCooldowns.length > 1 ? 's' : ''}</span>
+              <span className="underline font-semibold ml-0.5 text-amber-900">(Réactiver)</span>
+            </button>
+          )}
+
           {/* Bouton Réinitialiser la discussion */}
           <button
             onClick={handleResetChat}
@@ -384,7 +326,7 @@ export const TutorView: React.FC = () => {
                 {isUser ? (
                   <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
                 ) : (
-                  renderFormattedContent(msg.text)
+                  <MarkdownRenderer content={msg.text} />
                 )}
 
                 {/* Métadonnées Tuteur (Fournisseur, modèle, latence) */}

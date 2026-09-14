@@ -50,6 +50,19 @@ export interface StudentContextData {
   recentGrades?: Array<{ subject: string; grade: number; max: number }>;
 }
 
+// Cascade ordonnée des modèles Gemini 3.x (exclusivement 3.x, exclusion stricte de 1.5 et 2.0 obsolètes)
+export const GEMINI_MODELS_CASCADE: string[] = [
+  'gemini-3.8-flash',
+  'gemini-3.7-flash',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-3-flash-preview',
+  'gemini-flash-latest',
+  'gemini-flash-lite-latest'
+];
+
 // ==============================================================================
 // 🏆 REGISTRE OFFICIEL DES PROVIDERS GRATUITS (STRICTEMENT BASÉ SUR LE README)
 // ==============================================================================
@@ -63,7 +76,7 @@ export const LLM_PROVIDERS_REGISTRY: LLMProviderConfig[] = [
     tier: 1,
     reputationRank: 1,
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
-    model: 'gemini-3.7-flash', // Directement issu du tableau "Best Free Models"
+    model: 'gemini-3.8-flash', // Premier modèle actif de la cascade Gemini 3.x
     envKeyName: 'VITE_GEMINI_API_KEY',
     rateLimit: '15 RPM, 1,500 RPD, 1M context',
     websiteUrl: 'https://aistudio.google.com/app/apikey',
@@ -587,6 +600,130 @@ export const isProviderConfigured = (provider: LLMProviderConfig): boolean => {
 };
 
 // ==============================================================================
+// ⚡ CIRCUIT-BREAKER LOCALSTORAGE (MÉMOIRE DES PANNES & TOLÉRANCE AUX PANNES)
+// ==============================================================================
+export interface ProviderFailureRecord {
+  key: string;
+  providerName: string;
+  lastFailedAt: number; // timestamp ms
+  failureCount: number;
+  lastError: string;
+}
+
+export type ProviderFailuresMap = Record<string, ProviderFailureRecord>;
+
+export const STORAGE_FAILURES_KEY = 'betterschool_ai_provider_failures';
+export const DEFAULT_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes de mise en pause
+
+/**
+ * Récupère l'ensemble des pannes enregistrées depuis le localStorage
+ */
+export const getStoredFailures = (): ProviderFailuresMap => {
+  try {
+    const raw = localStorage.getItem(STORAGE_FAILURES_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+};
+
+/**
+ * Sauvegarde la carte des pannes dans le localStorage
+ */
+export const saveStoredFailures = (map: ProviderFailuresMap): void => {
+  try {
+    localStorage.setItem(STORAGE_FAILURES_KEY, JSON.stringify(map));
+  } catch (err) {
+    console.warn('[BetterSchool AI] Sauvegarde localStorage impossible:', err);
+  }
+};
+
+/**
+ * Vérifie si un provider ou modèle précis est actuellement en période de pause (cooldown)
+ */
+export const isProviderInCooldown = (
+  providerKey: string,
+  cooldownMs = DEFAULT_COOLDOWN_MS
+): boolean => {
+  const failures = getStoredFailures();
+  const record = failures[providerKey];
+  if (!record) return false;
+
+  const elapsed = Date.now() - record.lastFailedAt;
+  if (elapsed < cooldownMs) {
+    return true; // En pause active
+  }
+
+  // Cooldown expiré : nettoyage de l'enregistrement pour redonner une chance
+  delete failures[providerKey];
+  saveStoredFailures(failures);
+  return false;
+};
+
+/**
+ * Enregistre une indisponibilité (timeout, 503, 404, etc.) dans localStorage pour éviter le spam inutile
+ */
+export const recordProviderFailure = (
+  providerKey: string,
+  providerName: string,
+  error: string
+): void => {
+  const failures = getStoredFailures();
+  const existing = failures[providerKey];
+  failures[providerKey] = {
+    key: providerKey,
+    providerName,
+    lastFailedAt: Date.now(),
+    failureCount: (existing?.failureCount || 0) + 1,
+    lastError: error
+  };
+  saveStoredFailures(failures);
+  console.warn(`[BetterSchool AI Circuit-Breaker] '${providerKey}' (${providerName}) mis en pause (${Math.round(DEFAULT_COOLDOWN_MS / 60000)} min) : ${error}`);
+};
+
+/**
+ * Rétablit un provider/modèle avec succès (supprime son enregistrement de panne)
+ */
+export const recordProviderSuccess = (providerKey: string): void => {
+  const failures = getStoredFailures();
+  if (failures[providerKey]) {
+    delete failures[providerKey];
+    saveStoredFailures(failures);
+    console.info(`[BetterSchool AI Circuit-Breaker] '${providerKey}' rétabli avec succès.`);
+  }
+};
+
+/**
+ * Réinitialise manuellement toutes les pannes enregistrées dans le localStorage
+ */
+export const clearAllProviderFailures = (): void => {
+  try {
+    localStorage.removeItem(STORAGE_FAILURES_KEY);
+    console.info('[BetterSchool AI Circuit-Breaker] Toutes les suspensions de providers ont été réinitialisées.');
+  } catch {}
+};
+
+/**
+ * Retourne la liste des pannes actuellement en cooldown actif
+ */
+export const getActiveCooldowns = (cooldownMs = DEFAULT_COOLDOWN_MS): ProviderFailureRecord[] => {
+  const failures = getStoredFailures();
+  const now = Date.now();
+  return Object.values(failures).filter(f => now - f.lastFailedAt < cooldownMs);
+};
+
+/**
+ * Vérifie si un provider est à la fois configuré ET non en cooldown
+ */
+export const isProviderAvailable = (provider: LLMProviderConfig): boolean => {
+  if (!isProviderConfigured(provider)) return false;
+  if (isProviderInCooldown(provider.id)) return false;
+  return true;
+};
+
+
+// ==============================================================================
 // 🧠 CONSTRUCTEUR D'INVITE SYSTÈME PÉDAGOGIQUE
 // ==============================================================================
 export const buildSystemPrompt = (context?: StudentContextData): string => {
@@ -706,13 +843,13 @@ Je suis ton tuteur BetterSchool et je suis prêt à t'accompagner pas à pas. Po
 };
 
 // ==============================================================================
-// 🚀 ORCHESTRATEUR PRINCIPAL DU TUTEUR IA (CASCADE DE FALLBACK)
+// 🚀 ORCHESTRATEUR PRINCIPAL DU TUTEUR IA (CASCADE DE FALLBACK AVEC CIRCUIT-BREAKER)
 // ==============================================================================
 export class AITutorService {
-  private static TIMEOUT_MS = 12000; // 12 secondes max par provider avant bascule
+  private static TIMEOUT_MS = 10000; // 10 secondes max par provider avant bascule
 
   /**
-   * Envoie la requête au meilleur provider disponible avec cascade de fallback
+   * Envoie la requête au meilleur provider disponible avec cascade de fallback et circuit-breaker
    */
   static async queryTutor(
     messages: LLMMessage[],
@@ -735,11 +872,51 @@ export class AITutorService {
 
     // 3. Tenter chaque provider dans l'ordre de réputation
     for (const provider of configuredProviders) {
+      // Si le provider est en cooldown dans localStorage, le sauter instantanément (0ms)
+      if (isProviderInCooldown(provider.id)) {
+        fallbackChain.push({
+          providerId: provider.id,
+          providerName: provider.name,
+          error: 'Fournisseur en pause (cooldown suite à indisponibilité récente)'
+        });
+        continue;
+      }
+
+      // Cas Spécifique Google Gemini : cascade intelligente des modèles Gemini 3.x
+      if (provider.id === 'google-gemini') {
+        const apiKey = getProviderApiKey(provider);
+        const geminiResult = await this.callGeminiWithCascade(
+          provider,
+          apiKey,
+          fullMessages,
+          fallbackChain
+        );
+
+        if (geminiResult && geminiResult.text.trim().length > 0) {
+          const latencyMs = Math.round(performance.now() - startTime);
+          return {
+            text: geminiResult.text.trim(),
+            providerId: provider.id,
+            providerName: provider.name,
+            modelUsed: geminiResult.modelUsed,
+            tier: provider.tier,
+            latencyMs,
+            fallbackChain,
+            isZeroDowntimeFallback: false
+          };
+        }
+
+        // Si tous les modèles Gemini ont échoué ou étaient en pause, continuer vers le prochain provider (Groq, etc.)
+        continue;
+      }
+
+      // Cas standard : providers OpenAI-compatibles et tiers
       try {
         const apiKey = getProviderApiKey(provider);
         const replyText = await this.callProvider(provider, apiKey, fullMessages);
 
         if (replyText && replyText.trim().length > 0) {
+          recordProviderSuccess(provider.id);
           const latencyMs = Math.round(performance.now() - startTime);
           return {
             text: replyText.trim(),
@@ -754,6 +931,7 @@ export class AITutorService {
         }
       } catch (err: any) {
         const errMsg = err?.message || 'Erreur inconnue';
+        recordProviderFailure(provider.id, provider.name, errMsg);
         fallbackChain.push({
           providerId: provider.id,
           providerName: provider.name,
@@ -782,6 +960,122 @@ export class AITutorService {
   }
 
   /**
+   * Cascade ordonnée des modèles Gemini 3.x avec circuit-breaker par modèle
+   */
+  private static async callGeminiWithCascade(
+    provider: LLMProviderConfig,
+    apiKey: string,
+    messages: LLMMessage[],
+    fallbackChain: Array<{ providerId: string; providerName: string; error: string }>
+  ): Promise<{ text: string; modelUsed: string } | null> {
+    const systemInstruction = messages.find(m => m.role === 'system')?.content || '';
+    const conversation = messages
+      .filter(m => m.role !== 'system')
+      .map(m => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }]
+      }));
+
+    const bodyPayload = {
+      contents: conversation,
+      ...(systemInstruction ? {
+        systemInstruction: { parts: [{ text: systemInstruction }] }
+      } : {}),
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+      }
+    };
+
+    let allModelsInCooldown = true;
+
+    for (const model of GEMINI_MODELS_CASCADE) {
+      const modelKey = `google-gemini:${model}`;
+      const modelDisplayName = `Google Gemini (${model})`;
+
+      // Si ce modèle précis est en cooldown dans localStorage, le sauter instantanément (0ms)
+      if (isProviderInCooldown(modelKey)) {
+        fallbackChain.push({
+          providerId: modelKey,
+          providerName: modelDisplayName,
+          error: 'Modèle en pause (cooldown suite à indisponibilité récente)'
+        });
+        continue;
+      }
+
+      allModelsInCooldown = false;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 7000); // 7 secondes max par modèle Gemini
+
+      try {
+        const url = `${provider.baseUrl}/${model}:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyPayload),
+          signal: controller.signal
+        });
+
+        if (!res.ok) {
+          const errBody = await res.text().catch(() => '');
+          const statusDesc = `HTTP ${res.status}: ${res.statusText || errBody.slice(0, 80)}`;
+
+          // Si la clé API est invalide (400, 401, 403), inutile de tester les autres modèles
+          if (res.status === 400 || res.status === 401 || res.status === 403) {
+            recordProviderFailure('google-gemini', 'Google Gemini', `Clé API invalide ou accès refusé (${res.status})`);
+            fallbackChain.push({
+              providerId: 'google-gemini',
+              providerName: 'Google Gemini',
+              error: statusDesc
+            });
+            return null;
+          }
+
+          // Indisponibilité spécifique à ce modèle (503 surchargé, 404 introuvable, 429 quota modèle, etc.)
+          recordProviderFailure(modelKey, modelDisplayName, statusDesc);
+          fallbackChain.push({
+            providerId: modelKey,
+            providerName: modelDisplayName,
+            error: statusDesc
+          });
+          continue; // Essayer le modèle Gemini suivant
+        }
+
+        const data = await res.json();
+        const extracted = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (extracted && extracted.trim().length > 0) {
+          // Succès ! Rétablissement du modèle et du provider global
+          recordProviderSuccess(modelKey);
+          recordProviderSuccess('google-gemini');
+          return {
+            text: extracted,
+            modelUsed: model
+          };
+        } else {
+          throw new Error('Réponse vide ou format Gemini inattendu');
+        }
+      } catch (err: any) {
+        const errMsg = err?.name === 'AbortError' ? 'Délai d’attente dépassé (timeout 7s)' : (err?.message || 'Erreur réseau');
+        recordProviderFailure(modelKey, modelDisplayName, errMsg);
+        fallbackChain.push({
+          providerId: modelKey,
+          providerName: modelDisplayName,
+          error: errMsg
+        });
+        console.warn(`[BetterSchool AI Tutor] Échec ${modelDisplayName}: ${errMsg}`);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    if (allModelsInCooldown) {
+      recordProviderFailure('google-gemini', 'Google Gemini', 'Tous les modèles Gemini 3.x sont en pause');
+    }
+
+    return null;
+  }
+
+  /**
    * Appelle un provider spécifique avec timeout et gestion d'erreur stricte
    */
   private static async callProvider(
@@ -793,29 +1087,6 @@ export class AITutorService {
     const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT_MS);
 
     try {
-      // Cas spécifique 1 : Google Gemini natif
-      if (provider.id === 'google-gemini') {
-        const url = `${provider.baseUrl}/${provider.model}:generateContent?key=${apiKey}`;
-        const bodyPayload = provider.customBody ? provider.customBody(messages, provider.model) : {};
-
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bodyPayload),
-          signal: controller.signal
-        });
-
-        if (!res.ok) {
-          const errBody = await res.text().catch(() => '');
-          throw new Error(`HTTP ${res.status}: ${res.statusText || errBody.slice(0, 100)}`);
-        }
-
-        const data = await res.json();
-        const extracted = provider.customExtract ? provider.customExtract(data) : '';
-        if (!extracted) throw new Error('Format de réponse Gemini inattendu');
-        return extracted;
-      }
-
       // Cas standard : OpenAI-compatible endpoints
       const url = provider.baseUrl.endsWith('/chat/completions') 
         ? provider.baseUrl 
@@ -858,3 +1129,4 @@ export class AITutorService {
     }
   }
 }
+
