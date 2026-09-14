@@ -372,7 +372,7 @@ export const DashboardView: React.FC = () => {
       </div>
 
       {/* 4. Deux Colonnes Claires : Programme & Devoirs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 lg:items-stretch gap-6">
         
         {/* Colonne Gauche : Programme du jour trié chronologiquement */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-subtle">
@@ -426,7 +426,7 @@ export const DashboardView: React.FC = () => {
         </div>
 
         {/* Colonne Droite : Devoirs */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-subtle flex flex-col">
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-subtle flex flex-col min-h-0">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-extrabold text-base text-slate-900">Devoirs & Travail</h3>
             
@@ -460,7 +460,7 @@ export const DashboardView: React.FC = () => {
           </div>
 
           {/* List */}
-          <div className="space-y-2 flex-1 max-h-[360px] overflow-y-auto pr-1">
+          <div className="space-y-2 flex-1 min-h-0 overflow-y-auto pr-1">
             {filteredHomeworks.length === 0 ? (
               <div className="p-8 text-center text-xs font-medium text-slate-400">
                 Aucun devoir dans cette vue.
@@ -474,7 +474,7 @@ export const DashboardView: React.FC = () => {
                     className={`p-3 rounded-2xl border transition-all flex items-start gap-3 ${
                       hw.isCompleted
                         ? 'bg-slate-50/50 border-slate-100 opacity-60'
-                        : 'bg-white border-slate-200/70 hover:border-slate-300'
+                      : 'bg-red-50/80 border-red-200/80 hover:bg-red-50 hover:border-red-300'
                     }`}
                   >
                     <button
