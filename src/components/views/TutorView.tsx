@@ -1,58 +1,40 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Bot, 
-  Send, 
   Sparkles, 
   RotateCcw, 
   BookOpen, 
   Code2, 
   Calculator, 
   Feather, 
-  Lightbulb,
-  Layers,
-  ChevronRight,
-  ChevronDown,
-  ShieldCheck,
-  Zap,
-  AlertTriangle,
-  Clock
+  Lightbulb, 
+  ShieldCheck, 
+  Zap, 
+  Clock 
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
 import { 
   AITutorService, 
   LLM_PROVIDERS_REGISTRY, 
-  isProviderConfigured,
   isProviderAvailable,
   clearAllProviderFailures,
   getActiveCooldowns,
-  StudentContextData,
-  LLMTier
+  StudentContextData
 } from '../../services/aiTutorService';
-import { MarkdownRenderer } from '../common/MarkdownRenderer';
-
-interface TutorMessage {
-  id: string;
-  sender: 'user' | 'tutor';
-  text: string;
-  time: string;
-  providerName?: string;
-  modelUsed?: string;
-  latencyMs?: number;
-  tier?: LLMTier;
-  isZeroDowntimeFallback?: boolean;
-  fallbackChain?: Array<{ providerId: string; providerName: string; error: string }>;
-}
+import { TutorInputBar } from './tutor/TutorInputBar';
+import { TutorMessageItem, TutorMessage } from './tutor/TutorMessageItem';
 
 const STORAGE_CHAT_KEY = 'betterschool_v3_tutor_messages';
+const INITIAL_VISIBLE_COUNT = 25;
 
 export const TutorView: React.FC = () => {
   const { student, homeworks, courses } = useSchool();
-  const [inputText, setInputText] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [activeProviderName, setActiveProviderName] = useState<string>('');
   const [expandedFallbackId, setExpandedFallbackId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState<number>(INITIAL_VISIBLE_COUNT);
 
-  // Initialisation ou restauration de l'historique de discussion
+  // Initialisation ou restauration de l'historique de discussion intégral
   const [messages, setMessages] = useState<TutorMessage[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_CHAT_KEY);
@@ -79,7 +61,7 @@ export const TutorView: React.FC = () => {
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Sauvegarde automatique des messages
+  // Sauvegarde automatique intégrale de l'historique
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_CHAT_KEY, JSON.stringify(messages));
@@ -88,12 +70,19 @@ export const TutorView: React.FC = () => {
     }
   }, [messages]);
 
-  // Défilement automatique interne des messages vers le bas (sans scroller la fenêtre globale)
+  // Plafonnement du nombre de messages dessinés à l'écran (DOM Windowing anti-crash)
+  const visibleMessages = useMemo(() => {
+    return messages.slice(-visibleCount);
+  }, [messages, visibleCount]);
+
+  const hiddenCount = Math.max(0, messages.length - visibleCount);
+
+  // Défilement automatique interne des messages vers le bas
   useEffect(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTo({
         top: messagesContainerRef.current.scrollHeight,
-        behavior: 'smooth'
+        behavior: isThinking ? 'auto' : 'smooth'
       });
     }
   }, [messages, isThinking]);
@@ -133,7 +122,7 @@ export const TutorView: React.FC = () => {
     return list.slice(0, 4);
   }, [homeworks]);
 
-  // Premier provider actif dans la cascade (calculé de manière sécurisée)
+  // Premier provider actif dans la cascade
   const topActiveProvider = useMemo(() => {
     return LLM_PROVIDERS_REGISTRY
       .filter(p => isProviderAvailable(p))
@@ -150,8 +139,8 @@ export const TutorView: React.FC = () => {
     setMessages(prev => [...prev]);
   };
 
-  const handleSendMessage = async (textToSend?: string) => {
-    const content = (textToSend || inputText).trim();
+  const handleSendMessage = async (textToSend: string) => {
+    const content = textToSend.trim();
     if (!content || isThinking) return;
 
     const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -163,46 +152,73 @@ export const TutorView: React.FC = () => {
       time: timeNow
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputText('');
+    const tutorMsgId = `tutor-${Date.now()}`;
+    const initialTutorMessage: TutorMessage = {
+      id: tutorMsgId,
+      sender: 'tutor',
+      text: '',
+      time: timeNow,
+      providerName: topActiveProvider?.name || 'BetterSchool AI Engine',
+      isStreaming: true
+    };
+
+    // Ajout immédiat du message utilisateur et du message assistant vide
+    setMessages(prev => [...prev, userMessage, initialTutorMessage]);
     setIsThinking(true);
     setActiveProviderName(topActiveProvider?.name || 'Moteur de repli');
 
     try {
-      // Construction de l'historique complet pour le LLM
+      // Préparation de l'historique pour le LLM
       const historyForLLM = [...messages, userMessage].map(m => ({
         role: (m.sender === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
         content: m.text
       }));
 
-      // Appel au moteur d'orchestration avec cascade de fallback et circuit-breaker
-      const response = await AITutorService.queryTutor(historyForLLM, studentContext);
+      // Appel au moteur avec streaming natif par SSE
+      const response = await AITutorService.queryTutorStream(
+        historyForLLM,
+        studentContext,
+        (_chunk, accumulated) => {
+          setMessages(prev => prev.map(m => {
+            if (m.id === tutorMsgId) {
+              return { ...m, text: accumulated, isStreaming: true };
+            }
+            return m;
+          }));
+        }
+      );
 
-      const tutorReply: TutorMessage = {
-        id: `tutor-${Date.now()}`,
-        sender: 'tutor',
-        text: response.text,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        providerName: response.providerName,
-        modelUsed: response.modelUsed,
-        latencyMs: response.latencyMs,
-        tier: response.tier,
-        isZeroDowntimeFallback: response.isZeroDowntimeFallback,
-        fallbackChain: response.fallbackChain
-      };
-
-      setMessages(prev => [...prev, tutorReply]);
+      // Finalisation avec métadonnées complètes
+      setMessages(prev => prev.map(m => {
+        if (m.id === tutorMsgId) {
+          return {
+            ...m,
+            text: response.text,
+            providerName: response.providerName,
+            modelUsed: response.modelUsed,
+            latencyMs: response.latencyMs,
+            tier: response.tier,
+            isZeroDowntimeFallback: response.isZeroDowntimeFallback,
+            fallbackChain: response.fallbackChain,
+            isStreaming: false
+          };
+        }
+        return m;
+      }));
     } catch (err: any) {
       // Secours ultime sans downtime
-      const errorReply: TutorMessage = {
-        id: `tutor-err-${Date.now()}`,
-        sender: 'tutor',
-        text: "Une coupure réseau est survenue. N'hésite pas à reposer ta question !",
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        providerName: 'Secours Local',
-        isZeroDowntimeFallback: true
-      };
-      setMessages(prev => [...prev, errorReply]);
+      setMessages(prev => prev.map(m => {
+        if (m.id === tutorMsgId) {
+          return {
+            ...m,
+            text: m.text || "Une coupure réseau est survenue. N'hésite pas à reposer ta question !",
+            providerName: 'Secours Local',
+            isZeroDowntimeFallback: true,
+            isStreaming: false
+          };
+        }
+        return m;
+      }));
     } finally {
       setIsThinking(false);
       setActiveProviderName('');
@@ -223,6 +239,7 @@ export const TutorView: React.FC = () => {
         isZeroDowntimeFallback: false
       };
       setMessages([resetMsg]);
+      setVisibleCount(INITIAL_VISIBLE_COUNT);
       try {
         localStorage.setItem(STORAGE_CHAT_KEY, JSON.stringify([resetMsg]));
       } catch {
@@ -230,6 +247,10 @@ export const TutorView: React.FC = () => {
       }
     }
   };
+
+  // Le loader de réflexion n'apparaît que si le streaming n'a pas encore produit de texte
+  const currentStreamingMessage = messages[messages.length - 1];
+  const isWaitingForFirstChunk = isThinking && currentStreamingMessage?.sender === 'tutor' && !currentStreamingMessage?.text;
 
   return (
     <div className="h-[calc(100vh-140px)] bg-white rounded-2xl sm:rounded-3xl border border-slate-200/70 shadow-subtle overflow-hidden flex flex-col max-w-5xl mx-auto w-full">
@@ -308,120 +329,33 @@ export const TutorView: React.FC = () => {
           </div>
         </div>
 
-        {/* Message stream */}
-        {messages.map((msg) => {
-          const isUser = msg.sender === 'user';
-          const hasFallback = Boolean(msg.fallbackChain && msg.fallbackChain.length > 0);
-          const isExpanded = expandedFallbackId === msg.id;
-
-          return (
-            <div
-              key={msg.id}
-              className={`flex items-end gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}
+        {/* Bouton de chargement des messages plus anciens (si > visibleCount) */}
+        {hiddenCount > 0 && (
+          <div className="flex justify-center my-2">
+            <button
+              type="button"
+              onClick={() => setVisibleCount(prev => prev + 25)}
+              className="m3-press inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white hover:bg-indigo-50 text-indigo-700 font-bold text-xs border border-indigo-200/80 shadow-xs transition-colors cursor-pointer"
             >
-              {!isUser && (
-                <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center shrink-0 mb-1 ring-2 ring-slate-100 shadow-subtle">
-                  <Bot className="w-4 h-4 text-indigo-400" />
-                </div>
-              )}
+              <span>↑ Charger les messages précédents ({hiddenCount} masqués)</span>
+            </button>
+          </div>
+        )}
 
-              <div className={`max-w-[88%] sm:max-w-[76%] rounded-2xl p-4 space-y-2 ${
-                isUser
-                  ? 'bg-slate-900 text-white rounded-br-xs shadow-subtle font-medium text-xs sm:text-sm'
-                  : 'bg-white text-slate-800 border border-slate-200/70 rounded-bl-xs shadow-subtle'
-              }`}>
-                {/* Contenu du message */}
-                {isUser ? (
-                  <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
-                ) : (
-                  <MarkdownRenderer content={msg.text} />
-                )}
+        {/* Tranche des messages dessinés à l'écran (Plafonnée dans le DOM) */}
+        {visibleMessages.map((msg) => (
+          <TutorMessageItem
+            key={msg.id}
+            msg={msg}
+            studentAvatar={student?.avatar}
+            studentFirstName={student?.firstName}
+            isExpanded={expandedFallbackId === msg.id}
+            onToggleExpand={(id) => setExpandedFallbackId(prev => prev === id ? null : id)}
+          />
+        ))}
 
-                {/* Métadonnées Tuteur (Fournisseur, modèle, latence) */}
-                {!isUser && (
-                  <div className="pt-2 mt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-400 font-medium">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {msg.isZeroDowntimeFallback ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 font-bold">
-                          <ShieldCheck className="w-3 h-3 text-amber-600" />
-                          <span>Moteur Résilient BetterSchool (Zéro Downtime)</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold border border-slate-200">
-                          <Sparkles className="w-2.5 h-2.5 text-indigo-500" />
-                          <span>{msg.providerName || 'IA'}</span>
-                          {msg.modelUsed && <span className="text-slate-400">({msg.modelUsed})</span>}
-                          {msg.latencyMs && <span>• {msg.latencyMs}ms</span>}
-                        </span>
-                      )}
-
-                      {/* Indicateur de repli transparent si un provider a dû être sauté */}
-                      {hasFallback && (
-                        <button
-                          onClick={() => setExpandedFallbackId(isExpanded ? null : msg.id)}
-                          className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold border border-indigo-100 transition-colors cursor-pointer"
-                          title="Voir la chaîne de repli"
-                        >
-                          <Layers className="w-2.5 h-2.5" />
-                          <span>Repli ({msg.fallbackChain?.length})</span>
-                          {isExpanded ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}
-                        </button>
-                      )}
-                    </div>
-
-                    <span>{msg.time}</span>
-                  </div>
-                )}
-
-                {/* Détails déroulants de la cascade de repli */}
-                {hasFallback && isExpanded && (
-                  <div className="mt-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 space-y-1">
-                    <div className="font-bold text-slate-800 flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3 text-amber-500" />
-                      <span>Cascade de résilience appliquée :</span>
-                    </div>
-                    {msg.fallbackChain?.map((fb, fidx) => (
-                      <div key={fidx} className="flex items-center justify-between text-slate-500 pl-3 border-l-2 border-amber-300 py-0.5">
-                        <span className="font-semibold text-slate-700">{fb.providerName}</span>
-                        <span className="text-[10px] text-red-500 bg-red-50 px-1.5 py-0.2 rounded font-mono truncate max-w-[180px]">
-                          {fb.error}
-                        </span>
-                      </div>
-                    ))}
-                    <div className="text-[10px] text-emerald-700 font-semibold pl-3 border-l-2 border-emerald-400 pt-0.5">
-                      ✓ Résolu par {msg.providerName} sans coupure pour l'élève.
-                    </div>
-                  </div>
-                )}
-
-                {isUser && (
-                  <div className="text-[10px] flex items-center justify-end text-slate-400">
-                    <span>{msg.time}</span>
-                  </div>
-                )}
-              </div>
-
-              {isUser && (
-                <div className="shrink-0 mb-1">
-                  {student?.avatar ? (
-                    <img
-                      src={student.avatar}
-                      alt="Avatar"
-                      className="w-8 h-8 rounded-full object-cover ring-2 ring-slate-200"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs ring-2 ring-slate-200">
-                      {student?.firstName ? student.firstName.charAt(0).toUpperCase() : 'E'}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Thinking Indicator */}
-        {isThinking && (
+        {/* Thinking Indicator (uniquement avant la réception du premier chunk de texte) */}
+        {isWaitingForFirstChunk && (
           <div className="flex items-end gap-2.5 justify-start">
             <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center shrink-0 mb-1 ring-2 ring-slate-100 shadow-subtle">
               <Bot className="w-4 h-4 text-indigo-400" />
@@ -449,7 +383,8 @@ export const TutorView: React.FC = () => {
             <button
               key={idx}
               onClick={() => handleSendMessage(item.prompt)}
-              className="m3-press shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200/80 text-slate-600 text-xs font-semibold border border-slate-200/60 transition-colors"
+              disabled={isThinking}
+              className="m3-press shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200/80 disabled:opacity-50 disabled:pointer-events-none text-slate-600 text-xs font-semibold border border-slate-200/60 transition-colors"
             >
               <Icon className="w-3.5 h-3.5 text-slate-400" />
               <span>{item.label}</span>
@@ -458,31 +393,11 @@ export const TutorView: React.FC = () => {
         })}
       </div>
 
-      {/* Bottom Message Input Form */}
-      <form 
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSendMessage();
-        }}
-        className="p-3 sm:p-4 bg-white border-t border-slate-100 flex items-center gap-2 sm:gap-3"
-      >
-        <input
-          type="text"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          placeholder="Pose une question sur tes cours, devoirs ou révisions..."
-          className="flex-1 px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all font-medium"
-        />
-
-        <button
-          type="submit"
-          disabled={!inputText.trim() || isThinking}
-          className="m3-press p-3 rounded-2xl bg-slate-900 hover:bg-indigo-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white transition-colors shadow-subtle shrink-0"
-          title="Envoyer"
-        >
-          <Send className="w-4 h-4" />
-        </button>
-      </form>
+      {/* Conteneur de saisie autonome isolé (0 re-rendu de la liste des messages lors de la frappe) */}
+      <TutorInputBar
+        onSend={(text) => handleSendMessage(text)}
+        disabled={isThinking}
+      />
 
     </div>
   );

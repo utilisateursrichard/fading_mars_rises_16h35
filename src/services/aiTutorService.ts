@@ -849,20 +849,22 @@ export class AITutorService {
   private static TIMEOUT_MS = 10000; // 10 secondes max par provider avant bascule
 
   /**
-   * Envoie la requête au meilleur provider disponible avec cascade de fallback et circuit-breaker
+   * Envoie la requête au meilleur provider disponible avec cascade de fallback et support de streaming natif
    */
-  static async queryTutor(
+  static async queryTutorStream(
     messages: LLMMessage[],
-    context?: StudentContextData
+    context?: StudentContextData,
+    onChunk?: (chunk: string, accumulated: string) => void
   ): Promise<TutorResponse> {
     const startTime = performance.now();
     const fallbackChain: Array<{ providerId: string; providerName: string; error: string }> = [];
 
-    // 1. Préparer l'historique complet avec l'invite système actualisée
+    // 1. Limiter l'historique transmis au LLM aux 12 derniers messages (évite de dépasser le context window)
+    const recentMessages = messages.slice(-12);
     const systemContent = buildSystemPrompt(context);
     const fullMessages: LLMMessage[] = [
       { role: 'system', content: systemContent },
-      ...messages.filter(m => m.role !== 'system')
+      ...recentMessages.filter(m => m.role !== 'system')
     ];
 
     // 2. Identifier la liste ordonnée des providers configurés
@@ -882,14 +884,15 @@ export class AITutorService {
         continue;
       }
 
-      // Cas Spécifique Google Gemini : cascade intelligente des modèles Gemini 3.x
+      // Cas Spécifique Google Gemini : cascade intelligente des modèles Gemini 3.x avec streaming SSE
       if (provider.id === 'google-gemini') {
         const apiKey = getProviderApiKey(provider);
-        const geminiResult = await this.callGeminiWithCascade(
+        const geminiResult = await this.callGeminiWithCascadeStream(
           provider,
           apiKey,
           fullMessages,
-          fallbackChain
+          fallbackChain,
+          onChunk
         );
 
         if (geminiResult && geminiResult.text.trim().length > 0) {
@@ -910,10 +913,10 @@ export class AITutorService {
         continue;
       }
 
-      // Cas standard : providers OpenAI-compatibles et tiers
+      // Cas standard : providers OpenAI-compatibles et tiers avec streaming SSE
       try {
         const apiKey = getProviderApiKey(provider);
-        const replyText = await this.callProvider(provider, apiKey, fullMessages);
+        const replyText = await this.callProviderStream(provider, apiKey, fullMessages, onChunk);
 
         if (replyText && replyText.trim().length > 0) {
           recordProviderSuccess(provider.id);
@@ -942,9 +945,21 @@ export class AITutorService {
     }
 
     // 4. SI AUCUNE CLÉ N'EST CONFIGURÉE OU QUE TOUS LES PROVIDERS ONT ÉCHOUÉ :
-    // Activation du Moteur Pédagogique Résilient (ZÉRO DOWNTIME GARANTI)
+    // Activation du Moteur Pédagogique Résilient (ZÉRO DOWNTIME GARANTI avec diffusion fluide)
     const userLastMessage = messages.filter(m => m.role === 'user').pop()?.content || '';
     const fallbackReply = generateZeroDowntimeFallbackResponse(userLastMessage, context);
+
+    if (onChunk) {
+      const words = fallbackReply.split(/(\s+)/);
+      let accumulated = '';
+      for (const word of words) {
+        accumulated += word;
+        onChunk(word, accumulated);
+        // Simulation d'un streaming mot par mot pour une sensation réactive et uniforme
+        await new Promise(r => setTimeout(r, 14));
+      }
+    }
+
     const latencyMs = Math.round(performance.now() - startTime);
 
     return {
@@ -960,13 +975,24 @@ export class AITutorService {
   }
 
   /**
-   * Cascade ordonnée des modèles Gemini 3.x avec circuit-breaker par modèle
+   * Méthode compatible synchrone/complète (délègue à queryTutorStream sans callback)
    */
-  private static async callGeminiWithCascade(
+  static async queryTutor(
+    messages: LLMMessage[],
+    context?: StudentContextData
+  ): Promise<TutorResponse> {
+    return this.queryTutorStream(messages, context);
+  }
+
+  /**
+   * Cascade ordonnée des modèles Gemini 3.x avec circuit-breaker et streaming SSE
+   */
+  private static async callGeminiWithCascadeStream(
     provider: LLMProviderConfig,
     apiKey: string,
     messages: LLMMessage[],
-    fallbackChain: Array<{ providerId: string; providerName: string; error: string }>
+    fallbackChain: Array<{ providerId: string; providerName: string; error: string }>,
+    onChunk?: (chunk: string, accumulated: string) => void
   ): Promise<{ text: string; modelUsed: string } | null> {
     const systemInstruction = messages.find(m => m.role === 'system')?.content || '';
     const conversation = messages
@@ -1005,10 +1031,10 @@ export class AITutorService {
 
       allModelsInCooldown = false;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 7000); // 7 secondes max par modèle Gemini
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s max
 
       try {
-        const url = `${provider.baseUrl}/${model}:generateContent?key=${apiKey}`;
+        const url = `${provider.baseUrl}/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1031,38 +1057,82 @@ export class AITutorService {
             return null;
           }
 
-          // Indisponibilité spécifique à ce modèle (503 surchargé, 404 introuvable, 429 quota modèle, etc.)
+          // Indisponibilité spécifique à ce modèle (503, 404, 429, etc.)
           recordProviderFailure(modelKey, modelDisplayName, statusDesc);
           fallbackChain.push({
             providerId: modelKey,
             providerName: modelDisplayName,
             error: statusDesc
           });
-          continue; // Essayer le modèle Gemini suivant
+          continue;
         }
 
-        const data = await res.json();
-        const extracted = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        if (extracted && extracted.trim().length > 0) {
+        const reader = res.body?.getReader();
+        if (!reader) {
+          throw new Error('ReadableStream non disponible');
+        }
+
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let accumulatedText = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith(':')) continue;
+            if (trimmed.startsWith('data: ')) {
+              const jsonStr = trimmed.slice(6);
+              try {
+                const data = JSON.parse(jsonStr);
+                const chunk = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                if (chunk) {
+                  accumulatedText += chunk;
+                  if (onChunk) onChunk(chunk, accumulatedText);
+                }
+              } catch {
+                // Fragment JSON incomplet, ignoré pour ce tour
+              }
+            }
+          }
+        }
+
+        if (buffer.trim().startsWith('data: ')) {
+          try {
+            const data = JSON.parse(buffer.trim().slice(6));
+            const chunk = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (chunk) {
+              accumulatedText += chunk;
+              if (onChunk) onChunk(chunk, accumulatedText);
+            }
+          } catch {}
+        }
+
+        if (accumulatedText && accumulatedText.trim().length > 0) {
           // Succès ! Rétablissement du modèle et du provider global
           recordProviderSuccess(modelKey);
           recordProviderSuccess('google-gemini');
           return {
-            text: extracted,
+            text: accumulatedText.trim(),
             modelUsed: model
           };
         } else {
-          throw new Error('Réponse vide ou format Gemini inattendu');
+          throw new Error('Réponse vide du flux Gemini');
         }
       } catch (err: any) {
-        const errMsg = err?.name === 'AbortError' ? 'Délai d’attente dépassé (timeout 7s)' : (err?.message || 'Erreur réseau');
+        const errMsg = err?.name === 'AbortError' ? 'Délai d’attente dépassé (timeout stream)' : (err?.message || 'Erreur réseau stream');
         recordProviderFailure(modelKey, modelDisplayName, errMsg);
         fallbackChain.push({
           providerId: modelKey,
           providerName: modelDisplayName,
           error: errMsg
         });
-        console.warn(`[BetterSchool AI Tutor] Échec ${modelDisplayName}: ${errMsg}`);
+        console.warn(`[BetterSchool AI Tutor] Échec stream ${modelDisplayName}: ${errMsg}`);
       } finally {
         clearTimeout(timeoutId);
       }
@@ -1076,18 +1146,18 @@ export class AITutorService {
   }
 
   /**
-   * Appelle un provider spécifique avec timeout et gestion d'erreur stricte
+   * Appelle un provider compatible OpenAI avec streaming SSE
    */
-  private static async callProvider(
+  private static async callProviderStream(
     provider: LLMProviderConfig,
     apiKey: string,
-    messages: LLMMessage[]
+    messages: LLMMessage[],
+    onChunk?: (chunk: string, accumulated: string) => void
   ): Promise<string> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT_MS);
 
     try {
-      // Cas standard : OpenAI-compatible endpoints
       const url = provider.baseUrl.endsWith('/chat/completions') 
         ? provider.baseUrl 
         : `${provider.baseUrl}/chat/completions`;
@@ -1102,7 +1172,8 @@ export class AITutorService {
         model: provider.model,
         messages: messages.map(m => ({ role: m.role, content: m.content })),
         temperature: 0.7,
-        max_tokens: 1500
+        max_tokens: 1500,
+        stream: true
       };
 
       const res = await fetch(url, {
@@ -1117,13 +1188,47 @@ export class AITutorService {
         throw new Error(`HTTP ${res.status}: ${res.statusText || errBody.slice(0, 100)}`);
       }
 
-      const data = await res.json();
-      const content = data?.choices?.[0]?.message?.content;
-      if (!content) {
-        throw new Error('Réponse vide ou format OpenAI incompatible');
+      const reader = res.body?.getReader();
+      if (!reader) {
+        throw new Error('ReadableStream non disponible');
       }
 
-      return content;
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+      let accumulatedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith(':')) continue;
+          if (trimmed === 'data: [DONE]') continue;
+          if (trimmed.startsWith('data: ')) {
+            const jsonStr = trimmed.slice(6);
+            try {
+              const data = JSON.parse(jsonStr);
+              const chunk = data?.choices?.[0]?.delta?.content || '';
+              if (chunk) {
+                accumulatedText += chunk;
+                if (onChunk) onChunk(chunk, accumulatedText);
+              }
+            } catch {
+              // Fragment JSON incomplet
+            }
+          }
+        }
+      }
+
+      if (!accumulatedText.trim()) {
+        throw new Error('Réponse vide du flux OpenAI');
+      }
+
+      return accumulatedText.trim();
     } finally {
       clearTimeout(timeoutId);
     }
