@@ -71,14 +71,14 @@ export const CourseDetailModal: React.FC = () => {
               <p className="text-[10px] font-bold uppercase text-slate-400">Horaire</p>
               <p className="font-bold text-slate-800 flex items-center gap-1">
                 <Clock className="w-3 h-3 text-slate-400" />
-                <span>{event.startTime} - {event.endTime}</span>
+                <span>{event.wholeDay ? 'Toute la journée' : `${event.startTime} - ${event.endTime}`}</span>
               </p>
             </div>
             <div className="space-y-0.5">
               <p className="text-[10px] font-bold uppercase text-slate-400">Salle</p>
               <p className="font-bold text-slate-800 flex items-center gap-1">
                 <MapPin className="w-3 h-3 text-slate-400" />
-                <span>{event.room}</span>
+                <span>{event.room || 'Non spécifiée'}</span>
               </p>
             </div>
             <div className="space-y-0.5">
@@ -88,27 +88,29 @@ export const CourseDetailModal: React.FC = () => {
           </div>
 
           {/* Teacher */}
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/80 border border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
-                {event.teacher.split(' ').map(n => n[0]).join('')}
+          {event.teacher && (
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/80 border border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
+                  {event.teacher.split(' ').map(n => n[0]).join('')}
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900">{event.teacher}</p>
+                  <p className="text-[10px] text-slate-400">Enseignant titulaire</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-bold text-slate-900">{event.teacher}</p>
-                <p className="text-[10px] text-slate-400">Enseignant titulaire</p>
-              </div>
+              <button
+                onClick={() => {
+                  setSelectedEventModal(null);
+                  startDirectMessageWithTeacher(event.teacher);
+                }}
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Contacter</span>
+              </button>
             </div>
-            <button
-              onClick={() => {
-                setSelectedEventModal(null);
-                startDirectMessageWithTeacher(event.teacher);
-              }}
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>Contacter</span>
-            </button>
-          </div>
+          )}
 
           {/* Description */}
           {event.description && (

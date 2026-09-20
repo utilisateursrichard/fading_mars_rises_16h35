@@ -148,38 +148,38 @@ export const AgendaView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
   const [weekOffset, setWeekOffset] = useState<number>(0);
 
-  // Jour actuel réel (1=Lundi ... 6=Samedi, si Dimanche -> 1 pour préparer la semaine à venir)
+  // Jour actuel réel (1=Lundi ... 6=Samedi, 7=Dimanche)
   const currentRealDayNum = useMemo(() => {
     const jsDay = new Date().getDay();
-    return (jsDay >= 1 && jsDay <= 6) ? (jsDay as DayOfWeek) : (1 as DayOfWeek);
+    return (jsDay === 0 ? 7 : jsDay) as DayOfWeek;
   }, []);
 
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(currentRealDayNum);
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
 
-  // Date cible de la semaine active
-  // Le dimanche par convention pour les agendas scolaires, on bascule par défaut sur la semaine de demain (lundi)
+  // Date cible de la semaine active : basée sur le lundi de la semaine courante + weekOffset * 7 jours
   const targetDate = useMemo(() => {
-    const d = new Date();
-    if (d.getDay() === 0 && weekOffset === 0) {
-      d.setDate(d.getDate() + 1);
-    } else {
-      d.setDate(d.getDate() + weekOffset * 7);
-    }
-    return d;
+    const now = new Date();
+    const jsDay = now.getDay();
+    const diffToMonday = jsDay === 0 ? -6 : 1 - jsDay;
+    const currentMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday);
+    const targetMonday = new Date(currentMonday);
+    targetMonday.setDate(currentMonday.getDate() + weekOffset * 7);
+    return targetMonday;
   }, [weekOffset]);
 
-  // Configuration des jours de la semaine (Lundi -> Samedi)
+  // Configuration des jours de la semaine (Lundi -> Dimanche)
   const DAY_NAMES = useMemo(() => [
     { dow: 1 as DayOfWeek, name: 'Lundi', short: 'LUN' },
     { dow: 2 as DayOfWeek, name: 'Mardi', short: 'MAR' },
     { dow: 3 as DayOfWeek, name: 'Mercredi', short: 'MER' },
     { dow: 4 as DayOfWeek, name: 'Jeudi', short: 'JEU' },
     { dow: 5 as DayOfWeek, name: 'Vendredi', short: 'VEN' },
-    { dow: 6 as DayOfWeek, name: 'Samedi', short: 'SAM' }
+    { dow: 6 as DayOfWeek, name: 'Samedi', short: 'SAM' },
+    { dow: 7 as DayOfWeek, name: 'Dimanche', short: 'DIM' }
   ], []);
 
-  // Calcul dynamique des dates de la semaine (Lundi -> Samedi)
+  // Calcul dynamique des dates de la semaine (Lundi -> Dimanche)
   const weekDates = useMemo(() => {
     const d = new Date(targetDate);
     const day = d.getDay();
@@ -264,7 +264,7 @@ export const AgendaView: React.FC = () => {
     setWeekOffset(0);
     const now = new Date();
     const jsDay = now.getDay();
-    const day = (jsDay >= 1 && jsDay <= 6) ? (jsDay as DayOfWeek) : (1 as DayOfWeek);
+    const day = (jsDay === 0 ? 7 : jsDay) as DayOfWeek;
     setSelectedDay(day);
   };
 
@@ -288,18 +288,39 @@ export const AgendaView: React.FC = () => {
   }, [events, subjectFilter, globalSearch]);
 
   const eventsByDay = useMemo(() => {
-    const map: { [key: number]: CourseEvent[] } = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+    const map: { [key: number]: CourseEvent[] } = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] };
     filteredEvents.forEach(evt => {
-      if (!map[evt.dayOfWeek]) {
-        map[evt.dayOfWeek] = [];
+      // 1. Recherche par date exacte dans les jours de la semaine active
+      let targetDow: number | null = null;
+      if (evt.date) {
+        for (const wd of weekDates) {
+          if (wd.fullDate === evt.date) {
+            targetDow = wd.dayOfWeek;
+            break;
+          }
+        }
       }
-      map[evt.dayOfWeek].push(evt);
+
+      // 2. Si non trouvé par date exacte
+      if (targetDow === null) {
+        // En présence d'une date calendaire qui ne correspond pas à cette semaine,
+        // on ne l'affiche pas dans cette semaine
+        if (evt.date && /^\d{4}-\d{2}-\d{2}$/.test(evt.date)) {
+          return;
+        }
+        // Sinon (mock data récurrente sans date stricte), se baser sur dayOfWeek
+        targetDow = evt.dayOfWeek;
+      }
+
+      if (targetDow && map[targetDow]) {
+        map[targetDow].push(evt);
+      }
     });
     Object.keys(map).forEach(key => {
       map[Number(key)].sort((a, b) => a.startTime.localeCompare(b.startTime));
     });
     return map;
-  }, [filteredEvents]);
+  }, [filteredEvents, weekDates]);
 
   // Calcul dynamique des bornes horaires de la semaine (minHour et maxHour)
   const { minHour, maxHour, totalHours } = useMemo(() => {
@@ -344,8 +365,8 @@ export const AgendaView: React.FC = () => {
 
   // Disposition calculée par jour avec gestion des chevauchements (gauche/droite)
   const layoutByDay = useMemo(() => {
-    const result: { [key: number]: PositionedEvent[] } = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-    [1, 2, 3, 4, 5, 6].forEach(dayNum => {
+    const result: { [key: number]: PositionedEvent[] } = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] };
+    [1, 2, 3, 4, 5, 6, 7].forEach(dayNum => {
       const dayEvts = eventsByDay[dayNum] || [];
       result[dayNum] = computeDayLayout(dayEvts, minHour, HOUR_HEIGHT);
     });
@@ -486,9 +507,12 @@ export const AgendaView: React.FC = () => {
       {viewMode === 'week' ? (
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-subtle overflow-hidden">
           <div className="overflow-x-auto">
-            <div className="min-w-[860px]">
-              {/* Header Row: Heure + 6 jours (Lundi à Samedi) */}
-              <div className="grid grid-cols-[55px_repeat(6,1fr)] border-b border-slate-200/80 bg-slate-50/70 sticky top-0 z-20">
+            <div className="min-w-[960px]">
+              {/* Header Row: Heure + Jours (Lundi à Dimanche) */}
+              <div 
+                className="grid border-b border-slate-200/80 bg-slate-50/70 sticky top-0 z-20"
+                style={{ gridTemplateColumns: `55px repeat(${daysConfig.length}, minmax(0, 1fr))` }}
+              >
                 <div className="py-3 px-2 text-center text-[11px] font-bold text-slate-400 border-r border-slate-200/60 flex items-center justify-center">
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
                 </div>
@@ -520,7 +544,13 @@ export const AgendaView: React.FC = () => {
               </div>
 
               {/* Timetable Body */}
-              <div className="grid grid-cols-[55px_repeat(6,1fr)] relative" style={{ height: `${totalGridHeight}px` }}>
+              <div 
+                className="grid relative" 
+                style={{ 
+                  height: `${totalGridHeight}px`,
+                  gridTemplateColumns: `55px repeat(${daysConfig.length}, minmax(0, 1fr))` 
+                }}
+              >
                 {/* Colonne des heures */}
                 <div className="relative border-r border-slate-200/60 select-none bg-slate-50/40">
                   {hoursList.map((h, i) => {
@@ -614,6 +644,11 @@ export const AgendaView: React.FC = () => {
                                 <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded border leading-none ${theme.badgeClass}`}>
                                   {evt.subjectCode}
                                 </span>
+                                {evt.wholeDay && (
+                                  <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1 py-0.2 rounded border border-indigo-100">
+                                    Journée
+                                  </span>
+                                )}
                                 {evt.status === 'in_progress' && (
                                   <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.2 rounded">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -628,7 +663,7 @@ export const AgendaView: React.FC = () => {
                               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-500">
                                 <span className="font-semibold text-slate-700 flex items-center gap-0.5">
                                   <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
-                                  {evt.startTime}-{evt.endTime}
+                                  {evt.wholeDay ? 'Toute la journée' : `${evt.startTime}-${evt.endTime}`}
                                 </span>
                                 {evt.room && (
                                   <span className="flex items-center gap-0.5 truncate">
@@ -804,12 +839,14 @@ export const AgendaView: React.FC = () => {
                               </div>
 
                               <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                                <button
-                                  onClick={() => startDirectMessageWithTeacher(evt.teacher)}
-                                  className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                                >
-                                  Prof
-                                </button>
+                                {evt.teacher && (
+                                  <button
+                                    onClick={() => startDirectMessageWithTeacher(evt.teacher)}
+                                    className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                                  >
+                                    Prof
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => setSelectedEventModal(evt)}
                                   className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-900 hover:bg-indigo-600 text-white transition-colors"
@@ -822,18 +859,26 @@ export const AgendaView: React.FC = () => {
                             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
                               <span className="font-bold text-slate-700 flex items-center gap-1">
                                 <Clock className="w-3.5 h-3.5 text-slate-400" />
-                                {evt.startTime} - {evt.endTime}
+                                {evt.wholeDay ? 'Toute la journée' : `${evt.startTime} - ${evt.endTime}`}
                               </span>
-                              <span>•</span>
-                              <span className="flex items-center gap-1">
-                                <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                                {evt.room}
-                              </span>
-                              <span>•</span>
-                              <span className="flex items-center gap-1">
-                                <User className="w-3.5 h-3.5 text-slate-400" />
-                                {evt.teacher}
-                              </span>
+                              {evt.room && (
+                                <>
+                                  <span>•</span>
+                                  <span className="flex items-center gap-1">
+                                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                                    {evt.room}
+                                  </span>
+                                </>
+                              )}
+                              {evt.teacher && (
+                                <>
+                                  <span>•</span>
+                                  <span className="flex items-center gap-1">
+                                    <User className="w-3.5 h-3.5 text-slate-400" />
+                                    {evt.teacher}
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </div>
 

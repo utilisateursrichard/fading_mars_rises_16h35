@@ -170,12 +170,13 @@ export const DashboardView: React.FC = () => {
       3: 'Mercredi',
       4: 'Jeudi',
       5: 'Vendredi',
-      6: 'Samedi'
+      6: 'Samedi',
+      7: 'Dimanche'
     };
 
     for (let offset = 1; offset <= 7; offset++) {
-      const nextDow = ((currentJsDay + offset) % 7);
-      if (nextDow === 0) continue; // Pas d'école le dimanche
+      const nextJsDow = ((currentJsDay + offset) % 7);
+      const nextDow = nextJsDow === 0 ? 7 : nextJsDow;
       
       const dayEvts = allEvents
         .filter(e => e.dayOfWeek === nextDow)

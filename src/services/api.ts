@@ -106,8 +106,8 @@ class SchoolService {
 
   async getTodayEvents(): Promise<CourseEvent[]> {
     const todayNum = new Date().getDay(); // 0 is Sunday, 1 is Monday... 6 is Saturday
-    // Si dimanche, on prépare la journée de lundi (1) ; sinon jour courant exact (1 à 6)
-    const targetDay = (todayNum >= 1 && todayNum <= 6) ? todayNum : 1;
+    // 1=Lundi ... 6=Samedi, 7=Dimanche
+    const targetDay = todayNum === 0 ? 7 : todayNum;
     const events = syncEventStatuses(mockCourseEvents).filter(evt => evt.dayOfWeek === targetDay);
     return Promise.resolve(events);
   }

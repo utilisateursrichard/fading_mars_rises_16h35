@@ -16,7 +16,10 @@ const COLOR_MAP: Record<string, string> = {
   'green-500': 'emerald',
   'yellow-500': 'amber',
   'blue-500': 'indigo',
-  'purple-500': 'violet'
+  'purple-500': 'violet',
+  'mint-200': 'emerald',
+  'mint-500': 'emerald',
+  'mint-700': 'emerald'
 };
 
 const mapColor = (smartschoolColor?: string): string => {
@@ -59,14 +62,15 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
       return null;
     }
 
+    const isLessonFree = raw.plannedElementType === 'planned-lesson-free-days' || raw.period?.wholeDay === true;
     const course = raw.courses?.[0];
     const rawName = raw.name || raw.title || raw.courseCluster?.name;
-    const subject = course?.name || rawName || 'Cours';
+    const subject = course?.name || rawName || (isLessonFree ? 'Jour sans cours' : 'Cours');
     
-    // Code matière court (ex: "MATH", "ANG2")
+    // Code matière court (ex: "MATH", "ANG2", "FÊTE")
     const subjectCode = course?.scheduleCodes?.[0] || 
       (course?.name ? course.name.substring(0, 4).toUpperCase() : 
-      (rawName ? rawName.substring(0, 4).toUpperCase() : subject.substring(0, 4).toUpperCase()));
+      (rawName ? (rawName.length > 4 ? rawName.substring(0, 4).toUpperCase() : rawName.toUpperCase()) : (isLessonFree ? 'CONGÉ' : subject.substring(0, 4).toUpperCase())));
     
     // Organisateur / Enseignant
     const teacherUser = raw.organisers?.users?.[0];
@@ -74,38 +78,74 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
                     teacherUser?.name?.startingWithLastName || 
                     teacherUser?.name?.formatted || 
                     raw.organisers?.groups?.[0]?.name || 
-                    'Professeur';
+                    (isLessonFree ? '' : 'Professeur');
     
     // Salle de classe
     const location = raw.locations?.[0];
-    const room = location?.title || location?.name || 'Salle indéterminée';
+    const room = location?.title || location?.name || (isLessonFree ? '' : 'Salle indéterminée');
     
     // Période et horaires
     const fromStr = raw.period?.dateTimeFrom;
     const toStr = raw.period?.dateTimeTo;
     if (!fromStr) return null;
 
-    const fromDate = new Date(fromStr);
-    const toDate = toStr ? new Date(toStr) : new Date(fromDate.getTime() + 50 * 60 * 1000);
-    
-    if (isNaN(fromDate.getTime())) return null;
-
     const pad = (n: number) => n.toString().padStart(2, '0');
-    const startTime = `${pad(fromDate.getHours())}:${pad(fromDate.getMinutes())}`;
-    const endTime = `${pad(toDate.getHours())}:${pad(toDate.getMinutes())}`;
-    const date = `${fromDate.getFullYear()}-${pad(fromDate.getMonth() + 1)}-${pad(fromDate.getDate())}`;
-    
-    // JS Date.getDay(): 0=Dimanche, 1=Lundi ... 6=Samedi
-    const jsDay = fromDate.getDay();
-    const dayOfWeek = (jsDay === 0 ? 1 : jsDay) as DayOfWeek;
+
+    // Extraction directe sans distorsion de fuseau horaire (ex: "2026-09-27T08:00:00+02:00")
+    let date = '';
+    let startTime = '08:00';
+    let endTime = '08:50';
+    let year = 0;
+    let month = 0;
+    let day = 0;
+
+    const fromMatch = fromStr.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/);
+    if (fromMatch) {
+      year = parseInt(fromMatch[1], 10);
+      month = parseInt(fromMatch[2], 10);
+      day = parseInt(fromMatch[3], 10);
+      date = `${fromMatch[1]}-${fromMatch[2]}-${fromMatch[3]}`;
+      if (fromMatch[4] && fromMatch[5]) {
+        startTime = `${fromMatch[4]}:${fromMatch[5]}`;
+      }
+    } else {
+      const fromDate = new Date(fromStr);
+      if (isNaN(fromDate.getTime())) return null;
+      year = fromDate.getFullYear();
+      month = fromDate.getMonth() + 1;
+      day = fromDate.getDate();
+      date = `${year}-${pad(month)}-${pad(day)}`;
+      startTime = `${pad(fromDate.getHours())}:${pad(fromDate.getMinutes())}`;
+    }
+
+    if (toStr) {
+      const toMatch = toStr.match(/T(\d{2}):(\d{2})/);
+      if (toMatch) {
+        endTime = `${toMatch[1]}:${toMatch[2]}`;
+      } else {
+        const toDate = new Date(toStr);
+        if (!isNaN(toDate.getTime())) {
+          endTime = `${pad(toDate.getHours())}:${pad(toDate.getMinutes())}`;
+        }
+      }
+    }
+
+    // Calcul garanti du jour de la semaine (1=Lundi, ..., 6=Samedi, 7=Dimanche)
+    const calDate = new Date(year, month - 1, day);
+    const jsDay = calDate.getDay(); // 0=Dimanche, 1=Lundi ... 6=Samedi
+    const dayOfWeek = (jsDay === 0 ? 7 : jsDay) as DayOfWeek;
 
     // Statut dynamique par rapport à l'heure actuelle
     const now = new Date();
+    const fromDate = new Date(fromStr);
+    const toDate = toStr ? new Date(toStr) : new Date(fromDate.getTime() + 50 * 60 * 1000);
     let status: EventStatus = 'scheduled';
-    if (now >= fromDate && now <= toDate) {
-      status = 'in_progress';
-    } else if (now > toDate) {
-      status = 'completed';
+    if (!isNaN(fromDate.getTime()) && !isNaN(toDate.getTime())) {
+      if (now >= fromDate && now <= toDate) {
+        status = 'in_progress';
+      } else if (now > toDate) {
+        status = 'completed';
+      }
     }
 
     return {
@@ -120,7 +160,9 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
       dayOfWeek,
       type: 'cours',
       color: mapColor(raw.color),
-      status
+      status,
+      wholeDay: raw.period?.wholeDay === true,
+      plannedElementType: raw.plannedElementType
     };
   } catch (err) {
     console.error('Erreur lors du parsing d\'un cours Smartschool:', err, raw);
@@ -141,17 +183,38 @@ export const parseSmartschoolHomework = (raw: any): Homework | null => {
     const dateStr = raw.period?.dateTimeTo || raw.period?.dateTimeFrom;
     if (!dateStr) return null;
 
-    const dueDateObj = new Date(dateStr);
-    if (isNaN(dueDateObj.getTime())) return null;
-
     const pad = (n: number) => n.toString().padStart(2, '0');
-    const dueDate = `${dueDateObj.getFullYear()}-${pad(dueDateObj.getMonth() + 1)}-${pad(dueDateObj.getDate())}`;
-    const dueTime = `${pad(dueDateObj.getHours())}:${pad(dueDateObj.getMinutes())}`;
+
+    // Extraction directe de la date d'échéance sans décalage de timezone
+    let dueDate = '';
+    let dueTime = '23:59';
+    let targetYear = 0;
+    let targetMonth = 0;
+    let targetDay = 0;
+
+    const hwMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/);
+    if (hwMatch) {
+      targetYear = parseInt(hwMatch[1], 10);
+      targetMonth = parseInt(hwMatch[2], 10);
+      targetDay = parseInt(hwMatch[3], 10);
+      dueDate = `${hwMatch[1]}-${hwMatch[2]}-${hwMatch[3]}`;
+      if (hwMatch[4] && hwMatch[5]) {
+        dueTime = `${hwMatch[4]}:${hwMatch[5]}`;
+      }
+    } else {
+      const dueDateObj = new Date(dateStr);
+      if (isNaN(dueDateObj.getTime())) return null;
+      targetYear = dueDateObj.getFullYear();
+      targetMonth = dueDateObj.getMonth() + 1;
+      targetDay = dueDateObj.getDate();
+      dueDate = `${targetYear}-${pad(targetMonth)}-${pad(targetDay)}`;
+      dueTime = `${pad(dueDateObj.getHours())}:${pad(dueDateObj.getMinutes())}`;
+    }
 
     // Les devoirs dans le passé (retard) sont supprimés / invisibles
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const targetDate = new Date(dueDateObj.getFullYear(), dueDateObj.getMonth(), dueDateObj.getDate());
+    const targetDate = new Date(targetYear, targetMonth - 1, targetDay);
     if (targetDate.getTime() < today.getTime()) {
       return null;
     }

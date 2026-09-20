@@ -1,7 +1,7 @@
 // Types de données stricts pour BetterSchool
 // Conçus pour être facilement reliés à une API backend (REST, GraphQL, Supabase, etc.)
 
-export type DayOfWeek = 1 | 2 | 3 | 4 | 5 | 6; // 1=Lundi ... 6=Samedi
+export type DayOfWeek = 1 | 2 | 3 | 4 | 5 | 6 | 7; // 1=Lundi ... 6=Samedi, 7=Dimanche
 
 export interface Student {
   id: string;
@@ -41,6 +41,8 @@ export interface CourseEvent {
   color: string;
   description?: string;
   status: EventStatus;
+  wholeDay?: boolean;
+  plannedElementType?: string;
   homeworkDue?: Homework[];
   materials?: CourseMaterial[];
 }

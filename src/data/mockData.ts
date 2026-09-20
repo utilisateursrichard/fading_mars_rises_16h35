@@ -120,7 +120,7 @@ const getCurrentWeekDates = () => {
 
   const pad = (n: number) => n.toString().padStart(2, '0');
   const dates: { [key: number]: string } = {};
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + (i - 1));
     dates[i] = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;

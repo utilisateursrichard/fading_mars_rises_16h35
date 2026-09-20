@@ -192,8 +192,15 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setEvents(res.events);
         setHomeworks(res.homeworks);
         const curDay = new Date().getDay();
-        const day = (curDay >= 1 && curDay <= 6) ? curDay : 1;
-        setTodayEvents(res.events.filter(e => e.dayOfWeek === day).sort((a, b) => a.startTime.localeCompare(b.startTime)));
+        const day = (curDay === 0 ? 7 : curDay);
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+        setTodayEvents(
+          res.events
+            .filter(e => e.date ? e.date === todayStr : e.dayOfWeek === day)
+            .sort((a, b) => a.startTime.localeCompare(b.startTime))
+        );
         if (res.student) {
           setStudent(prev => ({
             id: res.student?.id || prev?.id || 'real_student',
@@ -255,8 +262,15 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         
         // Cours du jour actif
         const todayNum = new Date().getDay();
-        const targetDay = (todayNum >= 1 && todayNum <= 6) ? todayNum : 1;
-        setTodayEvents(realEvents.filter(e => e.dayOfWeek === targetDay).sort((a, b) => a.startTime.localeCompare(b.startTime)));
+        const targetDay = (todayNum === 0 ? 7 : todayNum);
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+        setTodayEvents(
+          realEvents
+            .filter(e => e.date ? e.date === todayStr : e.dayOfWeek === targetDay)
+            .sort((a, b) => a.startTime.localeCompare(b.startTime))
+        );
 
         setHomeworks(realHomeworks);
 
@@ -275,8 +289,12 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               setEvents(res.events);
               setHomeworks(res.homeworks);
               const curDay = new Date().getDay();
-              const day = (curDay >= 1 && curDay <= 6) ? curDay : 1;
-              setTodayEvents(res.events.filter(e => e.dayOfWeek === day).sort((a, b) => a.startTime.localeCompare(b.startTime)));
+              const day = (curDay === 0 ? 7 : curDay);
+              setTodayEvents(
+                res.events
+                  .filter(e => e.date ? e.date === todayStr : e.dayOfWeek === day)
+                  .sort((a, b) => a.startTime.localeCompare(b.startTime))
+              );
               if (res.student) {
                 setStudent(prev => ({
                   id: res.student?.id || prev?.id || 'real_student',
