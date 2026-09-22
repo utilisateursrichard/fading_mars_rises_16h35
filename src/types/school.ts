@@ -62,6 +62,9 @@ export interface Homework {
   priority: 'low' | 'medium' | 'high';
   assignedDate: string;
   hasAttachment?: boolean;
+  platformId?: string;
+  assignmentId?: string;
+  plannedElementType?: string;
 }
 
 export interface Grade {

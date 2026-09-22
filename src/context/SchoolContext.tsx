@@ -16,7 +16,9 @@ import {
   getCachedRealHomeworks, 
   getCachedRealStudent, 
   syncAllSmartschoolData,
-  toggleCachedRealHomework
+  toggleCachedRealHomework,
+  resolveSmartschoolHomework,
+  unresolveSmartschoolHomework
 } from '../services/smartschoolApi';
 
 export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'tutor' | 'book';
@@ -357,13 +359,49 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Actions
   const toggleHomework = async (id: string) => {
+    // Retrouver le devoir dans l'état (ou dans les devoirs liés aux cours)
+    let targetHw = homeworks.find(h => h.id === id);
+    if (!targetHw) {
+      for (const evt of events) {
+        const found = evt.homeworkDue?.find(h => h.id === id);
+        if (found) {
+          targetHw = found;
+          break;
+        }
+      }
+    }
+
+    const willBeCompleted = targetHw ? !targetHw.isCompleted : true;
+
+    // Si le devoir est coché, envoyer la requête POST à Smartschool pour le marquer résolu
+    if (willBeCompleted) {
+      resolveSmartschoolHomework(targetHw || id).catch(err => {
+        console.warn('Erreur lors de la résolution Smartschool:', err);
+      });
+    } else {
+      unresolveSmartschoolHomework(targetHw || id).catch(() => {});
+    }
+
+    // Mettre à jour l'état local des devoirs
+    setHomeworks(prev => prev.map(homework =>
+      homework.id === id ? { ...homework, isCompleted: willBeCompleted } : homework
+    ));
+
+    // Mettre également à jour les devoirs attachés aux événements (modal cours / agenda)
+    setEvents(prev => prev.map(evt => {
+      if (!evt.homeworkDue || evt.homeworkDue.length === 0) return evt;
+      const hasMatch = evt.homeworkDue.some(h => h.id === id);
+      if (!hasMatch) return evt;
+      return {
+        ...evt,
+        homeworkDue: evt.homeworkDue.map(h => h.id === id ? { ...h, isCompleted: willBeCompleted } : h)
+      };
+    }));
+
     if (!isDemoMode) {
       // En mode réel, ne jamais appeler schoolService : il lit la liste de démo
       // et remplacerait les devoirs Smartschool affichés par celle-ci.
       toggleCachedRealHomework(id);
-      setHomeworks(prev => prev.map(homework =>
-        homework.id === id ? { ...homework, isCompleted: !homework.isCompleted } : homework
-      ));
       return;
     }
 

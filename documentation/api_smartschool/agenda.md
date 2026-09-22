@@ -93,6 +93,26 @@ Host: <ecole>.smartschool.be
 
 ---
 
+### Endpoint 2.4 : Résolution d'un devoir officiel (`resolve`)
+
+Marque un devoir assigné par un professeur comme « terminé / résolu » dans l'agenda Smartschool.
+
+```http
+POST /planner/api/v1/planned-assignments/{platformId}/{assignmentId}/resolve HTTP/2
+Host: <ecole>.smartschool.be
+Content-Type: application/json
+Accept: application/json, text/plain, */*
+X-Requested-With: XMLHttpRequest
+```
+
+#### Paramètres :
+* **`{platformId}`** : Identifiant numérique de l'établissement (ex: `4907` pour Collège Jean XXIII).
+* **`{assignmentId}`** : UUIDv4 unique du devoir planifié (ex: `4ab22089-ead4-4606-b52b-69960a62fc38`).
+
+*(Optionnel) Décochage : l'endpoint symétrique `POST /planner/api/v1/planned-assignments/{platformId}/{assignmentId}/unresolve` permet d'annuler la complétion.*
+
+---
+
 ## 3. Comment BetterSchool exploite ces endpoints
 
 Depuis le frontend BetterSchool via notre pont `smartschoolBridge.ts` :

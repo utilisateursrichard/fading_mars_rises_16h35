@@ -532,3 +532,151 @@ export const getCachedRealStudent = (): Partial<Student> | null => {
     return null;
   }
 };
+
+/**
+ * Récupère l'identifiant de la plateforme / école (ex: "4907" pour le Collège Jean XXIII)
+ */
+export const getPlatformIdFromContext = (): string => {
+  // 1. Depuis l'identifiant de l'élève connecté (format {ecoleId}_{userId}_{groupId})
+  const activeUserId = getActiveUserId();
+  if (activeUserId) {
+    const match = activeUserId.match(/^([0-9]+)_/);
+    if (match) return match[1];
+  }
+
+  // 2. Depuis le cache étudiant
+  const cachedStudent = getCachedRealStudent();
+  if (cachedStudent?.ineNumber) {
+    const match = cachedStudent.ineNumber.match(/^([0-9]+)_/);
+    if (match) return match[1];
+  }
+
+  // 3. Identifiant par défaut de la plateforme (Collège Jean XXIII)
+  return '4907';
+};
+
+/**
+ * Extrait la plateforme (ex: "4907") et l'UUID de l'assignation (ex: "4ab22089-ead4-4606-b52b-69960a62fc38")
+ * depuis un identifiant ou un objet Homework.
+ */
+export const extractAssignmentDetails = (
+  homeworkOrId: Homework | string,
+  fallbackPlatformId: string = '4907'
+): { platformId: string; assignmentId: string } | null => {
+  const hwObj = typeof homeworkOrId === 'object' ? homeworkOrId : null;
+  const idStr = typeof homeworkOrId === 'string' ? homeworkOrId : (homeworkOrId.id || '');
+
+  // 1. Si l'identifiant contient le chemin complet "planned-assignments/{platformId}/{assignmentId}"
+  const pathMatch = idStr.match(/planned-assignments\/([0-9]+)\/([0-9a-fA-F-]+)/i);
+  if (pathMatch) {
+    return {
+      platformId: pathMatch[1],
+      assignmentId: pathMatch[2]
+    };
+  }
+
+  // 2. Si les détails sont directement présents sur l'objet Homework
+  if (hwObj?.assignmentId) {
+    return {
+      platformId: hwObj.platformId || getPlatformIdFromContext() || fallbackPlatformId,
+      assignmentId: hwObj.assignmentId
+    };
+  }
+
+  // 3. Si l'identifiant contient un UUIDv4 standard
+  const uuidMatch = idStr.match(/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/i);
+  if (uuidMatch) {
+    return {
+      platformId: hwObj?.platformId || getPlatformIdFromContext() || fallbackPlatformId,
+      assignmentId: uuidMatch[1]
+    };
+  }
+
+  // 4. Si l'identifiant est au format {platformId}_{assignmentId}
+  const comboMatch = idStr.match(/([0-9]+)[_/]([0-9a-fA-F-]+)/i);
+  if (comboMatch) {
+    return {
+      platformId: comboMatch[1],
+      assignmentId: comboMatch[2]
+    };
+  }
+
+  return null;
+};
+
+/**
+ * Envoie une requête POST à Smartschool pour marquer un devoir comme résolu / coché
+ * Endpoint: POST /planner/api/v1/planned-assignments/{platformId}/{assignmentId}/resolve
+ */
+export const resolveSmartschoolHomework = async (
+  homeworkOrId: Homework | string
+): Promise<{ ok: boolean; status?: number; error?: string }> => {
+  const details = extractAssignmentDetails(homeworkOrId);
+  if (!details) {
+    console.warn('[Smartschool] Devoir ignoré pour resolve (identifiant non-Smartschool):', homeworkOrId);
+    return { ok: false, error: 'Identifiant Smartschool non reconnu' };
+  }
+
+  const { platformId, assignmentId } = details;
+  const url = `/planner/api/v1/planned-assignments/${platformId}/${assignmentId}/resolve`;
+
+  console.info(`[Smartschool] Résolution du devoir ${assignmentId} (Plateforme ${platformId}) -> POST ${url}`);
+
+  try {
+    const res = await fetchSmartschool(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({})
+    });
+
+    if (!res.ok) {
+      console.warn(`[Smartschool] Échec de la résolution du devoir ${assignmentId}:`, res.error || `HTTP ${res.status}`);
+      return { ok: false, status: res.status, error: res.error };
+    }
+
+    console.info(`[Smartschool] Devoir ${assignmentId} résolu avec succès sur Smartschool (Status ${res.status})`);
+    return { ok: true, status: res.status };
+  } catch (err: any) {
+    console.error(`[Smartschool] Erreur lors de l'appel resolve pour le devoir ${assignmentId}:`, err);
+    return { ok: false, error: err.message };
+  }
+};
+
+/**
+ * Envoie une requête POST à Smartschool pour décocher un devoir (unresolve)
+ * Endpoint: POST /planner/api/v1/planned-assignments/{platformId}/{assignmentId}/unresolve
+ */
+export const unresolveSmartschoolHomework = async (
+  homeworkOrId: Homework | string
+): Promise<{ ok: boolean; status?: number; error?: string }> => {
+  const details = extractAssignmentDetails(homeworkOrId);
+  if (!details) {
+    return { ok: false, error: 'Identifiant Smartschool non reconnu' };
+  }
+
+  const { platformId, assignmentId } = details;
+  const url = `/planner/api/v1/planned-assignments/${platformId}/${assignmentId}/unresolve`;
+
+  console.info(`[Smartschool] Décochage du devoir ${assignmentId} (Plateforme ${platformId}) -> POST ${url}`);
+
+  try {
+    const res = await fetchSmartschool(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({})
+    });
+
+    return { ok: res.ok, status: res.status, error: res.error };
+  } catch (err: any) {
+    console.error(`[Smartschool] Erreur lors de l'appel unresolve pour le devoir ${assignmentId}:`, err);
+    return { ok: false, error: err.message };
+  }
+};

@@ -225,8 +225,45 @@ export const parseSmartschoolHomework = (raw: any): Homework | null => {
 
     const priority = calculateHomeworkUrgency(dueDate, typeName, isCompleted);
 
+    // Extraction de la plateforme et de l'UUID du devoir
+    let platformId: string | undefined;
+    let assignmentId: string | undefined;
+
+    if (typeof raw.id === 'string') {
+      const pathMatch = raw.id.match(/planned-assignments\/([0-9]+)\/([0-9a-fA-F-]+)/i);
+      if (pathMatch) {
+        platformId = pathMatch[1];
+        assignmentId = pathMatch[2];
+      } else {
+        const uuidMatch = raw.id.match(/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/i);
+        if (uuidMatch) {
+          assignmentId = uuidMatch[1];
+        }
+      }
+    }
+
+    if (!platformId) {
+      if (raw.platformId) {
+        platformId = String(raw.platformId);
+      } else if (raw.organisers?.users?.[0]?.id) {
+        const pMatch = String(raw.organisers.users[0].id).match(/^([0-9]+)_/);
+        if (pMatch) platformId = pMatch[1];
+      }
+    }
+
+    if (!assignmentId) {
+      const altId = raw.assignmentId || raw.plannedAssignmentId || raw.assignment?.id;
+      if (altId && typeof altId === 'string') {
+        const altMatch = altId.match(/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/i);
+        if (altMatch) assignmentId = altMatch[1];
+      }
+    }
+
     return {
-      id: raw.id || `hw_${dueDate}_${Math.random().toString(36).substring(2, 7)}`,
+      id: raw.id || (assignmentId ? (platformId ? `planned-assignments/${platformId}/${assignmentId}/` : assignmentId) : `hw_${dueDate}_${Math.random().toString(36).substring(2, 7)}`),
+      platformId: platformId || '4907',
+      assignmentId: assignmentId || (typeof raw.id === 'string' && /^[0-9a-fA-F-]/.test(raw.id) ? raw.id : undefined),
+      plannedElementType: raw.plannedElementType || 'planned-assignments',
       subject,
       subjectCode,
       color: mapColor(raw.color),
