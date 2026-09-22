@@ -242,7 +242,7 @@ export const ResultsView: React.FC = () => {
               </span>
               {overallStats && (
                 <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700">
-                  {overallStats.current >= 16 ? 'Mention Très Bien' : overallStats.current >= 14 ? 'Mention Bien' : overallStats.current >= 12 ? 'Mention Assez Bien' : 'En bonne voie'}
+                  {overallStats.current >= 80 ? 'Mention Très Bien' : overallStats.current >= 70 ? 'Mention Bien' : overallStats.current >= 60 ? 'Mention Assez Bien' : 'En bonne voie'}
                 </span>
               )}
             </div>
@@ -254,13 +254,8 @@ export const ResultsView: React.FC = () => {
                     {overallStats.current}
                   </span>
                   <span className="text-slate-400 text-lg font-bold">
-                    / 20
+                    / 100
                   </span>
-                  {overallStats.currentPct !== undefined ? (
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 ml-1">
-                      {overallStats.currentPct}%
-                    </span>
-                  ) : null}
                 </div>
 
                 {overallStats.totalWeeklyHours ? (
@@ -363,15 +358,14 @@ export const ResultsView: React.FC = () => {
                 <div>
                   <p className="text-[11px] font-bold text-indigo-900">Nouvelle moyenne générale :</p>
                   <div className="flex items-baseline gap-1 mt-0.5">
-                    <span className="text-2xl font-black text-indigo-700">{simulatedStats.newOverall20}</span>
-                    <span className="text-xs font-bold text-indigo-400">/ 20</span>
-                    <span className="text-xs text-indigo-400 ml-1">({simulatedStats.newOverallPct}%)</span>
+                    <span className="text-2xl font-black text-indigo-700">{simulatedStats.newOverallPct}</span>
+                    <span className="text-xs font-bold text-indigo-400">/ 100</span>
                   </div>
                 </div>
                 <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold ${
                   simulatedStats.diffPct >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                 }`}>
-                  {simulatedStats.diffPct >= 0 ? `+${simulatedStats.diffPct}` : `${simulatedStats.diffPct}`} %
+                  {simulatedStats.diffPct >= 0 ? `+${simulatedStats.diffPct}` : `${simulatedStats.diffPct}`} pts
                 </div>
               </div>
             ) : (
@@ -441,9 +435,8 @@ export const ResultsView: React.FC = () => {
                   <div className="flex items-center justify-between sm:justify-end gap-6 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                     <div className="text-right">
                       <div className="flex items-baseline gap-1 justify-end">
-                        <span className="text-2xl font-black text-slate-900">{report.studentAverage}</span>
-                        <span className="text-xs text-slate-400 font-semibold">/ 20</span>
-                        <span className="text-xs text-slate-400 ml-1">({coursePct}%)</span>
+                        <span className="text-2xl font-black text-slate-900">{coursePct}</span>
+                        <span className="text-xs text-slate-400 font-semibold">/ 100</span>
                       </div>
                       {report.totalPossible ? (
                         <p className="text-[11px] text-slate-400">

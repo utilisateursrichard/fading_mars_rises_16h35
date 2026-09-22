@@ -229,7 +229,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       setSubjectReports(computed.reports);
       setOverallStats({
-        current: computed.overallAverage20,
+        current: computed.overallAveragePct,
         currentPct: computed.overallAveragePct,
         classAvg: 0,
         previousTerm: 0,

@@ -698,7 +698,7 @@ export const buildSubjectReportsFromEvaluations = (
 
     // Calcul de la moyenne du cours
     const hasGrades = sumTotal > 0;
-    const coursePct = hasGrades ? (sumObtained / sumTotal) * 100 : 0;
+    const coursePct = hasGrades ? Number(((sumObtained / sumTotal) * 100).toFixed(1)) : 0;
     const courseSur20 = Number(((coursePct / 100) * 20).toFixed(2));
 
     if (hasGrades) {
@@ -712,7 +712,7 @@ export const buildSubjectReportsFromEvaluations = (
       color: '#6366f1',
       teacher: data.teacherName,
       coefficient: data.hours,
-      studentAverage: courseSur20, // Compatible sur 20
+      studentAverage: coursePct, // Moyenne du cours sur 100
       grades,
       hoursPerWeek: data.hours,
       totalObtained: sumObtained,
