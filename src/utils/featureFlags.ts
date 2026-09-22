@@ -54,7 +54,7 @@ export const FEATURES_REGISTRY: Record<FeatureKey, FeatureConfig> = {
     id: 'results',
     label: "Notes & Résultats",
     description: "Bulletins, moyennes et simulateur de notes",
-    isReadyInLive: false,
+    isReadyInLive: true,
   },
   courses: {
     id: 'courses',

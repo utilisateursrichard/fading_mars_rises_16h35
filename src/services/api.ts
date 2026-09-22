@@ -158,14 +158,14 @@ class SchoolService {
     const current20 = totalCoeffs > 0 ? (totalWeighted / totalCoeffs) : 0;
     const classAvg20 = totalCoeffs > 0 ? (classWeighted / totalCoeffs) : 0;
 
-    // Moyenne générale calculée sur 100
-    const current = Number((current20 * 5).toFixed(1));
-    const classAvg = Number((classAvg20 * 5).toFixed(1));
+    // Moyenne générale calculée sur 20
+    const current = Number(current20.toFixed(2));
+    const classAvg = Number(classAvg20.toFixed(2));
 
     return Promise.resolve({
       current,
       classAvg,
-      previousTerm: 77.0 // Trimestre précédent sur 100 (15.4 * 5 = 77.0)
+      previousTerm: 15.4
     });
   }
 

@@ -249,13 +249,18 @@ export const ResultsView: React.FC = () => {
 
             {overallStats ? (
               <div className="mt-4 flex flex-col sm:flex-row sm:items-baseline gap-6">
-                <div className="flex items-baseline gap-3">
+                <div className="flex items-baseline gap-2">
                   <span className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900">
-                    {overallStats.currentPct !== undefined ? `${overallStats.currentPct}%` : `${overallStats.current}/20`}
+                    {overallStats.current}
                   </span>
-                  <span className="text-slate-400 text-sm font-semibold">
-                    ({overallStats.current}/20)
+                  <span className="text-slate-400 text-lg font-bold">
+                    / 20
                   </span>
+                  {overallStats.currentPct !== undefined ? (
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 ml-1">
+                      {overallStats.currentPct}%
+                    </span>
+                  ) : null}
                 </div>
 
                 {overallStats.totalWeeklyHours ? (
@@ -358,8 +363,9 @@ export const ResultsView: React.FC = () => {
                 <div>
                   <p className="text-[11px] font-bold text-indigo-900">Nouvelle moyenne générale :</p>
                   <div className="flex items-baseline gap-1 mt-0.5">
-                    <span className="text-xl font-black text-indigo-700">{simulatedStats.newOverallPct}%</span>
-                    <span className="text-xs text-indigo-400">({simulatedStats.newOverall20}/20)</span>
+                    <span className="text-2xl font-black text-indigo-700">{simulatedStats.newOverall20}</span>
+                    <span className="text-xs font-bold text-indigo-400">/ 20</span>
+                    <span className="text-xs text-indigo-400 ml-1">({simulatedStats.newOverallPct}%)</span>
                   </div>
                 </div>
                 <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold ${
@@ -435,8 +441,9 @@ export const ResultsView: React.FC = () => {
                   <div className="flex items-center justify-between sm:justify-end gap-6 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                     <div className="text-right">
                       <div className="flex items-baseline gap-1 justify-end">
-                        <span className="text-2xl font-black text-slate-900">{coursePct}%</span>
-                        <span className="text-xs text-slate-400 font-semibold">({report.studentAverage}/20)</span>
+                        <span className="text-2xl font-black text-slate-900">{report.studentAverage}</span>
+                        <span className="text-xs text-slate-400 font-semibold">/ 20</span>
+                        <span className="text-xs text-slate-400 ml-1">({coursePct}%)</span>
                       </div>
                       {report.totalPossible ? (
                         <p className="text-[11px] text-slate-400">

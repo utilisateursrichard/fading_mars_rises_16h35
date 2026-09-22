@@ -340,26 +340,22 @@ export const DashboardView: React.FC = () => {
             <>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900">{overallStats.current}</span>
-                <span className="text-xs text-slate-400 font-semibold">/ 100</span>
+                <span className="text-xs text-slate-400 font-semibold">/ 20</span>
               </div>
-              {(() => {
-                const diffPrev = Number((overallStats.current - overallStats.previousTerm).toFixed(1));
-                return (
-                  <p className={`text-[11px] font-bold mt-1 ${diffPrev >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {diffPrev >= 0 ? `+${diffPrev}` : diffPrev} pts{' '}
-                    <span className="text-slate-400 font-normal">vs classe ({overallStats.classAvg}/100)</span>
-                  </p>
-                );
-              })()}
+              <p className="text-[11px] font-semibold text-slate-400 mt-1">
+                {overallStats.totalWeeklyHours
+                  ? `${overallStats.totalWeeklyHours}h de cours hebdomadaires`
+                  : (overallStats.currentPct !== undefined ? `${overallStats.currentPct}% de réussite` : 'Contrôle continu')}
+              </p>
             </>
           ) : (
             <div className="space-y-1">
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl sm:text-3xl font-black text-slate-300">--</span>
-                <span className="text-xs text-slate-400 font-semibold">/ 100</span>
+                <span className="text-xs text-slate-400 font-semibold">/ 20</span>
               </div>
-              <p className="text-[11px] text-amber-600 font-bold mt-1">
-                En attente du module Skore
+              <p className="text-[11px] text-slate-400 font-medium mt-1">
+                Aucune note disponible
               </p>
             </div>
           )}
