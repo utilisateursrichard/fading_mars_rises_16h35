@@ -5,7 +5,7 @@
  * et stocke les données réelles de l'élève en cache local.
  */
 
-import { CourseEvent, Homework, Student } from '../types/school';
+import { CourseEvent, Homework, Student, SkoreEvaluation } from '../types/school';
 import { fetchSmartschool, queryHostDOM, getHostPageInfo, evalHostExpression } from './smartschoolBridge';
 import { 
   parseSmartschoolCourse, 
@@ -19,7 +19,8 @@ const REAL_STORAGE_KEYS = {
   EVENTS: 'betterschool_real_events',
   HOMEWORKS: 'betterschool_real_homeworks',
   STUDENT: 'betterschool_real_student',
-  LAST_SYNC: 'betterschool_real_last_sync'
+  LAST_SYNC: 'betterschool_real_last_sync',
+  EVALUATIONS: 'betterschool_real_evaluations'
 };
 
 /**
@@ -280,6 +281,7 @@ export interface SyncResult {
   events: CourseEvent[];
   homeworks: Homework[];
   student: Partial<Student> | null;
+  evaluations: SkoreEvaluation[];
   error?: string;
 }
 
@@ -403,6 +405,91 @@ export const fetchRealHomeworks = async (userId?: string | null, targetDate?: Da
 };
 
 /**
+ * Récupère le détail complet d'une évaluation (notamment pour obtenir projectGoals des types "project")
+ */
+export const fetchRealEvaluationDetail = async (identifier: string): Promise<SkoreEvaluation | null> => {
+  if (!identifier) return null;
+  try {
+    const url = `/results/api/v1/evaluations/${identifier}`;
+    const res = await fetchSmartschool(url, {
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+
+    if (!res.ok || !res.body) return null;
+    const data = JSON.parse(res.body);
+    return data || null;
+  } catch (e) {
+    console.warn(`Erreur lors du chargement du détail de l'évaluation ${identifier}:`, e);
+    return null;
+  }
+};
+
+/**
+ * Récupère la liste des évaluations de l'élève depuis le module Résultats (Skore)
+ */
+export const fetchRealEvaluations = async (
+  pageNumber: number = 1,
+  itemsOnPage: number = 50
+): Promise<SkoreEvaluation[]> => {
+  try {
+    const url = `/results/api/v1/evaluations/?pageNumber=${pageNumber}&itemsOnPage=${itemsOnPage}`;
+    const res = await fetchSmartschool(url, {
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+
+    if (!res.ok || !res.body) {
+      return getCachedRealEvaluations();
+    }
+
+    let rawData: any;
+    try {
+      rawData = JSON.parse(res.body);
+    } catch {
+      return getCachedRealEvaluations();
+    }
+
+    const rawList: SkoreEvaluation[] = Array.isArray(rawData)
+      ? rawData
+      : (rawData.evaluations || rawData.items || rawData.results || []);
+
+    if (!Array.isArray(rawList)) {
+      return getCachedRealEvaluations();
+    }
+
+    // Résolution enrichie pour les projets LPD dépourvus d'objectifs chiffrés
+    const enriched = await Promise.all(
+      rawList.map(async (ev) => {
+        if (ev.type === 'project' && (!ev.details?.projectGoals || ev.details.projectGoals.length === 0)) {
+          try {
+            const detail = await fetchRealEvaluationDetail(ev.identifier);
+            if (detail?.details) {
+              return { ...ev, details: detail.details };
+            }
+          } catch {}
+        }
+        return ev;
+      })
+    );
+
+    // Persister en cache local
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(REAL_STORAGE_KEYS.EVALUATIONS, JSON.stringify(enriched));
+    }
+
+    return enriched;
+  } catch (err) {
+    console.warn('Erreur lors du chargement des évaluations réelles Skore:', err);
+    return getCachedRealEvaluations();
+  }
+};
+
+/**
  * Synchronise l'ensemble des données réelles de l'élève
  */
 export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string | null): Promise<SyncResult> => {
@@ -428,14 +515,16 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       events: getCachedRealEvents(),
       homeworks: getCachedRealHomeworks(),
       student: partialStudent,
+      evaluations: getCachedRealEvaluations(),
       error: 'Identifiant élève non trouvé'
     };
   }
 
   try {
-    const [rawEvents, homeworks] = await Promise.all([
+    const [rawEvents, homeworks, evaluations] = await Promise.all([
       fetchRealAgenda(effectiveUserId, targetDate),
-      fetchRealHomeworks(effectiveUserId, targetDate)
+      fetchRealHomeworks(effectiveUserId, targetDate),
+      fetchRealEvaluations()
     ]);
 
     // Associer les devoirs aux cours correspondants
@@ -454,7 +543,8 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       success: true,
       events,
       homeworks,
-      student: finalStudent
+      student: finalStudent,
+      evaluations
     };
   } catch (err: any) {
     return {
@@ -462,6 +552,7 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       events: getCachedRealEvents(),
       homeworks: getCachedRealHomeworks(),
       student: getCachedRealStudent() || partialStudent,
+      evaluations: getCachedRealEvaluations(),
       error: err.message || 'Erreur de synchronisation'
     };
   }
@@ -490,6 +581,16 @@ export const getCachedRealHomeworks = (): Homework[] => {
     const pad = (n: number) => n.toString().padStart(2, '0');
     const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
     return list.filter(h => !h.dueDate || h.dueDate >= todayStr);
+  } catch {
+    return [];
+  }
+};
+
+export const getCachedRealEvaluations = (): SkoreEvaluation[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(REAL_STORAGE_KEYS.EVALUATIONS);
+    return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
   }

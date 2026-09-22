@@ -151,7 +151,7 @@ class SchoolService {
 
     reports.forEach(rep => {
       totalWeighted += rep.studentAverage * rep.coefficient;
-      classWeighted += rep.classAverage * rep.coefficient;
+      classWeighted += (rep.classAverage ?? 0) * rep.coefficient;
       totalCoeffs += rep.coefficient;
     });
 

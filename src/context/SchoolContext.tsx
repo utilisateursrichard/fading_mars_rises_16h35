@@ -6,7 +6,8 @@ import {
   SubjectReport,
   Conversation,
   Message,
-  SubjectCourse
+  SubjectCourse,
+  SkoreEvaluation
 } from '../types/school';
 import { schoolService } from '../services/api';
 import { mockNotifications } from '../data/mockData';
@@ -15,11 +16,13 @@ import {
   getCachedRealEvents, 
   getCachedRealHomeworks, 
   getCachedRealStudent, 
+  getCachedRealEvaluations,
   syncAllSmartschoolData,
   toggleCachedRealHomework,
   resolveSmartschoolHomework,
   unresolveSmartschoolHomework
 } from '../services/smartschoolApi';
+import { buildSubjectReportsFromEvaluations } from '../services/smartschoolParsers';
 
 export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'tutor' | 'book';
 
@@ -53,11 +56,17 @@ interface SchoolContextType {
   setActiveConversationId: (id: string) => void;
   activeMessages: Message[];
   sendMessage: (content: string) => Promise<void>;
-  // Résultats
+  // Résultats & Skore
   subjectReports: SubjectReport[];
-  overallStats: { current: number; classAvg: number; previousTerm: number } | null;
+  overallStats: { current: number; classAvg: number; previousTerm: number; currentPct?: number; totalWeeklyHours?: number } | null;
   activePeriod: 'T1' | 'T2' | 'T3';
   setActivePeriod: (p: 'T1' | 'T2' | 'T3') => void;
+  skoreEvaluations: SkoreEvaluation[];
+  availablePeriods: string[];
+  activePeriodName: string;
+  setActivePeriodName: (p: string) => void;
+  excludedGradeIds: Set<string>;
+  toggleGradeExclusion: (gradeId: string) => void;
   // Cours
   courses: SubjectCourse[];
   selectedCourseId: string | null;
@@ -138,15 +147,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [activeMessages, setActiveMessages] = useState<Message[]>([]);
 
   const [subjectReports, setSubjectReports] = useState<SubjectReport[]>([]);
-  const [overallStats, setOverallStats] = useState<{ current: number; classAvg: number; previousTerm: number } | null>(null);
+  const [overallStats, setOverallStats] = useState<{ current: number; classAvg: number; previousTerm: number; currentPct?: number; totalWeeklyHours?: number } | null>(null);
   const [activePeriod, setActivePeriod] = useState<'T1' | 'T2' | 'T3'>('T1');
-
-  const [courses, setCourses] = useState<SubjectCourse[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
-
-  const [globalSearch, setGlobalSearch] = useState('');
-
-  const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications);
 
   // État du mode démo : Mode Réel par défaut (isDemoMode = false)
   const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
@@ -182,6 +184,76 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       localStorage.setItem('betterschool_demo_mode', String(enabled));
     } catch {}
   };
+
+  // Skore Réel
+  const [skoreEvaluations, setSkoreEvaluations] = useState<SkoreEvaluation[]>(() => {
+    return getCachedRealEvaluations();
+  });
+  const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
+  const [activePeriodName, setActivePeriodName] = useState<string>('');
+  const [excludedGradeIds, setExcludedGradeIds] = useState<Set<string>>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('betterschool_v2_excluded_grades');
+        if (stored) return new Set(JSON.parse(stored));
+      }
+    } catch {}
+    return new Set();
+  });
+
+  const toggleGradeExclusion = (gradeId: string) => {
+    setExcludedGradeIds(prev => {
+      const next = new Set(prev);
+      if (next.has(gradeId)) {
+        next.delete(gradeId);
+      } else {
+        next.add(gradeId);
+      }
+      try {
+        localStorage.setItem('betterschool_v2_excluded_grades', JSON.stringify(Array.from(next)));
+      } catch {}
+      return next;
+    });
+  };
+
+  // Recalcul des rapports réels Skore lors des changements d'évaluations ou d'exclusions
+  useEffect(() => {
+    if (isDemoMode) return;
+
+    if (skoreEvaluations && skoreEvaluations.length > 0) {
+      const computed = buildSubjectReportsFromEvaluations(
+        skoreEvaluations,
+        excludedGradeIds,
+        activePeriodName || undefined
+      );
+
+      setSubjectReports(computed.reports);
+      setOverallStats({
+        current: computed.overallAverage20,
+        currentPct: computed.overallAveragePct,
+        classAvg: 0,
+        previousTerm: 0,
+        totalWeeklyHours: computed.totalWeeklyHours
+      });
+
+      if (computed.periods.length > 0) {
+        setAvailablePeriods(computed.periods);
+        if (!activePeriodName && computed.periods[0]) {
+          setActivePeriodName(computed.periods[0]);
+        }
+      }
+    } else {
+      setSubjectReports([]);
+      setOverallStats(null);
+    }
+  }, [isDemoMode, skoreEvaluations, excludedGradeIds, activePeriodName]);
+
+  const [courses, setCourses] = useState<SubjectCourse[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+
+  const [globalSearch, setGlobalSearch] = useState('');
+
+  const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
@@ -242,6 +314,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const realEvents = getCachedRealEvents();
         const realHomeworks = getCachedRealHomeworks();
         const realStudentData = getCachedRealStudent();
+        const realEvals = getCachedRealEvaluations();
+        setSkoreEvaluations(realEvals);
 
         if (realStudentData) {
           setStudent({
@@ -279,10 +353,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // Modules non encore branchés restent vierges en mode réel
         setConversations([]);
         setActiveMessages([]);
-        setSubjectReports([]);
         setCourses([]);
         setNotifications([]);
-        setOverallStats(null); // Mode Réel : aucune note fictive
 
         // Si BetterSchool tourne au sein de Smartschool, synchroniser en direct
         if (isInsideSmartschoolPlatform) {
@@ -290,6 +362,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             if (res.success) {
               setEvents(res.events);
               setHomeworks(res.homeworks);
+              if (res.evaluations) {
+                setSkoreEvaluations(res.evaluations);
+              }
               const curDay = new Date().getDay();
               const day = (curDay === 0 ? 7 : curDay);
               setTodayEvents(
@@ -498,6 +573,12 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         overallStats,
         activePeriod,
         setActivePeriod,
+        skoreEvaluations,
+        availablePeriods,
+        activePeriodName,
+        setActivePeriodName,
+        excludedGradeIds,
+        toggleGradeExclusion,
         courses,
         selectedCourseId,
         setSelectedCourseId,

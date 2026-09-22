@@ -67,6 +67,15 @@ export interface Homework {
   plannedElementType?: string;
 }
 
+export interface GradeGoal {
+  title?: string;
+  scoreText: string;
+  obtained: number;
+  total: number;
+  percentage?: number;
+  color?: string;
+}
+
 export interface Grade {
   id: string;
   subject: string;
@@ -76,12 +85,25 @@ export interface Grade {
   coefficient: number;
   title: string;
   date: string;
-  classAverage: number;
-  minGrade: number;
-  maxGrade: number;
+  classAverage?: number;
+  minGrade?: number;
+  maxGrade?: number;
   teacherComment?: string;
-  period: 'T1' | 'T2' | 'T3';
-  type: 'DS' | 'DM' | 'TP' | 'Interro' | 'Oral';
+  period: string;
+  type?: 'DS' | 'DM' | 'TP' | 'Interro' | 'Oral' | string;
+  // Enrichissements Skore
+  obtainedPoints?: number;
+  totalPoints?: number;
+  rawScoreText?: string;
+  isSommatif?: boolean;
+  isManuallyExcluded?: boolean;
+  color?: string;
+  teacherName?: string;
+  teacherPhoto?: string;
+  availabilityDate?: string;
+  feedbacks?: string[];
+  goals?: GradeGoal[];
+  evaluationType?: 'normal' | 'project';
 }
 
 export interface SubjectReport {
@@ -91,11 +113,96 @@ export interface SubjectReport {
   teacher: string;
   coefficient: number;
   studentAverage: number;
-  classAverage: number;
-  minAverage: number;
-  maxAverage: number;
+  classAverage?: number;
+  minAverage?: number;
+  maxAverage?: number;
   grades: Grade[];
-  teacherAppreciation: string;
+  teacherAppreciation?: string;
+  hoursPerWeek?: number;
+  totalObtained?: number;
+  totalPossible?: number;
+}
+
+// Structures natives Smartschool Skore API
+export interface SkoreGraphic {
+  type: string;
+  color?: string;
+  value?: number | string | null;
+  description?: string | null;
+}
+
+export interface SkoreComponent {
+  id: number;
+  name: string;
+  abbreviation: string;
+}
+
+export interface SkoreTeacher {
+  id: string;
+  pictureHash?: string;
+  pictureUrl?: string;
+  name: {
+    startingWithFirstName?: string;
+    startingWithLastName?: string;
+  };
+  deleted?: boolean;
+}
+
+export interface SkoreCourse {
+  id: number;
+  name: string;
+  graphic?: {
+    type: string;
+    value: string;
+  };
+  teachers?: SkoreTeacher[];
+  class?: {
+    identifier: string;
+    id: number;
+    platformId: number;
+    name: string;
+    type?: string;
+    icon?: string;
+  };
+}
+
+export interface SkorePeriod {
+  id: number;
+  name: string;
+  icon?: string;
+  isActive?: boolean;
+}
+
+export interface SkoreProjectGoal {
+  goal?: {
+    goalId?: string;
+    leerplanId?: string;
+    leerplanKey?: string;
+  };
+  graphic: SkoreGraphic;
+  feedback?: any[];
+  feedbacks?: any[];
+}
+
+export interface SkoreEvaluation {
+  identifier: string;
+  type: 'project' | 'normal' | string;
+  name: string;
+  graphic: SkoreGraphic;
+  date: string;
+  gradebookOwner?: SkoreTeacher;
+  component: SkoreComponent;
+  courses: SkoreCourse[];
+  period: SkorePeriod;
+  feedback?: any[];
+  feedbacks?: any[];
+  availabilityDate?: string;
+  isPublished?: boolean;
+  doesCount?: boolean;
+  details?: {
+    projectGoals?: SkoreProjectGoal[];
+    scales?: any[];
+  };
 }
 
 export interface MessageAttachment {

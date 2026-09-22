@@ -5,7 +5,17 @@
  * en structures de données BetterSchool strictement typées (CourseEvent, Homework, Student).
  */
 
-import { CourseEvent, Homework, DayOfWeek, EventType, EventStatus } from '../types/school';
+import { 
+  CourseEvent, 
+  Homework, 
+  DayOfWeek, 
+  EventType, 
+  EventStatus,
+  Grade,
+  GradeGoal,
+  SubjectReport,
+  SkoreEvaluation
+} from '../types/school';
 import { calculateHomeworkImportance, getHomeworkPriority } from '../utils/homeworkImportance';
 
 // Palette de correspondance des couleurs Smartschool vers BetterSchool
@@ -398,3 +408,334 @@ export const extractMetadataFromPlanner = (
 
   return { schoolName, studentClass, firstName, lastName, avatar };
 };
+
+// ==========================================
+// 📊 MODULE SKORE — RÉSULTATS & ÉVALUATIONS
+// ==========================================
+
+/**
+ * Extrait les points obtenus et le dénominateur depuis une description textuelle.
+ * Gère "35,5/40", "8/10", "3/5", etc.
+ */
+export const parseScoreDescription = (
+  desc?: string | null
+): { obtained: number; total: number } | null => {
+  if (!desc || typeof desc !== 'string') return null;
+  const cleaned = desc.trim();
+  const match = cleaned.match(/^([\d,.]+)\s*\/\s*([\d,.]+)$/);
+  if (!match) return null;
+
+  const obtained = parseFloat(match[1].replace(',', '.'));
+  const total = parseFloat(match[2].replace(',', '.'));
+
+  if (isNaN(obtained) || isNaN(total) || total <= 0) return null;
+  return { obtained, total };
+};
+
+/**
+ * Détecte formellement un travail formatif (exercice d'entraînement qui ne compte pas au bulletin).
+ */
+export const isFormativeEvaluation = (ev: SkoreEvaluation): boolean => {
+  if (ev.component?.abbreviation?.toUpperCase() === 'F') return true;
+  if (/formatif/i.test(ev.component?.name || '')) return true;
+  if (/\bformatif\b/i.test(ev.name || '')) return true;
+  return false;
+};
+
+/**
+ * Extrait le score chiffré complet d'une évaluation (normale ou projet LPD).
+ */
+export const extractScoreFromEvaluation = (
+  ev: SkoreEvaluation
+): {
+  obtained: number;
+  total: number;
+  rawText: string;
+  percentage: number;
+  goals?: GradeGoal[];
+} | null => {
+  // Cas 1 : Évaluation de type "project" avec objectifs d'apprentissage (LPD)
+  if (ev.type === 'project' && ev.details?.projectGoals && ev.details.projectGoals.length > 0) {
+    const goals: GradeGoal[] = [];
+    let sumObtained = 0;
+    let sumTotal = 0;
+
+    for (const g of ev.details.projectGoals) {
+      const parsed = parseScoreDescription(g.graphic?.description);
+      if (parsed) {
+        sumObtained += parsed.obtained;
+        sumTotal += parsed.total;
+        const pct = typeof g.graphic?.value === 'number'
+          ? g.graphic.value
+          : Math.round((parsed.obtained / parsed.total) * 100);
+
+        goals.push({
+          title: g.goal?.leerplanKey || 'Objectif',
+          scoreText: g.graphic?.description || `${parsed.obtained}/${parsed.total}`,
+          obtained: parsed.obtained,
+          total: parsed.total,
+          percentage: pct,
+          color: g.graphic?.color
+        });
+      }
+    }
+
+    if (sumTotal > 0) {
+      const percentage = Math.round((sumObtained / sumTotal) * 100);
+      return {
+        obtained: sumObtained,
+        total: sumTotal,
+        rawText: `${sumObtained}/${sumTotal}`,
+        percentage,
+        goals
+      };
+    }
+  }
+
+  // Cas 2 : Description directe X/Y (ex: "35,5/40")
+  if (ev.graphic?.description) {
+    const parsed = parseScoreDescription(ev.graphic.description);
+    if (parsed) {
+      const pct = typeof ev.graphic.value === 'number'
+        ? ev.graphic.value
+        : Math.round((parsed.obtained / parsed.total) * 100);
+
+      return {
+        obtained: parsed.obtained,
+        total: parsed.total,
+        rawText: ev.graphic.description,
+        percentage: pct
+      };
+    }
+  }
+
+  // Cas 3 : Pourcentage brut (ex: value: 89)
+  if (typeof ev.graphic?.value === 'number' && ev.graphic.value >= 0) {
+    return {
+      obtained: ev.graphic.value,
+      total: 100,
+      rawText: `${ev.graphic.value}%`,
+      percentage: ev.graphic.value
+    };
+  }
+
+  return null;
+};
+
+/**
+ * Prédicat robuste déterminant si un devoir doit être comptabilisé dans la moyenne.
+ */
+export const doesEvaluationCountInAverage = (
+  ev: SkoreEvaluation,
+  isManuallyExcluded: boolean = false
+): boolean => {
+  if (isManuallyExcluded) return false;
+  if (ev.doesCount === false) return false;
+  if (ev.isPublished === false) return false;
+  if (isFormativeEvaluation(ev)) return false;
+
+  const score = extractScoreFromEvaluation(ev);
+  if (!score || score.total <= 0) return false;
+
+  return true;
+};
+
+/**
+ * Extrait le volume horaire hebdomadaire d'un cours (ex: "Math. Imm. (5h)" -> 5).
+ * Renvoie 1 par défaut si aucun chiffre d'heure n'est mentionné.
+ */
+export const extractHoursFromCourseName = (courseName?: string): number => {
+  if (!courseName) return 1;
+  const match = courseName.match(/\((\d+)\s*h\)/i);
+  if (match && match[1]) {
+    const parsed = parseInt(match[1], 10);
+    if (!isNaN(parsed) && parsed > 0) return parsed;
+  }
+  return 1;
+};
+
+/**
+ * Convertit une SkoreEvaluation en objet Grade BetterSchool.
+ */
+export const parseSkoreEvaluationToGrade = (
+  ev: SkoreEvaluation,
+  isManuallyExcluded: boolean = false
+): Grade => {
+  const score = extractScoreFromEvaluation(ev);
+  const course = ev.courses?.[0];
+  const subjectName = course?.name || 'Matière';
+  const teacherObj = ev.gradebookOwner || course?.teachers?.[0];
+
+  const teacherName = teacherObj?.name?.startingWithFirstName || 
+                      teacherObj?.name?.startingWithLastName || 
+                      'Enseignant';
+
+  const teacherPhoto = teacherObj?.pictureUrl || '';
+  const isSommatif = !isFormativeEvaluation(ev);
+
+  // Note ramenée sur 20 pour compatibilité d'affichage
+  const noteSur20 = score && score.total > 0
+    ? Number(((score.obtained / score.total) * 20).toFixed(2))
+    : 0;
+
+  // Extraction propre des feedbacks textuels s'ils existent
+  const feedbacksList: string[] = [];
+  const rawFeedbacks = [...(ev.feedbacks || []), ...(ev.feedback || [])];
+  for (const f of rawFeedbacks) {
+    if (typeof f === 'string' && f.trim()) {
+      feedbacksList.push(f.trim());
+    } else if (f && typeof f === 'object') {
+      const txt = f.text || f.comment || f.message || f.body;
+      if (txt && typeof txt === 'string' && txt.trim()) {
+        feedbacksList.push(txt.trim());
+      }
+    }
+  }
+
+  return {
+    id: ev.identifier,
+    subject: subjectName,
+    subjectCode: subjectName.substring(0, 4).toUpperCase(),
+    value: noteSur20,
+    maxValue: 20,
+    coefficient: score?.total || 1,
+    title: ev.name,
+    date: ev.date ? ev.date.substring(0, 10) : '',
+    period: ev.period?.name || 'Septembre - Décembre',
+    type: isSommatif ? 'Sommatif' : 'Formatif',
+    obtainedPoints: score?.obtained,
+    totalPoints: score?.total,
+    rawScoreText: score?.rawText || ev.graphic?.description || '—',
+    isSommatif,
+    isManuallyExcluded,
+    color: ev.graphic?.color || 'indigo',
+    teacherName,
+    teacherPhoto,
+    availabilityDate: ev.availabilityDate,
+    feedbacks: feedbacksList.length > 0 ? feedbacksList : undefined,
+    goals: score?.goals,
+    evaluationType: ev.type === 'project' ? 'project' : 'normal'
+  };
+};
+
+/**
+ * Construit l'ensemble des SubjectReports et les statistiques globales
+ * à partir de la liste des évaluations réelles Smartschool.
+ */
+export const buildSubjectReportsFromEvaluations = (
+  evaluations: SkoreEvaluation[],
+  excludedGradeIds: Set<string> = new Set(),
+  targetPeriod?: string
+): {
+  reports: SubjectReport[];
+  overallAveragePct: number;
+  overallAverage20: number;
+  totalWeeklyHours: number;
+  periods: string[];
+} => {
+  // 1. Extraire la liste des périodes uniques
+  const periodSet = new Set<string>();
+  evaluations.forEach(ev => {
+    if (ev.period?.name) periodSet.add(ev.period.name);
+  });
+  const periods = Array.from(periodSet);
+
+  // 2. Filtrer par période cible si spécifiée
+  const filteredEvals = targetPeriod
+    ? evaluations.filter(ev => ev.period?.name === targetPeriod)
+    : evaluations;
+
+  // 3. Regrouper par matière
+  const courseMap = new Map<string, {
+    courseName: string;
+    teacherName: string;
+    hours: number;
+    evals: SkoreEvaluation[];
+  }>();
+
+  for (const ev of filteredEvals) {
+    const course = ev.courses?.[0];
+    const courseName = course?.name || 'Autre matière';
+    const teacherName = ev.gradebookOwner?.name?.startingWithFirstName || 
+                        ev.gradebookOwner?.name?.startingWithLastName || 
+                        'Enseignant';
+
+    if (!courseMap.has(courseName)) {
+      courseMap.set(courseName, {
+        courseName,
+        teacherName,
+        hours: extractHoursFromCourseName(courseName),
+        evals: []
+      });
+    }
+    courseMap.get(courseName)!.evals.push(ev);
+  }
+
+  // 4. Calculer la moyenne de chaque matière
+  const reports: SubjectReport[] = [];
+  let totalWeightedPercentage = 0;
+  let totalActiveHours = 0;
+
+  for (const [courseName, data] of courseMap.entries()) {
+    const grades: Grade[] = [];
+    let sumObtained = 0;
+    let sumTotal = 0;
+
+    for (const ev of data.evals) {
+      const isExcluded = excludedGradeIds.has(ev.identifier);
+      const grade = parseSkoreEvaluationToGrade(ev, isExcluded);
+      grades.push(grade);
+
+      // Vérifier si le devoir compte dans la moyenne
+      if (doesEvaluationCountInAverage(ev, isExcluded)) {
+        const score = extractScoreFromEvaluation(ev);
+        if (score && score.total > 0) {
+          sumObtained += score.obtained;
+          sumTotal += score.total;
+        }
+      }
+    }
+
+    // Calcul de la moyenne du cours
+    const hasGrades = sumTotal > 0;
+    const coursePct = hasGrades ? (sumObtained / sumTotal) * 100 : 0;
+    const courseSur20 = Number(((coursePct / 100) * 20).toFixed(2));
+
+    if (hasGrades) {
+      totalWeightedPercentage += coursePct * data.hours;
+      totalActiveHours += data.hours;
+    }
+
+    reports.push({
+      subject: courseName,
+      subjectCode: courseName.substring(0, 4).toUpperCase(),
+      color: '#6366f1',
+      teacher: data.teacherName,
+      coefficient: data.hours,
+      studentAverage: courseSur20, // Compatible sur 20
+      grades,
+      hoursPerWeek: data.hours,
+      totalObtained: sumObtained,
+      totalPossible: sumTotal
+    });
+  }
+
+  // Tri par ordre alphabétique des matières
+  reports.sort((a, b) => a.subject.localeCompare(b.subject));
+
+  // 5. Calcul de la moyenne générale pondérée par le volume horaire
+  const overallAveragePct = totalActiveHours > 0
+    ? Number((totalWeightedPercentage / totalActiveHours).toFixed(1))
+    : 0;
+
+  const overallAverage20 = Number(((overallAveragePct / 100) * 20).toFixed(2));
+
+  return {
+    reports,
+    overallAveragePct,
+    overallAverage20,
+    totalWeeklyHours: totalActiveHours,
+    periods
+  };
+};
+

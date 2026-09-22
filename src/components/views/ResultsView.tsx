@@ -5,10 +5,22 @@ import {
   ChevronUp, 
   Calculator, 
   Sparkles,
-  Award
+  Award,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  LayoutGrid,
+  ListFilter,
+  MessageSquare,
+  Target,
+  BookOpen,
+  Check
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
 import { getSubjectTheme } from '../../utils/theme';
+import { Grade } from '../../types/school';
 
 export const ResultsView: React.FC = () => {
   const { 
@@ -16,17 +28,29 @@ export const ResultsView: React.FC = () => {
     overallStats, 
     activePeriod, 
     setActivePeriod,
-    globalSearch 
+    availablePeriods,
+    activePeriodName,
+    setActivePeriodName,
+    excludedGradeIds,
+    toggleGradeExclusion,
+    globalSearch,
+    isDemoMode
   } = useSchool();
 
+  // Mode d'affichage : 'bulletin' (vue par matière) ou 'feed' (flux chronologique)
+  const [viewMode, setViewMode] = useState<'bulletin' | 'feed'>('bulletin');
+
+  // Matières dépliées dans l'accordéon du bulletin
   const [expandedSubjects, setExpandedSubjects] = useState<{ [key: string]: boolean }>({
     'SCI': true,
-    'MATH': true
+    'MATH': true,
+    'NÉER': true
   });
 
-  const [simSubject, setSimSubject] = useState('MATH');
-  const [simGradeValue, setSimGradeValue] = useState<number>(18);
-  const [simCoefficient, setSimCoefficient] = useState<number>(2);
+  // États du simulateur de moyenne
+  const [simSubject, setSimSubject] = useState<string>('');
+  const [simObtained, setSimObtained] = useState<number>(16);
+  const [simTotal, setSimTotal] = useState<number>(20);
   const [hasSimulated, setHasSimulated] = useState(false);
 
   const toggleSubject = (code: string) => {
@@ -36,169 +60,254 @@ export const ResultsView: React.FC = () => {
     }));
   };
 
+  // Filtrage par recherche globale
   const filteredReports = useMemo(() => {
     if (!globalSearch) return subjectReports;
+    const q = globalSearch.toLowerCase();
     return subjectReports.filter(r => 
-      r.subject.toLowerCase().includes(globalSearch.toLowerCase()) ||
-      r.subjectCode.toLowerCase().includes(globalSearch.toLowerCase()) ||
-      r.teacher.toLowerCase().includes(globalSearch.toLowerCase())
+      r.subject.toLowerCase().includes(q) ||
+      r.subjectCode.toLowerCase().includes(q) ||
+      r.teacher.toLowerCase().includes(q) ||
+      r.grades.some(g => g.title.toLowerCase().includes(q))
     );
   }, [subjectReports, globalSearch]);
 
-  const simulatedStats = useMemo(() => {
-    if (!hasSimulated) return null;
+  // Initialisation du sujet simulé dès que des matières sont disponibles
+  const activeSimSubject = useMemo(() => {
+    if (simSubject && filteredReports.some(r => r.subjectCode === simSubject)) {
+      return simSubject;
+    }
+    return filteredReports[0]?.subjectCode || '';
+  }, [simSubject, filteredReports]);
 
-    let totalWeighted = 0;
-    let totalCoeffs = 0;
+  // Simulation réactive de moyenne avec barème libre
+  const simulatedStats = useMemo(() => {
+    if (!hasSimulated || !activeSimSubject || filteredReports.length === 0) return null;
+
+    let totalWeightedPct = 0;
+    let totalWeeklyHours = 0;
+    let targetSubjectOldPct = 0;
+    let targetSubjectNewPct = 0;
 
     filteredReports.forEach(rep => {
-      let subjectAvg = rep.studentAverage;
-      if (rep.subjectCode === simSubject) {
-        const currentGradesWeight = rep.grades.reduce((acc, g) => acc + (g.value * g.coefficient), 0);
-        const currentCoeffs = rep.grades.reduce((acc, g) => acc + g.coefficient, 0);
-        const newTotalWeight = currentGradesWeight + (simGradeValue * simCoefficient);
-        const newTotalCoeffs = currentCoeffs + simCoefficient;
-        subjectAvg = newTotalCoeffs > 0 ? (newTotalWeight / newTotalCoeffs) : rep.studentAverage;
+      const hours = rep.hoursPerWeek || rep.coefficient || 1;
+      let subjectPct = rep.studentAverage > 0 ? (rep.studentAverage / 20) * 100 : 0;
+
+      if (rep.subjectCode === activeSimSubject) {
+        targetSubjectOldPct = subjectPct;
+        const currentObt = rep.totalObtained ?? (rep.studentAverage > 0 ? (rep.studentAverage / 20) * 100 : 0);
+        const currentTot = rep.totalPossible ?? (rep.studentAverage > 0 ? 100 : 0);
+
+        const newObt = currentObt + simObtained;
+        const newTot = currentTot + simTotal;
+
+        if (newTot > 0) {
+          subjectPct = (newObt / newTot) * 100;
+          targetSubjectNewPct = subjectPct;
+        }
       }
 
-      totalWeighted += subjectAvg * rep.coefficient;
-      totalCoeffs += rep.coefficient;
+      totalWeightedPct += subjectPct * hours;
+      totalWeeklyHours += hours;
     });
 
-    const currentOverall = overallStats?.current ?? 0;
-    const newOverall20 = totalCoeffs > 0 ? (totalWeighted / totalCoeffs) : (currentOverall / 5);
-    const newOverall = Number((newOverall20 * 5).toFixed(1));
-    const diff = Number((newOverall - currentOverall).toFixed(1));
+    const newOverallPct = totalWeeklyHours > 0 ? totalWeightedPct / totalWeeklyHours : 0;
+    const currentOverallPct = overallStats?.currentPct ?? (overallStats?.current ? (overallStats.current / 20) * 100 : 0);
+    const diffPct = Number((newOverallPct - currentOverallPct).toFixed(1));
 
     return {
-      newOverall,
-      diff
+      newOverallPct: Number(newOverallPct.toFixed(1)),
+      newOverall20: Number(((newOverallPct / 100) * 20).toFixed(2)),
+      diffPct,
+      targetSubjectNewPct: Number(targetSubjectNewPct.toFixed(1)),
+      targetSubjectDiff: Number((targetSubjectNewPct - targetSubjectOldPct).toFixed(1))
     };
-  }, [hasSimulated, simSubject, simGradeValue, simCoefficient, filteredReports, overallStats?.current]);
+  }, [hasSimulated, activeSimSubject, simObtained, simTotal, filteredReports, overallStats]);
+
+  // Liste plate chronologique de toutes les évaluations pour la vue "Flux"
+  const allChronologicalGrades = useMemo(() => {
+    const list: (Grade & { hoursPerWeek?: number })[] = [];
+    filteredReports.forEach(rep => {
+      rep.grades.forEach(g => {
+        list.push({ ...g, hoursPerWeek: rep.hoursPerWeek || rep.coefficient });
+      });
+    });
+
+    // Tri par date décroissante
+    return list.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateB - dateA;
+    });
+  }, [filteredReports]);
+
+  // Statut visuel du score
+  const getScoreColorBadge = (percentage?: number) => {
+    if (percentage === undefined || percentage === null) return 'bg-slate-100 text-slate-700 border-slate-200';
+    if (percentage >= 75) return 'bg-emerald-50 text-emerald-700 border-emerald-200/70';
+    if (percentage >= 50) return 'bg-amber-50 text-amber-700 border-amber-200/70';
+    return 'bg-rose-50 text-rose-700 border-rose-200/70';
+  };
 
   return (
     <div className="space-y-6 pb-12 max-w-6xl mx-auto">
       
-      {/* Header with Term Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/70 shadow-subtle">
+      {/* Header avec Navigation de Vue & Période */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/70 shadow-subtle">
         <div>
           <div className="flex items-center gap-2.5">
             <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Résultats & Notes</h2>
-            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700">
-              Contrôle Continu
+            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-indigo-50 text-indigo-700">
+              Module Skore
             </span>
           </div>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Moyennes pondérées par les coefficients officiels du Baccalauréat
+            Pondération par points bruts cumulés et volume horaire hebdomadaire
           </p>
         </div>
 
-        {/* Trimestre Selector */}
-        <div className="flex items-center p-1 bg-slate-100 rounded-xl text-xs font-bold">
-          {(['T1', 'T2', 'T3'] as const).map(period => (
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Segmented Control : Bulletin vs Flux chronologique */}
+          <div className="flex items-center p-1 bg-slate-100 rounded-2xl text-xs font-bold">
             <button
-              key={period}
-              onClick={() => setActivePeriod(period)}
-              className={`px-3.5 py-1.5 rounded-lg transition-all ${
-                activePeriod === period ? 'bg-white text-slate-900 shadow-subtle' : 'text-slate-500 hover:text-slate-900'
+              onClick={() => setViewMode('bulletin')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl transition-all ${
+                viewMode === 'bulletin'
+                  ? 'bg-white text-slate-900 shadow-subtle'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              {period === 'T1' ? '1er Trimestre' : period === 'T2' ? '2ème Trimestre' : '3ème Trimestre'}
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Bulletin par matière</span>
             </button>
-          ))}
+            <button
+              onClick={() => setViewMode('feed')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl transition-all ${
+                viewMode === 'feed'
+                  ? 'bg-white text-slate-900 shadow-subtle'
+                  : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Flux chronologique</span>
+            </button>
+          </div>
+
+          {/* Sélecteur de Période (Dynamique en Réel ou T1/T2/T3 en Démo) */}
+          {availablePeriods.length > 0 ? (
+            <div className="flex items-center p-1 bg-slate-100 rounded-2xl text-xs font-bold">
+              {availablePeriods.map(p => (
+                <button
+                  key={p}
+                  onClick={() => setActivePeriodName(p)}
+                  className={`px-3 py-1.5 rounded-xl transition-all ${
+                    activePeriodName === p
+                      ? 'bg-white text-slate-900 shadow-subtle'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center p-1 bg-slate-100 rounded-2xl text-xs font-bold">
+              {(['T1', 'T2', 'T3'] as const).map(period => (
+                <button
+                  key={period}
+                  onClick={() => setActivePeriod(period)}
+                  className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                    activePeriod === period
+                      ? 'bg-white text-slate-900 shadow-subtle'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  {period === 'T1' ? '1er Trimestre' : period === 'T2' ? '2ème Trimestre' : '3ème Trimestre'}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Overview & Simulator Grid */}
+      {/* Grille Synthèse Globale & Simulateur */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Clean Light Summary Card */}
+        {/* KPI Moyenne Générale M3E Pro */}
         <div className="lg:col-span-2 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/70 shadow-subtle flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Moyenne Générale Pondérée • {activePeriod}
+                Moyenne Générale Pondérée • {activePeriodName || activePeriod}
               </span>
               {overallStats && (
                 <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700">
-                  Mention Très Bien estimée
+                  {overallStats.current >= 16 ? 'Mention Très Bien' : overallStats.current >= 14 ? 'Mention Bien' : overallStats.current >= 12 ? 'Mention Assez Bien' : 'En bonne voie'}
                 </span>
               )}
             </div>
 
             {overallStats ? (
-              <>
-                <div className="mt-4 flex flex-col sm:flex-row sm:items-baseline gap-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900">{overallStats.current}</span>
-                    <span className="text-slate-400 text-base font-semibold">/ 100</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 w-fit">
-                    <TrendingUp className="w-3.5 h-3.5" />
-                    <span>
-                      {overallStats.current >= overallStats.previousTerm ? '+' : ''}
-                      {Number((overallStats.current - overallStats.previousTerm).toFixed(1))} pts par rapport au trimestre précédent
-                    </span>
-                  </div>
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-baseline gap-6">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900">
+                    {overallStats.currentPct !== undefined ? `${overallStats.currentPct}%` : `${overallStats.current}/20`}
+                  </span>
+                  <span className="text-slate-400 text-sm font-semibold">
+                    ({overallStats.current}/20)
+                  </span>
                 </div>
 
-                <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-3 gap-4">
-                  <div className="p-3 bg-slate-50/70 rounded-2xl">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Classe</p>
-                    <p className="text-base font-extrabold text-slate-800 mt-0.5">{overallStats.classAvg} <span className="text-xs font-normal text-slate-400">/ 100</span></p>
+                {overallStats.totalWeeklyHours ? (
+                  <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200/60 w-fit">
+                    <BookOpen className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>{overallStats.totalWeeklyHours}h de cours hebdomadaires</span>
                   </div>
-                  <div className="p-3 bg-slate-50/70 rounded-2xl">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Plus basse</p>
-                    <p className="text-base font-extrabold text-slate-800 mt-0.5">37.0 <span className="text-xs font-normal text-slate-400">/ 100</span></p>
-                  </div>
-                  <div className="p-3 bg-slate-50/70 rounded-2xl">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Plus haute</p>
-                    <p className="text-base font-extrabold text-slate-800 mt-0.5">97.0 <span className="text-xs font-normal text-slate-400">/ 100</span></p>
-                  </div>
-                </div>
-              </>
+                ) : null}
+              </div>
             ) : (
-              <div className="mt-4 space-y-3">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl sm:text-5xl font-black tracking-tight text-slate-300">--</span>
-                  <span className="text-slate-400 text-base font-semibold">/ 100</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 w-fit">
-                  <span>En attente de connexion avec le module Skore</span>
-                </div>
+              <div className="py-8 text-center text-xs text-slate-400">
+                Aucune note enregistrée pour cette période.
               </div>
             )}
           </div>
+
+          <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+            <span>Règle officielle : points bruts sommatifs cumulés</span>
+            <span className="font-semibold text-slate-600">
+              {allChronologicalGrades.filter(g => g.isSommatif && !g.isManuallyExcluded).length} évaluations comptabilisées
+            </span>
+          </div>
         </div>
 
-        {/* Interactive Grade Simulator Card */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/70 shadow-subtle flex flex-col justify-between">
+        {/* Simulateur de Moyenne Interactif */}
+        <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/70 shadow-subtle flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                <Calculator className="w-4 h-4" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Calculator className="w-4 h-4 text-indigo-600" />
+                <h3 className="font-bold text-sm text-slate-900">Simulateur de note</h3>
               </div>
-              <h3 className="font-extrabold text-slate-900 text-sm">Simulateur de note</h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                Impact direct
+              </span>
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-4">
-              Prévois l’impact d’un prochain devoir sur ta moyenne.
-            </p>
 
-            {subjectReports.length > 0 ? (
+            {filteredReports.length > 0 ? (
               <div className="space-y-3">
                 <div>
                   <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Matière</label>
                   <select
-                    value={simSubject}
+                    value={activeSimSubject}
                     onChange={(e) => {
                       setSimSubject(e.target.value);
                       setHasSimulated(true);
                     }}
-                    className="w-full px-3 py-2 text-xs font-bold bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   >
-                    {subjectReports.map(rep => (
+                    {filteredReports.map(rep => (
                       <option key={rep.subjectCode} value={rep.subjectCode}>
-                        {rep.subject} (Coef {rep.coefficient})
+                        {rep.subject} ({rep.hoursPerWeek || rep.coefficient}h)
                       </option>
                     ))}
                   </select>
@@ -206,41 +315,39 @@ export const ResultsView: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Note espérée (/20)</label>
+                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Note espérée</label>
                     <input
                       type="number"
                       min="0"
-                      max="20"
+                      max={simTotal}
                       step="0.5"
-                      value={simGradeValue}
+                      value={simObtained}
                       onChange={(e) => {
-                        setSimGradeValue(Number(e.target.value));
+                        setSimObtained(Number(e.target.value));
                         setHasSimulated(true);
                       }}
-                      className="w-full px-3 py-2 text-xs font-black text-indigo-600 bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3 py-2 text-xs font-black text-indigo-600 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Coefficient</label>
-                    <select
-                      value={simCoefficient}
+                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Sur total (/)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={simTotal}
                       onChange={(e) => {
-                        setSimCoefficient(Number(e.target.value));
+                        setSimTotal(Number(e.target.value));
                         setHasSimulated(true);
                       }}
-                      className="w-full px-3 py-2 text-xs font-bold bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                    >
-                      <option value={1}>Coef. 1</option>
-                      <option value={2}>Coef. 2</option>
-                      <option value={3}>Coef. 3</option>
-                      <option value={4}>Coef. 4</option>
-                    </select>
+                      className="w-full px-3 py-2 text-xs font-black text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    />
                   </div>
                 </div>
               </div>
             ) : (
               <div className="py-6 text-center text-xs text-slate-400 font-medium">
-                Le simulateur sera disponible dès la publication des premières évaluations.
+                Le simulateur sera disponible dès la publication des premières notes.
               </div>
             )}
           </div>
@@ -249,22 +356,22 @@ export const ResultsView: React.FC = () => {
             {hasSimulated && simulatedStats ? (
               <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex items-center justify-between">
                 <div>
-                  <p className="text-[11px] font-bold text-indigo-900">Nouvelle moyenne :</p>
+                  <p className="text-[11px] font-bold text-indigo-900">Nouvelle moyenne générale :</p>
                   <div className="flex items-baseline gap-1 mt-0.5">
-                    <span className="text-xl font-black text-indigo-700">{simulatedStats.newOverall}</span>
-                    <span className="text-xs text-indigo-400">/ 100</span>
+                    <span className="text-xl font-black text-indigo-700">{simulatedStats.newOverallPct}%</span>
+                    <span className="text-xs text-indigo-400">({simulatedStats.newOverall20}/20)</span>
                   </div>
                 </div>
                 <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold ${
-                  simulatedStats.diff >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                  simulatedStats.diffPct >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                 }`}>
-                  {simulatedStats.diff >= 0 ? `+${simulatedStats.diff}` : `${simulatedStats.diff}`} pts
+                  {simulatedStats.diffPct >= 0 ? `+${simulatedStats.diffPct}` : `${simulatedStats.diffPct}`} %
                 </div>
               </div>
             ) : (
               <button
                 onClick={() => setHasSimulated(true)}
-                disabled={subjectReports.length === 0}
+                disabled={filteredReports.length === 0}
                 className="w-full py-2 bg-slate-900 hover:bg-indigo-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-subtle"
               >
                 Calculer l'impact
@@ -275,132 +382,346 @@ export const ResultsView: React.FC = () => {
 
       </div>
 
-      {/* Subjects Detailed Accordion List */}
-      <div className="space-y-3.5">
-        <div className="flex items-center justify-between">
-          <h3 className="font-extrabold text-base text-slate-900">Matières & Détail des évaluations</h3>
-          <span className="text-xs text-slate-400 font-medium">{filteredReports.length} matières</span>
-        </div>
+      {/* CONTENU PRINCIPAL SELON LE MODE SÉLECTIONNÉ */}
 
-        {filteredReports.length === 0 && (
-          <div className="bg-white p-8 rounded-3xl border border-slate-200/70 text-center space-y-1.5 shadow-subtle">
-            <p className="text-sm font-bold text-slate-700">Aucun résultat scolaire disponible pour le moment</p>
-            <p className="text-xs text-slate-400">Le module Résultats (Skore) sera automatiquement synchronisé lors de la publication des bulletins.</p>
+      {viewMode === 'bulletin' ? (
+        /* VUE A : BULLETIN PAR MATIÈRE */
+        <div className="space-y-3.5">
+          <div className="flex items-center justify-between">
+            <h3 className="font-extrabold text-base text-slate-900">Matières & Évaluations détaillées</h3>
+            <span className="text-xs text-slate-400 font-medium">{filteredReports.length} matières</span>
           </div>
-        )}
 
-        {filteredReports.map((report) => {
-          const isExpanded = !!expandedSubjects[report.subjectCode];
-          const theme = getSubjectTheme(report.subjectCode);
+          {filteredReports.length === 0 && (
+            <div className="bg-white p-8 rounded-3xl border border-slate-200/70 text-center space-y-1.5 shadow-subtle">
+              <p className="text-sm font-bold text-slate-700">Aucun résultat disponible pour cette période</p>
+              <p className="text-xs text-slate-400">Les évaluations Smartschool apparaîtront automatiquement dès leur publication.</p>
+            </div>
+          )}
 
-          return (
-            <div
-              key={report.subjectCode}
-              className="bg-white rounded-3xl border border-slate-200/70 shadow-subtle overflow-hidden transition-all"
-            >
-              {/* Subject Bar */}
+          {filteredReports.map((report) => {
+            const isExpanded = !!expandedSubjects[report.subjectCode];
+            const theme = getSubjectTheme(report.subjectCode);
+            const coursePct = report.totalPossible && report.totalPossible > 0
+              ? Math.round(((report.totalObtained || 0) / report.totalPossible) * 100)
+              : Math.round((report.studentAverage / 20) * 100);
+
+            return (
               <div
-                onClick={() => toggleSubject(report.subjectCode)}
-                className="cursor-pointer p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors"
+                key={report.subjectCode}
+                className="bg-white rounded-3xl border border-slate-200/70 shadow-subtle overflow-hidden transition-all"
               >
-                <div className="flex items-start sm:items-center gap-3.5">
-                  <span className={`px-3 py-2 rounded-2xl text-xs font-black border uppercase tracking-wider shrink-0 ${theme.badgeClass}`}>
-                    {report.subjectCode}
-                  </span>
-
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-sm sm:text-base text-slate-900">{report.subject}</h4>
-                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold text-slate-600">
-                        Coef. {report.coefficient}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400 font-medium mt-0.5">{report.teacher}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between sm:justify-end gap-6 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                  <div className="text-right">
-                    <div className="flex items-baseline gap-1 justify-end">
-                      <span className="text-2xl font-black text-slate-900">{report.studentAverage}</span>
-                      <span className="text-xs text-slate-400 font-semibold">/ 20</span>
-                    </div>
-                    <p className="text-[11px] text-slate-400">
-                      Classe : {report.classAverage}
-                    </p>
-                  </div>
-
-                  <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </div>
-                </div>
-              </div>
-
-              {/* Collapsible Content */}
-              {isExpanded && (
-                <div className="px-5 pb-6 pt-2 border-t border-slate-100 bg-slate-50/40 space-y-4">
-                  
-                  {/* Appreciation */}
-                  <div className="p-3.5 rounded-2xl bg-amber-50/50 border border-amber-200/50 text-xs">
-                    <span className="font-bold uppercase tracking-wider text-[10px] text-amber-800 block mb-1">
-                      Appréciation de l'enseignant
+                {/* En-tête de Matière */}
+                <div
+                  onClick={() => toggleSubject(report.subjectCode)}
+                  className="cursor-pointer p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors"
+                >
+                  <div className="flex items-start sm:items-center gap-3.5">
+                    <span className={`px-3 py-2 rounded-2xl text-xs font-black border uppercase tracking-wider shrink-0 ${theme.badgeClass}`}>
+                      {report.subjectCode}
                     </span>
-                    <p className="text-slate-700 italic">
-                      « {report.teacherAppreciation} »
-                    </p>
+
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-sm sm:text-base text-slate-900">{report.subject}</h4>
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold text-slate-600">
+                          {report.hoursPerWeek || report.coefficient}h / sem.
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium mt-0.5">{report.teacher}</p>
+                    </div>
                   </div>
 
-                  {/* Grades */}
-                  <div>
-                    <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-                      Évaluations ({report.grades.length})
-                    </h5>
+                  <div className="flex items-center justify-between sm:justify-end gap-6 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                    <div className="text-right">
+                      <div className="flex items-baseline gap-1 justify-end">
+                        <span className="text-2xl font-black text-slate-900">{coursePct}%</span>
+                        <span className="text-xs text-slate-400 font-semibold">({report.studentAverage}/20)</span>
+                      </div>
+                      {report.totalPossible ? (
+                        <p className="text-[11px] text-slate-400">
+                          Cumul : {report.totalObtained} / {report.totalPossible} pts
+                        </p>
+                      ) : null}
+                    </div>
 
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contenu Dépliable */}
+                {isExpanded && (
+                  <div className="px-5 pb-6 pt-2 border-t border-slate-100 bg-slate-50/40 space-y-4">
+                    
+                    {/* Appréciation si présente */}
+                    {report.teacherAppreciation && (
+                      <div className="p-3.5 rounded-2xl bg-amber-50/50 border border-amber-200/50 text-xs">
+                        <span className="font-bold uppercase tracking-wider text-[10px] text-amber-800 block mb-1">
+                          Appréciation de l'enseignant
+                        </span>
+                        <p className="text-slate-700 italic">
+                          « {report.teacherAppreciation} »
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Liste des Évaluations */}
+                    <div>
+                      <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                        Évaluations de la période ({report.grades.length})
+                      </h5>
+
+                      <div className="space-y-2">
+                        {report.grades.map((grade) => {
+                          const isExcluded = excludedGradeIds.has(grade.id);
+                          const isSommatif = grade.isSommatif ?? true;
+
+                          return (
+                            <div
+                              key={grade.id}
+                              className={`p-3.5 rounded-2xl border transition-all shadow-subtle ${
+                                isExcluded
+                                  ? 'bg-slate-100/60 border-slate-200/50 opacity-60'
+                                  : 'bg-white border-slate-200/70'
+                              }`}
+                            >
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md uppercase ${
+                                      isSommatif
+                                        ? 'bg-purple-100 text-purple-700'
+                                        : 'bg-slate-200 text-slate-600'
+                                    }`}>
+                                      {isSommatif ? 'Sommatif' : 'Formatif'}
+                                    </span>
+                                    {isExcluded && (
+                                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-rose-100 text-rose-700">
+                                        Exclu du calcul
+                                      </span>
+                                    )}
+                                    <span className="text-xs font-bold text-slate-900">{grade.title}</span>
+                                  </div>
+
+                                  <div className="text-[11px] text-slate-400 flex items-center gap-2">
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="w-3 h-3" />
+                                      {grade.date ? new Date(grade.date).toLocaleDateString('fr-FR') : 'Date non définie'}
+                                    </span>
+                                    {grade.evaluationType === 'project' && (
+                                      <>
+                                        <span>•</span>
+                                        <span className="flex items-center gap-1 text-indigo-600 font-semibold">
+                                          <Target className="w-3 h-3" /> Compétences LPD
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                  <div className="text-right">
+                                    <div className="flex items-baseline gap-1 justify-end">
+                                      <span className="text-lg font-black text-slate-900">
+                                        {grade.rawScoreText || `${grade.value}/20`}
+                                      </span>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400">
+                                      {isSommatif ? (isExcluded ? 'Non compté' : 'Compte dans la moyenne') : 'Entraînement'}
+                                    </span>
+                                  </div>
+
+                                  {/* Bouton d'exclusion manuelle de l'élève */}
+                                  <button
+                                    onClick={() => toggleGradeExclusion(grade.id)}
+                                    title={isExcluded ? 'Réinclure dans la moyenne' : 'Exclure du calcul de la moyenne'}
+                                    className={`p-2 rounded-xl border transition-all ${
+                                      isExcluded
+                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                                        : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+                                    }`}
+                                  >
+                                    {isExcluded ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Détail des objectifs LPD si évaluation par projet */}
+                              {grade.goals && grade.goals.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-2">
+                                  {grade.goals.map((goal, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50/60 border border-indigo-100 text-[11px] font-medium text-indigo-900"
+                                    >
+                                      <Target className="w-3 h-3 text-indigo-500" />
+                                      <span>{goal.title} :</span>
+                                      <span className="font-extrabold text-indigo-700">{goal.scoreText}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Feedbacks de l'enseignant si présents */}
+                              {grade.feedbacks && grade.feedbacks.length > 0 && (
+                                <div className="mt-3 pt-2.5 border-t border-slate-100 space-y-1.5">
+                                  {grade.feedbacks.map((fb, idx) => (
+                                    <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/50 flex items-start gap-2 text-xs text-slate-700">
+                                      <MessageSquare className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
+                                      <p className="italic">« {fb} »</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* VUE B : FLUX CHRONOLOGIQUE DES ÉVALUATIONS */
+        <div className="space-y-3.5">
+          <div className="flex items-center justify-between">
+            <h3 className="font-extrabold text-base text-slate-900">Dernières évaluations publiées</h3>
+            <span className="text-xs text-slate-400 font-medium">
+              {allChronologicalGrades.length} évaluations
+            </span>
+          </div>
+
+          {allChronologicalGrades.length === 0 && (
+            <div className="bg-white p-8 rounded-3xl border border-slate-200/70 text-center space-y-1.5 shadow-subtle">
+              <p className="text-sm font-bold text-slate-700">Aucune évaluation dans le flux</p>
+              <p className="text-xs text-slate-400">Toutes vos notes apparaîtront ici chronologiquement au fur et à mesure.</p>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {allChronologicalGrades.map((grade) => {
+              const isExcluded = excludedGradeIds.has(grade.id);
+              const theme = getSubjectTheme(grade.subjectCode);
+              const isSommatif = grade.isSommatif ?? true;
+
+              return (
+                <div
+                  key={grade.id}
+                  className={`bg-white p-5 rounded-3xl border transition-all shadow-subtle ${
+                    isExcluded ? 'border-slate-200/50 opacity-60 bg-slate-50/50' : 'border-slate-200/70'
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    {/* Colonne Gauche : Matière, Enseignant, Titre */}
                     <div className="space-y-2">
-                      {report.grades.map((grade) => (
-                        <div
-                          key={grade.id}
-                          className="bg-white p-3 rounded-2xl border border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-subtle"
-                        >
-                          <div className="space-y-0.5">
-                            <div className="flex items-center gap-2">
-                              <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-700 uppercase">
-                                {grade.type}
-                              </span>
-                              <span className="text-xs font-bold text-slate-900">{grade.title}</span>
-                            </div>
-                            <p className="text-[11px] text-slate-400 flex items-center gap-2">
-                              <span>{new Date(grade.date).toLocaleDateString('fr-FR')}</span>
-                              <span>•</span>
-                              <span>Coef. {grade.coefficient}</span>
-                            </p>
-                            {grade.teacherComment && (
-                              <p className="text-[11px] text-slate-600 mt-1 italic">
-                                Remarque : {grade.teacherComment}
-                              </p>
-                            )}
-                          </div>
+                      <div className="flex items-center gap-2.5">
+                        <span className={`px-2.5 py-1 rounded-xl text-xs font-black border uppercase tracking-wider ${theme.badgeClass}`}>
+                          {grade.subjectCode}
+                        </span>
+                        <span className="font-extrabold text-sm text-slate-900">{grade.subject}</span>
+                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md uppercase ${
+                          isSommatif ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {isSommatif ? 'Sommatif' : 'Formatif'}
+                        </span>
+                        {isExcluded && (
+                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-rose-100 text-rose-700">
+                            Exclu
+                          </span>
+                        )}
+                      </div>
 
-                          <div className="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                            <div className="text-right">
-                              <span className="text-lg font-black text-slate-900">{grade.value}</span>
-                              <span className="text-xs text-slate-400 font-semibold"> / {grade.maxValue}</span>
-                            </div>
-                            <div className="text-[10px] text-slate-400 text-right">
-                              <p>Moy. {grade.classAverage}</p>
-                            </div>
+                      <h4 className="font-bold text-base text-slate-900">{grade.title}</h4>
+
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                        {grade.teacherName && (
+                          <div className="flex items-center gap-1.5 text-slate-600 font-medium">
+                            {grade.teacherPhoto ? (
+                              <img src={grade.teacherPhoto} alt="" className="w-4 h-4 rounded-full object-cover" />
+                            ) : null}
+                            <span>{grade.teacherName}</span>
                           </div>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {grade.date ? new Date(grade.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Date inconnue'}
+                        </span>
+                        {grade.availabilityDate && (
+                          <span className="flex items-center gap-1 text-slate-400">
+                            <Clock className="w-3.5 h-3.5" />
+                            Publié le {new Date(grade.availabilityDate).toLocaleDateString('fr-FR')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Colonne Droite : Note proéminente & Action */}
+                    <div className="flex items-center justify-between sm:justify-end gap-4 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                      <div className="text-right">
+                        <div className="px-4 py-2 rounded-2xl border bg-slate-50 flex items-baseline gap-1.5 shadow-subtle">
+                          <span className="text-2xl font-black text-slate-900">
+                            {grade.rawScoreText || `${grade.value}/20`}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-medium text-slate-400 block mt-1">
+                          {isSommatif ? 'Pondération sommatif' : 'Formatif (indicatif)'}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => toggleGradeExclusion(grade.id)}
+                        title={isExcluded ? 'Réinclure dans la moyenne' : 'Exclure du calcul'}
+                        className={`p-2.5 rounded-2xl border transition-all ${
+                          isExcluded
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                            : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+                        }`}
+                      >
+                        {isExcluded ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Objectifs LPD si disponibles */}
+                  {grade.goals && grade.goals.length > 0 && (
+                    <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap gap-2">
+                      {grade.goals.map((goal, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-50/70 border border-indigo-100 text-xs font-medium text-indigo-900"
+                        >
+                          <Target className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>{goal.title} :</span>
+                          <span className="font-black text-indigo-700">{goal.scoreText}</span>
                         </div>
                       ))}
                     </div>
-                  </div>
+                  )}
 
+                  {/* Feedbacks de l'enseignant */}
+                  {grade.feedbacks && grade.feedbacks.length > 0 && (
+                    <div className="mt-3.5 pt-3 border-t border-slate-100 space-y-1.5">
+                      {grade.feedbacks.map((fb, idx) => (
+                        <div key={idx} className="p-3 rounded-2xl bg-slate-50 border border-slate-200/60 flex items-start gap-2.5 text-xs text-slate-700">
+                          <MessageSquare className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                          <p className="italic">« {fb} »</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
