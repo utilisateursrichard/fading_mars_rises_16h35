@@ -194,7 +194,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [excludedGradeIds, setExcludedGradeIds] = useState<Set<string>>(() => {
     try {
       if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('betterschool_v2_excluded_grades');
+        const stored = localStorage.getItem('betterschool_v3_excluded_grades');
         if (stored) return new Set(JSON.parse(stored));
       }
     } catch {}
@@ -210,7 +210,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         next.add(gradeId);
       }
       try {
-        localStorage.setItem('betterschool_v2_excluded_grades', JSON.stringify(Array.from(next)));
+        localStorage.setItem('betterschool_v3_excluded_grades', JSON.stringify(Array.from(next)));
       } catch {}
       return next;
     });

@@ -433,12 +433,20 @@ export const parseScoreDescription = (
 };
 
 /**
- * Détecte formellement un travail formatif (exercice d'entraînement qui ne compte pas au bulletin).
+ * Détecte formellement un travail formatif (exercice d'entraînement qui ne compte pas au bulletin)
+ * en se basant strictement sur les champs officiels de l'API Skore Smartschool.
  */
 export const isFormativeEvaluation = (ev: SkoreEvaluation): boolean => {
+  // 1. Abréviation officielle Smartschool de la composante ('F' = Formatif, 'S' = Sommatif)
   if (ev.component?.abbreviation?.toUpperCase() === 'F') return true;
-  if (/formatif/i.test(ev.component?.name || '')) return true;
-  if (/\bformatif\b/i.test(ev.name || '')) return true;
+
+  // 2. Intitulé officiel de la composante d'évaluation (FR et NL)
+  const compName = ev.component?.name || '';
+  if (/formatif|formatief/i.test(compName)) return true;
+
+  // 3. Indicateur natif Smartschool "ne compte pas dans le bulletin"
+  if (ev.doesCount === false) return true;
+
   return false;
 };
 
@@ -469,14 +477,19 @@ export const extractScoreFromEvaluation = (
           ? g.graphic.value
           : Math.round((parsed.obtained / parsed.total) * 100);
 
-        goals.push({
-          title: g.goal?.leerplanKey || 'Objectif',
-          scoreText: g.graphic?.description || `${parsed.obtained}/${parsed.total}`,
-          obtained: parsed.obtained,
-          total: parsed.total,
-          percentage: pct,
-          color: g.graphic?.color
-        });
+        // Filtrer la clé technique interne 'mini-db-skore' qui n'a aucune valeur pédagogique
+        const rawKey = g.goal?.leerplanKey || '';
+        const isTechnicalKey = !rawKey || rawKey === 'mini-db-skore' || rawKey.toLowerCase().includes('mini-db');
+        if (!isTechnicalKey) {
+          goals.push({
+            title: rawKey,
+            scoreText: g.graphic?.description || `${parsed.obtained}/${parsed.total}`,
+            obtained: parsed.obtained,
+            total: parsed.total,
+            percentage: pct,
+            color: g.graphic?.color
+          });
+        }
       }
     }
 
