@@ -24,6 +24,30 @@ const REAL_STORAGE_KEYS = {
   EVALUATIONS: 'betterschool_real_evaluations'
 };
 
+export interface SmartschoolStudentcardTeacher {
+  userID: number;
+  name: string;
+  surname: string;
+  fullName: string;
+  fullNameBIN: string;
+}
+
+export interface SmartschoolStudentcardItem {
+  userID: number;
+  name: string;
+  surname: string;
+  fullName: string;
+  fullNameBIN: string;
+  class: string;
+  adminName?: string;
+  titu?: SmartschoolStudentcardTeacher[];
+  photoUrl?: string;
+  currentAccount?: number;
+  status?: number;
+  accountID?: number;
+  isCurrentUser?: boolean;
+}
+
 /**
  * Récupère l'identifiant de l'élève actif (stocké lors de l'initialisation Smartschool)
  */
@@ -42,17 +66,134 @@ export const setActiveUserId = (userId: string): void => {
 };
 
 /**
+ * Récupère le profil élève mis en cache dans le localStorage
+ */
+export const getCachedRealStudent = (): Partial<Student> | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(REAL_STORAGE_KEYS.STUDENT);
+    if (!stored) return null;
+    const parsed: Partial<Student> = JSON.parse(stored);
+    if (parsed && isInvalidClassCandidate(parsed.studentClass)) {
+      parsed.studentClass = undefined;
+      try {
+        localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(parsed));
+      } catch {}
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Récupère l'identifiant de la plateforme / école (ex: "4907" pour le Collège Jean XXIII)
+ */
+export const getPlatformIdFromContext = (): string => {
+  // 1. Depuis l'identifiant de l'élève connecté (format {ecoleId}_{userId}_{groupId})
+  const activeUserId = getActiveUserId();
+  if (activeUserId) {
+    const match = activeUserId.match(/^([0-9]+)_/);
+    if (match) return match[1];
+  }
+
+  // 2. Depuis le cache étudiant
+  const cachedStudent = getCachedRealStudent();
+  if (cachedStudent?.ineNumber) {
+    const match = cachedStudent.ineNumber.match(/^([0-9]+)_/);
+    if (match) return match[1];
+  }
+
+  // 3. Identifiant par défaut de la plateforme (Collège Jean XXIII)
+  return '4907';
+};
+
+/**
+ * Récupère le profil officiel et la classe de l'élève connecté via l'endpoint Smartschool Studentcard
+ * POST /Studentcard/Student/getStudents
+ */
+export const fetchRealStudentcardProfile = async (): Promise<Partial<Student> | null> => {
+  try {
+    const res = await fetchSmartschool('/Studentcard/Student/getStudents', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+
+    if (res.ok && res.body) {
+      let rawList: SmartschoolStudentcardItem[] = [];
+      try {
+        rawList = typeof res.body === 'string' ? JSON.parse(res.body) : res.body;
+      } catch (err) {
+        console.warn('Erreur lors du parsing JSON de /Studentcard/Student/getStudents:', err);
+        return null;
+      }
+
+      if (Array.isArray(rawList) && rawList.length > 0) {
+        const studentItem = rawList.find(s => s.isCurrentUser === true) || rawList[0];
+        const studentClass = cleanStudentClass(studentItem.class?.trim());
+        const firstName = studentItem.name?.trim() || '';
+        const lastName = studentItem.surname?.trim() || '';
+        const avatar = studentItem.photoUrl?.trim() || '';
+        const id = studentItem.userID ? String(studentItem.userID) : '';
+
+        // Détection du platformId depuis photoUrl (ex: /hash/4907_...)
+        const platformMatch = avatar.match(/\/hash\/([0-9]+)_/);
+        const platformId = platformMatch ? platformMatch[1] : getPlatformIdFromContext();
+        const formattedPlannerId = `${platformId}_${studentItem.userID}_${studentItem.accountID ?? 0}`;
+
+        // Si aucun userId n'est encore actif, on configure l'identifiant déduit
+        if (!getActiveUserId()) {
+          setActiveUserId(formattedPlannerId);
+        }
+
+        const cached = getCachedRealStudent();
+        const updated: Partial<Student> = {
+          ...(cached || {}),
+          ...(id ? { id } : {}),
+          ...(firstName ? { firstName } : {}),
+          ...(lastName ? { lastName } : {}),
+          ...(avatar ? { avatar } : {}),
+          ...(studentClass ? { studentClass } : {}),
+          ineNumber: formattedPlannerId
+        };
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(updated));
+        }
+
+        return updated;
+      }
+    }
+  } catch (err) {
+    console.warn('Erreur lors de l\'appel à /Studentcard/Student/getStudents:', err);
+  }
+
+  return null;
+};
+
+/**
  * Découvre dynamiquement l'identifiant de l'élève (userId) sans aucun hardcoding :
  * 1. En vérifiant le cache local.
- * 2. En évaluant les variables globales de session hôte (window.smsc, window.currentUser).
- * 3. En interrogeant l'URL / titre de la page hôte via la passerelle.
- * 4. En inspectant la réponse HTML de /planner via le bridge Same-Origin.
+ * 2. En interrogeant l'endpoint officiel Studentcard (/Studentcard/Student/getStudents).
+ * 3. En évaluant les variables globales de session hôte (window.smsc, window.currentUser).
+ * 4. En interrogeant l'URL / titre de la page hôte via la passerelle.
+ * 5. En inspectant la réponse HTML de /planner via le bridge Same-Origin.
  */
 export const discoverUserId = async (): Promise<string | null> => {
   const cached = getActiveUserId();
   if (cached) return cached;
 
-  // 1. Essai d'évaluation globale sur l'hôte (window.smsc, window.currentUser, cookies, DOM)
+  // 1. Essai prioritaire via Studentcard officiel (/Studentcard/Student/getStudents)
+  try {
+    await fetchRealStudentcardProfile();
+    const active = getActiveUserId();
+    if (active) return active;
+  } catch {}
+
+  // 2. Essai d'évaluation globale sur l'hôte (window.smsc, window.currentUser, cookies, DOM)
   try {
     const evalRes = await evalHostExpression(`
       (function() {
@@ -136,12 +277,25 @@ export const discoverUserId = async (): Promise<string | null> => {
 };
 
 /**
- * Découvre dynamiquement le profil de l'élève (nom, prénom, avatar CDN) depuis Smartschool
+ * Découvre dynamiquement le profil de l'élève (nom, prénom, classe officielle, avatar CDN) depuis Smartschool :
+ * 1. Priorité absolue : Appel officiel à /Studentcard/Student/getStudents (nom exact, vraie classe, photo, titulaires)
+ * 2. Repli : Récupération directe du DOM Smartschool via postMessage queryHostDOM
+ * 3. Repli : Évaluation d'expressions sur la page hôte Smartschool via evalHostExpression
  */
 export const discoverStudentProfile = async (): Promise<Partial<Student> | null> => {
+  // 1. Source de vérité officielle : endpoint Studentcard /Studentcard/Student/getStudents
+  try {
+    const officialProfile = await fetchRealStudentcardProfile();
+    if (officialProfile && (officialProfile.firstName || officialProfile.studentClass)) {
+      return officialProfile;
+    }
+  } catch (e) {
+    console.warn('Erreur lors de la récupération via /Studentcard/Student/getStudents:', e);
+  }
+
   const cached = getCachedRealStudent();
 
-  // 1. Récupération directe du DOM Smartschool via postMessage queryHostDOM
+  // 2. Récupération directe du DOM Smartschool via postMessage queryHostDOM
   try {
     const domRes = await queryHostDOM([
       { 
@@ -381,13 +535,14 @@ export const fetchRealAgenda = async (userId?: string | null, targetDate?: Date)
   const metadata = extractMetadataFromPlanner(items, effectiveUserId);
   if (metadata.schoolName || metadata.studentClass || metadata.firstName || metadata.avatar) {
     const existingStudent = getCachedRealStudent() || {};
+    const validClass = cleanStudentClass(metadata.studentClass);
     const updatedStudent: Partial<Student> = {
       ...existingStudent,
       ...(metadata.schoolName ? { schoolName: metadata.schoolName } : {}),
-      ...(metadata.studentClass ? { studentClass: metadata.studentClass } : {}),
-      ...(metadata.firstName ? { firstName: metadata.firstName } : {}),
-      ...(metadata.lastName ? { lastName: metadata.lastName } : {}),
-      ...(metadata.avatar ? { avatar: metadata.avatar } : {})
+      ...(validClass && !existingStudent.studentClass ? { studentClass: validClass } : {}),
+      ...(metadata.firstName && !existingStudent.firstName ? { firstName: metadata.firstName } : {}),
+      ...(metadata.lastName && !existingStudent.lastName ? { lastName: metadata.lastName } : {}),
+      ...(metadata.avatar && !existingStudent.avatar ? { avatar: metadata.avatar } : {})
     };
     if (typeof window !== 'undefined') {
       localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(updatedStudent));
@@ -535,12 +690,7 @@ export const fetchRealEvaluations = async (
  * Synchronise l'ensemble des données réelles de l'élève
  */
 export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string | null): Promise<SyncResult> => {
-  let effectiveUserId = userId || getActiveUserId();
-  if (!effectiveUserId) {
-    effectiveUserId = await discoverUserId();
-  }
-
-  // Découverte préalable du profil (nom, avatar)
+  // Découverte préalable du profil (nom, classe officielle via Studentcard, photo, et initialisation éventuelle du userId)
   let partialStudent = getCachedRealStudent();
   try {
     const discovered = await discoverStudentProfile();
@@ -549,6 +699,11 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
     }
   } catch (e) {
     console.warn('Erreur lors de la découverte du profil:', e);
+  }
+
+  let effectiveUserId = userId || getActiveUserId();
+  if (!effectiveUserId) {
+    effectiveUserId = await discoverUserId();
   }
 
   if (!effectiveUserId) {
@@ -665,45 +820,7 @@ export const toggleCachedRealHomework = (homeworkId: string): boolean => {
   }
 };
 
-export const getCachedRealStudent = (): Partial<Student> | null => {
-  if (typeof window === 'undefined') return null;
-  try {
-    const stored = localStorage.getItem(REAL_STORAGE_KEYS.STUDENT);
-    if (!stored) return null;
-    const parsed: Partial<Student> = JSON.parse(stored);
-    if (parsed && isInvalidClassCandidate(parsed.studentClass)) {
-      parsed.studentClass = undefined;
-      try {
-        localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(parsed));
-      } catch {}
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-};
 
-/**
- * Récupère l'identifiant de la plateforme / école (ex: "4907" pour le Collège Jean XXIII)
- */
-export const getPlatformIdFromContext = (): string => {
-  // 1. Depuis l'identifiant de l'élève connecté (format {ecoleId}_{userId}_{groupId})
-  const activeUserId = getActiveUserId();
-  if (activeUserId) {
-    const match = activeUserId.match(/^([0-9]+)_/);
-    if (match) return match[1];
-  }
-
-  // 2. Depuis le cache étudiant
-  const cachedStudent = getCachedRealStudent();
-  if (cachedStudent?.ineNumber) {
-    const match = cachedStudent.ineNumber.match(/^([0-9]+)_/);
-    if (match) return match[1];
-  }
-
-  // 3. Identifiant par défaut de la plateforme (Collège Jean XXIII)
-  return '4907';
-};
 
 /**
  * Extrait la plateforme (ex: "4907") et l'UUID de l'assignation (ex: "4ab22089-ead4-4606-b52b-69960a62fc38")

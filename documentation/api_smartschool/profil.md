@@ -1,59 +1,89 @@
-# 👤 API Smartschool — Profil & Établissement
+# 🪪 API Smartschool — Module Profil & Carte d'Élève (Studentcard)
 
-Ce document répertorie la méthode d'extraction de l'identité de l'élève (nom, prénom, classe, INE/ID, avatar) et du nom de l'établissement scolaire.
-
----
-
-## 1. Données du Lycée / Établissement
-
-- **En Mode Démo :** Affiche la donnée factice (ex: `Lycée Victor Hugo`).
-- **En Mode Réel (Non connecté) :** Affiche `Lycée : inconnu`.
-- **En Mode Réel (Connecté) :** Affiche directement le nom réel (ex: `Collège Jean XXIII`) sans préfixe.
-- **Sources vérifiées :**
-  - **API Planner :** `locations[0].platformName` renvoie fidèlement le nom complet de l'école (ex: `"Collège Jean XXIII"`).
-  - **Sous-domaine :** `window.location.hostname` donne l'identifiant (ex: `jean23.smartschool.be` -> `jean23`).
+Ce document détaille les requêtes HTTP, en-têtes et structures de données associés au module officiel de **profil et carte d'élève** (`Studentcard`) de Smartschool.
 
 ---
 
-## 2. Données de l'élève (Prénom, Nom, Classe, Identifiant)
+## 1. Vue d'Ensemble
 
-- **Classe de l'élève :** `participants.groups[0].name` renvoie directement le code classe (ex: `"4T1"`).
-- **Identifiant Unique :** Format `{ecoleId}_{userId}_{groupId}` (ex: `4907_5748_0`).
-- **Nom et Prénom :** Trouvés dans le bandeau supérieur de Smartschool (`document.querySelector(...)`) ou via le profil utilisateur.
+L'endpoint `/Studentcard/Student/getStudents` est la **source de vérité officielle** de Smartschool pour identifier avec précision :
+* L'identité de l'élève connecté (`userID`, `name`, `surname`, `fullName`, `fullNameBIN`).
+* La **vraie classe scolaire** (`class`, ex: `"4T1"`), éliminant tout risque de faux positif avec les groupes généraux (comme `"Tout le monde"`).
+* La photo de profil haute résolution (`photoUrl`).
+* La liste des **professeurs titulaires** de la classe (`titu`).
+* L'intitulé administratif officiel du cursus (`adminName`).
 
 ---
 
-## 3. Système d'Avatar & Photos de Profil (CDN Smartschool)
+## 2. Requête HTTP
 
-### 3.1. Structure de l'URL CDN
-
-```
-https://userpicture20.smartschool.be/User/Userimage/hashimage/hash/{pictureHash}/plain/1/res/{size}
+```http
+POST /Studentcard/Student/getStudents HTTP/2
+Host: <ecole>.smartschool.be
+Accept: application/json, text/plain, */*
+X-Requested-With: XMLHttpRequest
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
 ```
 
-#### Décomposition des paramètres :
-* **Hôte CDN :** `userpicture20.smartschool.be` (cluster de stockage d'images Smartschool).
-* **`{pictureHash}` :** Identifiant unique du fichier image :
-  - **Avec photo personnalisée :** `{platformId}_{UUIDv4}`  
-    Exemple élève : `4907_a1b2c3d4-e5f6-4a8b-9c1d-1234567890ab`
-  - **Sans photo (avatar initiales généré) :** `initials_{Lettres}`  
-    Exemples profs : `initials_VD` (Véronique Dury), `initials_VV` (VL Verheylewegen), `initials_DD` (DI Didion).
-* **`/plain/1` :** Format brut (PNG / JPEG sans wrapper HTML).
-* **`/res/{size}` :** Résolution demandée en pixels carrés (ex: `res/128`, `res/64`, `res/256`, `res/512`).
+---
+
+## 3. Format de Réponse JSON
+
+L'API renvoie un tableau d'objets élèves (utile notamment en cas de comptes multiples ou parents avec plusieurs enfants).
+
+### Exemple de Réponse Réelle :
+
+```json
+[
+  {
+    "userID": 5748,
+    "name": "Richard",
+    "surname": "De Gandt",
+    "fullName": "De Gandt Richard",
+    "fullNameBIN": "Richard De Gandt",
+    "class": "4T1 ",
+    "adminName": "2e année 2e degré LANGUE MODERNE I NEERLANDAIS",
+    "titu": [
+      {
+        "userID": 910,
+        "name": "Catherine",
+        "surname": "Tondeur",
+        "fullName": "Tondeur TC",
+        "fullNameBIN": "TC Tondeur"
+      }
+    ],
+    "photoUrl": "https://userpicture20.smartschool.be/User/Userimage/hashimage/hash/4907_a96a6549-09ac-4372-920d-ecec6bfe0e4a/plain/1/res/128",
+    "currentAccount": 0,
+    "status": 1,
+    "accountID": 0,
+    "isCurrentUser": true
+  }
+]
+```
 
 ---
 
-### 3.2. Comment obtenir la photo de n'importe quel élève ou professeur ?
+## 4. Dictionnaire des Champs
 
-Le hash d'image (`705e859f-...`) étant un UUID aléatoire, il ne peut pas être deviné. En revanche, **Smartschool le fournit automatiquement dans toutes ses réponses d'API** dès qu'un utilisateur est mentionné :
+| Champ | Type | Description | Exemple |
+| :--- | :--- | :--- | :--- |
+| **`userID`** | `number` | Identifiant numérique unique de l'élève dans l'école. | `5748` |
+| **`name`** | `string` | Prénom de l'élève. | `"Richard"` |
+| **`surname`** | `string` | Nom de famille de l'élève. | `"De Gandt"` |
+| **`fullName`** | `string` | Nom complet format Nom Prénom. | `"De Gandt Richard"` |
+| **`fullNameBIN`** | `string` | Nom complet format Prénom Nom. | `"Richard De Gandt"` |
+| **`class`** | `string` | **Classe officielle de l'élève** (nécessite simplement un `.trim()`). | `"4T1 "` → `"4T1"` |
+| **`adminName`** | `string` | Intitulé officiel de la section / option d'études. | `"2e année 2e degré LANGUE MODERNE I NEERLANDAIS"` |
+| **`titu`** | `Array` | Liste des professeurs titulaires de la classe. | `[{ "userID": 910, "name": "Catherine", ... }]` |
+| **`photoUrl`** | `string` | URL directe de la photo de profil (Userimage). | `https://userpicture20.smartschool.be/...` |
+| **`isCurrentUser`** | `boolean` | Indique si cet enregistrement correspond à la session active. | `true` |
+| **`currentAccount`** | `number` | Index du compte courant (0 = compte élève principal). | `0` |
 
-1. **Pour l'élève connecté (Toi-même) :**
-   - **Méthode instantanée DOM :** Le bandeau supérieur de Smartschool contient une balise `<img src="https://userpicture20.smartschool.be/...">`. Notre bookmarklet peut lire `document.querySelector('img[src*="userpicture"]')?.src` en 1 milliseconde.
-   - **Méthode globale :** Dans l'objet JavaScript `window.smsc` ou `window.currentUser` présent sur la page.
+---
 
-2. **Pour les autres élèves d'une classe :**
-   - L'API de l'annuaire de classe / trombinoscope (ex: dans les groupes de cours ou la messagerie) renvoie pour chaque élève un objet JSON contenant directement les champs `"pictureUrl"` et `"pictureHash"`.
+## 5. Exploitation dans BetterSchool
 
-3. **Pour les professeurs :**
-   - L'API du planning (`/planner/api/v1/planned-elements/...`) renvoie déjà dans chaque cours l'objet `organisers.users[0]` avec `pictureUrl` et `pictureHash` !
-
+Dans `src/services/smartschoolApi.ts`, la fonction `fetchRealStudentcardProfile()` appelle cet endpoint prioritairement :
+1. Elle effectue la requête POST `/Studentcard/Student/getStudents`.
+2. Elle sélectionne le compte correspondant à `isCurrentUser === true` (ou le premier compte actif).
+3. Elle extrait immédiatement `firstName`, `lastName`, `avatar`, `studentClass` (`class.trim()`), et sauvegarde le profil en cache local.
