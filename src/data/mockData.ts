@@ -687,6 +687,55 @@ export const mockSubjectReports: SubjectReport[] = [
         type: 'DS'
       }
     ]
+  },
+  {
+    subject: 'Éducation Physique & Sportive',
+    subjectCode: 'EPS',
+    color: '#8b5cf6',
+    teacher: 'M. Bailleux qui baille bcp',
+    coefficient: 2,
+    studentAverage: null,
+    classAverage: null,
+    minAverage: null,
+    maxAverage: null,
+    isFormativeOnly: true,
+    teacherAppreciation: 'Très bon engagement dans les cycles sportifs. Travail sérieux et assidu.',
+    grades: [
+      {
+        id: 'gr-eps-1',
+        subject: 'EPS',
+        subjectCode: 'EPS',
+        value: 15,
+        maxValue: 20,
+        coefficient: 0,
+        title: 'Évaluation formative : Test d’endurance',
+        date: '2026-09-02',
+        classAverage: 14.2,
+        minGrade: 10,
+        maxGrade: 18,
+        teacherComment: 'Bonne gestion de l’effort.',
+        period: 'T1',
+        type: 'Formatif',
+        isFormative: true
+      },
+      {
+        id: 'gr-eps-2',
+        subject: 'EPS',
+        subjectCode: 'EPS',
+        value: 16,
+        maxValue: 20,
+        coefficient: 0,
+        title: 'Évaluation formative : Demi-fond & relais',
+        date: '2026-09-07',
+        classAverage: 13.8,
+        minGrade: 9,
+        maxGrade: 19,
+        teacherComment: 'Très bon esprit d’équipe.',
+        period: 'T1',
+        type: 'Formatif',
+        isFormative: true
+      }
+    ]
   }
 ];
 

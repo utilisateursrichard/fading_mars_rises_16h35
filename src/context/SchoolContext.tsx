@@ -135,7 +135,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [activeMessages, setActiveMessages] = useState<Message[]>([]);
 
   const [subjectReports, setSubjectReports] = useState<SubjectReport[]>([]);
-  const [overallStats, setOverallStats] = useState<{ current: number; classAvg: number; previousTerm: number } | null>({ current: 81.5, classAvg: 66.0, previousTerm: 77.0 });
+  const [overallStats, setOverallStats] = useState<{ current: number; classAvg: number; previousTerm: number } | null>({ current: 16.35, classAvg: 13.22, previousTerm: 15.4 });
   const [activePeriod, setActivePeriod] = useState<'T1' | 'T2' | 'T3'>('T1');
 
   const [courses, setCourses] = useState<SubjectCourse[]>([]);

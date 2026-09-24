@@ -194,14 +194,14 @@ export const DashboardView: React.FC = () => {
             <>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900">{overallStats.current}</span>
-                <span className="text-xs text-slate-400 font-semibold">/ 100</span>
+                <span className="text-xs text-slate-400 font-semibold">/ 20</span>
               </div>
               {(() => {
-                const diffPrev = Number((overallStats.current - overallStats.previousTerm).toFixed(1));
+                const diffClass = Number((overallStats.current - overallStats.classAvg).toFixed(1));
                 return (
-                  <p className={`text-[11px] font-bold mt-1 ${diffPrev >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {diffPrev >= 0 ? `+${diffPrev}` : diffPrev} pts{' '}
-                    <span className="text-slate-400 font-normal">vs classe ({overallStats.classAvg}/100)</span>
+                  <p className={`text-[11px] font-bold mt-1 ${diffClass >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {diffClass >= 0 ? `+${diffClass}` : diffClass} pts{' '}
+                    <span className="text-slate-400 font-normal">vs classe ({overallStats.classAvg}/20)</span>
                   </p>
                 );
               })()}
@@ -210,7 +210,7 @@ export const DashboardView: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl sm:text-3xl font-black text-slate-300">--</span>
-                <span className="text-xs text-slate-400 font-semibold">/ 100</span>
+                <span className="text-xs text-slate-400 font-semibold">/ 20</span>
               </div>
               <p className="text-[11px] text-amber-600 font-bold mt-1">
                 En attente du module Skore

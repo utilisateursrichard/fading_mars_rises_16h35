@@ -99,7 +99,8 @@ export interface Grade {
   maxGrade: number;
   teacherComment?: string;
   period: 'T1' | 'T2' | 'T3';
-  type: 'DS' | 'DM' | 'TP' | 'Interro' | 'Oral';
+  type: 'DS' | 'DM' | 'TP' | 'Interro' | 'Oral' | 'Formatif' | 'Formative' | string;
+  isFormative?: boolean;
 }
 
 export interface SubjectReport {
@@ -108,12 +109,13 @@ export interface SubjectReport {
   color: string;
   teacher: string;
   coefficient: number;
-  studentAverage: number;
-  classAverage: number;
-  minAverage: number;
-  maxAverage: number;
+  studentAverage: number | null;
+  classAverage: number | null;
+  minAverage: number | null;
+  maxAverage: number | null;
   grades: Grade[];
   teacherAppreciation: string;
+  isFormativeOnly?: boolean;
 }
 
 export interface MessageAttachment {

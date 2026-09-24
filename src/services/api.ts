@@ -31,6 +31,7 @@ import {
   mockMessages,
   mockCourses
 } from '../data/mockData';
+import { calculateOverallAverage } from '../utils/grades';
 
 // Clés de persistance locale
 const STORAGE_KEYS = {
@@ -123,22 +124,11 @@ class SchoolService {
 
   async getOverallAverage(): Promise<{ current: number; classAvg: number; previousTerm: number }> {
     const reports = await this.getSubjectReports();
-    let totalWeighted = 0;
-    let totalCoeffs = 0;
-    let classWeighted = 0;
-
-    reports.forEach(rep => {
-      totalWeighted += rep.studentAverage * rep.coefficient;
-      classWeighted += rep.classAverage * rep.coefficient;
-      totalCoeffs += rep.coefficient;
-    });
-
-    const current = totalCoeffs > 0 ? Number((totalWeighted / totalCoeffs).toFixed(2)) : 0;
-    const classAvg = totalCoeffs > 0 ? Number((classWeighted / totalCoeffs).toFixed(2)) : 0;
+    const stats = calculateOverallAverage(reports);
 
     return Promise.resolve({
-      current,
-      classAvg,
+      current: stats.current,
+      classAvg: stats.classAvg,
       previousTerm: 15.4 // Trimestre précédent pour calcul d'évolution
     });
   }

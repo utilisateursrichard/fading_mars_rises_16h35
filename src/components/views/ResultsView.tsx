@@ -4,11 +4,17 @@ import {
   ChevronDown, 
   ChevronUp, 
   Calculator, 
-  Sparkles,
-  Award
+  Sparkles
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
 import { getSubjectTheme } from '../../utils/theme';
+import { 
+  calculateOverallAverage, 
+  simulateNewGrade, 
+  isSubjectFormativeOnly, 
+  isGradeFormative, 
+  calculateGradesAverage 
+} from '../../utils/grades';
 
 export const ResultsView: React.FC = () => {
   const { 
@@ -45,36 +51,31 @@ export const ResultsView: React.FC = () => {
     );
   }, [subjectReports, globalSearch]);
 
+  const overallAverages = useMemo(() => {
+    return calculateOverallAverage(subjectReports);
+  }, [subjectReports]);
+
+  const currentOverallScore = overallStats?.current ?? overallAverages.current;
+
+  const mentionText = useMemo(() => {
+    if (currentOverallScore >= 16) return 'Mention Très Bien estimée';
+    if (currentOverallScore >= 14) return 'Mention Bien estimée';
+    if (currentOverallScore >= 12) return 'Mention Assez Bien estimée';
+    if (currentOverallScore >= 10) return 'Admis estimé';
+    return 'En progression';
+  }, [currentOverallScore]);
+
   const simulatedStats = useMemo(() => {
     if (!hasSimulated) return null;
 
-    let totalWeighted = 0;
-    let totalCoeffs = 0;
-
-    filteredReports.forEach(rep => {
-      let subjectAvg = rep.studentAverage;
-      if (rep.subjectCode === simSubject) {
-        const currentGradesWeight = rep.grades.reduce((acc, g) => acc + (g.value * g.coefficient), 0);
-        const currentCoeffs = rep.grades.reduce((acc, g) => acc + g.coefficient, 0);
-        const newTotalWeight = currentGradesWeight + (simGradeValue * simCoefficient);
-        const newTotalCoeffs = currentCoeffs + simCoefficient;
-        subjectAvg = newTotalCoeffs > 0 ? (newTotalWeight / newTotalCoeffs) : rep.studentAverage;
-      }
-
-      totalWeighted += subjectAvg * rep.coefficient;
-      totalCoeffs += rep.coefficient;
-    });
-
-    const currentOverall = overallStats?.current ?? 0;
-    const newOverall20 = totalCoeffs > 0 ? (totalWeighted / totalCoeffs) : (currentOverall / 5);
-    const newOverall = Number((newOverall20 * 5).toFixed(1));
-    const diff = Number((newOverall - currentOverall).toFixed(1));
-
-    return {
-      newOverall,
-      diff
-    };
-  }, [hasSimulated, simSubject, simGradeValue, simCoefficient, filteredReports, overallStats?.current]);
+    return simulateNewGrade(
+      subjectReports,
+      simSubject,
+      simGradeValue,
+      simCoefficient,
+      currentOverallScore
+    );
+  }, [hasSimulated, simSubject, simGradeValue, simCoefficient, subjectReports, currentOverallScore]);
 
   return (
     <div className="space-y-6 pb-12 max-w-6xl mx-auto">
@@ -120,7 +121,7 @@ export const ResultsView: React.FC = () => {
                 Moyenne Générale Pondérée • {activePeriod}
               </span>
               <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700">
-                Mention Très Bien estimée
+                {mentionText}
               </span>
             </div>
 
@@ -129,7 +130,7 @@ export const ResultsView: React.FC = () => {
                 <div className="mt-4 flex flex-col sm:flex-row sm:items-baseline gap-4">
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900">{overallStats.current}</span>
-                    <span className="text-slate-400 text-base font-semibold">/ 100</span>
+                    <span className="text-slate-400 text-base font-semibold">/ 20</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 w-fit">
                     <TrendingUp className="w-3.5 h-3.5" />
@@ -143,15 +144,15 @@ export const ResultsView: React.FC = () => {
                 <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-3 gap-4">
                   <div className="p-3 bg-slate-50/70 rounded-2xl">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Classe</p>
-                    <p className="text-base font-extrabold text-slate-800 mt-0.5">{overallStats.classAvg} <span className="text-xs font-normal text-slate-400">/ 100</span></p>
+                    <p className="text-base font-extrabold text-slate-800 mt-0.5">{overallStats.classAvg} <span className="text-xs font-normal text-slate-400">/ 20</span></p>
                   </div>
                   <div className="p-3 bg-slate-50/70 rounded-2xl">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Plus basse</p>
-                    <p className="text-base font-extrabold text-slate-800 mt-0.5">37.0 <span className="text-xs font-normal text-slate-400">/ 100</span></p>
+                    <p className="text-base font-extrabold text-slate-800 mt-0.5">{overallAverages.minAvg > 0 ? overallAverages.minAvg : 8.5} <span className="text-xs font-normal text-slate-400">/ 20</span></p>
                   </div>
                   <div className="p-3 bg-slate-50/70 rounded-2xl">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Plus haute</p>
-                    <p className="text-base font-extrabold text-slate-800 mt-0.5">97.0 <span className="text-xs font-normal text-slate-400">/ 100</span></p>
+                    <p className="text-base font-extrabold text-slate-800 mt-0.5">{overallAverages.maxAvg > 0 ? overallAverages.maxAvg : 18.8} <span className="text-xs font-normal text-slate-400">/ 20</span></p>
                   </div>
                 </div>
               </>
@@ -159,7 +160,7 @@ export const ResultsView: React.FC = () => {
               <div className="mt-4 space-y-3">
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl sm:text-5xl font-black tracking-tight text-slate-300">--</span>
-                  <span className="text-slate-400 text-base font-semibold">/ 100</span>
+                  <span className="text-slate-400 text-base font-semibold">/ 20</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 w-fit">
                   <span>En attente de connexion avec le module Skore</span>
@@ -239,26 +240,79 @@ export const ResultsView: React.FC = () => {
 
           <div className="mt-4 pt-4 border-t border-slate-100">
             {hasSimulated && simulatedStats ? (
-              <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-bold text-indigo-900">Nouvelle moyenne :</p>
-                  <div className="flex items-baseline gap-1 mt-0.5">
-                    <span className="text-xl font-black text-indigo-700">{simulatedStats.newOverall}</span>
-                    <span className="text-xs text-indigo-400">/ 100</span>
+              <div className="space-y-2.5">
+                {/* 1. Impact sur la matière sélectionnée */}
+                <div className="p-3 rounded-2xl bg-indigo-50/70 border border-indigo-100/80 flex items-center justify-between">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-900/80 truncate">
+                      Moyenne en {simulatedStats.subjectName}
+                    </p>
+                    <div className="flex items-baseline gap-1.5 mt-0.5">
+                      <span className="text-xs text-slate-400 line-through font-semibold">
+                        {simulatedStats.currentSubjectAvg !== null
+                          ? simulatedStats.currentSubjectAvg.toFixed(2)
+                          : 'N/A'}
+                      </span>
+                      <span className="text-slate-400 font-bold text-xs">→</span>
+                      <span className="text-base sm:text-lg font-black text-indigo-700">
+                        {simulatedStats.newSubjectAvg.toFixed(2)}
+                      </span>
+                      <span className="text-xs text-indigo-400 font-semibold">/ 20</span>
+                    </div>
+                  </div>
+                  <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold shrink-0 ${
+                    simulatedStats.subjectDiff === null
+                      ? 'bg-indigo-100 text-indigo-700'
+                      : simulatedStats.subjectDiff >= 0
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-rose-100 text-rose-700'
+                  }`}>
+                    {simulatedStats.subjectDiff === null
+                      ? '1ère note'
+                      : simulatedStats.subjectDiff >= 0
+                        ? `+${simulatedStats.subjectDiff.toFixed(2)} pts`
+                        : `${simulatedStats.subjectDiff.toFixed(2)} pts`}
                   </div>
                 </div>
-                <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold ${
-                  simulatedStats.diff >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-                }`}>
-                  {simulatedStats.diff >= 0 ? `+${simulatedStats.diff}` : `${simulatedStats.diff}`} pts
+
+                {/* 2. Impact sur la moyenne générale */}
+                <div className="p-3 rounded-2xl bg-slate-900 text-white flex items-center justify-between shadow-subtle">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Moyenne Générale
+                    </p>
+                    <div className="flex items-baseline gap-1.5 mt-0.5">
+                      <span className="text-xs text-slate-400 line-through font-semibold">
+                        {simulatedStats.currentOverall.toFixed(2)}
+                      </span>
+                      <span className="text-slate-500 font-bold text-xs">→</span>
+                      <span className="text-base sm:text-lg font-black text-white">
+                        {simulatedStats.newOverall.toFixed(2)}
+                      </span>
+                      <span className="text-xs text-slate-400 font-semibold">/ 20</span>
+                    </div>
+                  </div>
+                  <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold shrink-0 ${
+                    simulatedStats.overallDiff >= 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                  }`}>
+                    {simulatedStats.overallDiff >= 0 ? `+${simulatedStats.overallDiff.toFixed(2)}` : simulatedStats.overallDiff.toFixed(2)} pts
+                  </div>
                 </div>
+
+                <button
+                  onClick={() => setHasSimulated(false)}
+                  className="w-full py-1 text-center text-[11px] font-semibold text-slate-400 hover:text-indigo-600 transition-colors"
+                >
+                  Réinitialiser la simulation
+                </button>
               </div>
             ) : (
               <button
                 onClick={() => setHasSimulated(true)}
-                className="w-full py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition-all shadow-subtle"
+                className="w-full py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition-all shadow-subtle flex items-center justify-center gap-1.5"
               >
-                Calculer l'impact
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Calculer l'impact</span>
               </button>
             )}
           </div>
@@ -305,12 +359,32 @@ export const ResultsView: React.FC = () => {
 
                 <div className="flex items-center justify-between sm:justify-end gap-6 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                   <div className="text-right">
-                    <div className="flex items-baseline gap-1 justify-end">
-                      <span className="text-2xl font-black text-slate-900">{report.studentAverage}</span>
-                      <span className="text-xs text-slate-400 font-semibold">/ 20</span>
-                    </div>
+                    {(() => {
+                      const isFormative = isSubjectFormativeOnly(report);
+                      const avg = isFormative
+                        ? null
+                        : (report.grades && report.grades.length > 0
+                            ? calculateGradesAverage(report.grades, report.studentAverage)
+                            : report.studentAverage);
+
+                      if (avg !== null && avg !== undefined && !isNaN(avg)) {
+                        return (
+                          <div className="flex items-baseline gap-1 justify-end">
+                            <span className="text-2xl font-black text-slate-900">{avg}</span>
+                            <span className="text-xs text-slate-400 font-semibold">/ 20</span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="flex items-baseline gap-1 justify-end">
+                          <span className="text-2xl font-black text-slate-400">N/A</span>
+                        </div>
+                      );
+                    })()}
                     <p className="text-[11px] text-slate-400">
-                      Classe : {report.classAverage}
+                      {report.classAverage !== null && report.classAverage !== undefined
+                        ? `Classe : ${report.classAverage}`
+                        : 'Classe : N/A'}
                     </p>
                   </div>
 
@@ -348,15 +422,21 @@ export const ResultsView: React.FC = () => {
                         >
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-2">
-                              <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-700 uppercase">
-                                {grade.type}
-                              </span>
+                              {isGradeFormative(grade) ? (
+                                <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-100 text-amber-800 uppercase">
+                                  Formatif
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-700 uppercase">
+                                  {grade.type}
+                                </span>
+                              )}
                               <span className="text-xs font-bold text-slate-900">{grade.title}</span>
                             </div>
                             <p className="text-[11px] text-slate-400 flex items-center gap-2">
                               <span>{new Date(grade.date).toLocaleDateString('fr-FR')}</span>
                               <span>•</span>
-                              <span>Coef. {grade.coefficient}</span>
+                              <span>{isGradeFormative(grade) ? 'Formatif (sans coef.)' : `Coef. ${grade.coefficient}`}</span>
                             </p>
                             {grade.teacherComment && (
                               <p className="text-[11px] text-slate-600 mt-1 italic">
@@ -371,7 +451,7 @@ export const ResultsView: React.FC = () => {
                               <span className="text-xs text-slate-400 font-semibold"> / {grade.maxValue}</span>
                             </div>
                             <div className="text-[10px] text-slate-400 text-right">
-                              <p>Moy. {grade.classAverage}</p>
+                              <p>{grade.classAverage !== null && grade.classAverage !== undefined ? `Moy. ${grade.classAverage}` : 'Moy. N/A'}</p>
                             </div>
                           </div>
                         </div>
