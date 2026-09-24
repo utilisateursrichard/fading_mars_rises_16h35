@@ -128,7 +128,7 @@ export const ResultsView: React.FC = () => {
     });
 
     const newOverallPct = totalWeeklyHours > 0 ? totalWeightedPct / totalWeeklyHours : 0;
-    const currentOverallPct = overallStats?.currentPct ?? (overallStats?.current ? (overallStats.current / 20) * 100 : 0);
+    const currentOverallPct = overallStats?.currentPct ?? (overallStats?.current ? (overallStats.current > 20 ? overallStats.current : (overallStats.current / 20) * 100) : 0);
     const diffPct = Number((newOverallPct - currentOverallPct).toFixed(1));
 
     const targetSubjectOld20 = targetSubjectOldPct !== null ? Number(((targetSubjectOldPct / 100) * 20).toFixed(2)) : null;
@@ -148,6 +148,7 @@ export const ResultsView: React.FC = () => {
       targetSubjectDiff: targetSubjectOldPct !== null ? Number((targetSubjectNewPct - targetSubjectOldPct).toFixed(1)) : null,
       targetSubjectDiff20,
       isTargetInitialFormative,
+      currentOverallPct: Number(currentOverallPct.toFixed(1)),
       newOverallPct: Number(newOverallPct.toFixed(1)),
       newOverall20,
       diffPct,
@@ -347,7 +348,9 @@ export const ResultsView: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Note espérée</label>
+                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">
+                      Note espérée {simTotal > 0 && <span className="text-indigo-600 font-extrabold ml-1">({Number(((simObtained / simTotal) * 100).toFixed(0))}%)</span>}
+                    </label>
                     <input
                       type="number"
                       min="0"
@@ -395,30 +398,29 @@ export const ResultsView: React.FC = () => {
                     </p>
                     <div className="flex items-baseline gap-1.5 mt-0.5">
                       <span className="text-xs text-slate-400 line-through font-semibold">
-                        {simulatedStats.targetSubjectOld20 !== null
-                          ? `${simulatedStats.targetSubjectOld20}/20`
+                        {simulatedStats.targetSubjectOldPct !== null
+                          ? `${simulatedStats.targetSubjectOldPct}%`
                           : 'N/A'}
                       </span>
                       <span className="text-slate-400 font-bold text-xs">→</span>
                       <span className="text-base sm:text-lg font-black text-indigo-700">
-                        {simulatedStats.targetSubjectNew20}
+                        {simulatedStats.targetSubjectNewPct}%
                       </span>
-                      <span className="text-xs text-indigo-400 font-semibold">/ 20</span>
-                      <span className="text-[10px] text-indigo-500 font-bold ml-1">({simulatedStats.targetSubjectNewPct}%)</span>
+                      <span className="text-[10px] text-indigo-500 font-semibold ml-1">({simulatedStats.targetSubjectNew20}/20)</span>
                     </div>
                   </div>
                   <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold shrink-0 ${
-                    simulatedStats.targetSubjectDiff20 === null
+                    simulatedStats.targetSubjectDiff === null
                       ? 'bg-indigo-100 text-indigo-700'
-                      : simulatedStats.targetSubjectDiff20 >= 0
+                      : simulatedStats.targetSubjectDiff >= 0
                         ? 'bg-emerald-100 text-emerald-700'
                         : 'bg-rose-100 text-rose-700'
                   }`}>
-                    {simulatedStats.targetSubjectDiff20 === null
+                    {simulatedStats.targetSubjectDiff === null
                       ? '1ère note'
-                      : simulatedStats.targetSubjectDiff20 >= 0
-                        ? `+${simulatedStats.targetSubjectDiff20} pts`
-                        : `${simulatedStats.targetSubjectDiff20} pts`}
+                      : simulatedStats.targetSubjectDiff >= 0
+                        ? `+${simulatedStats.targetSubjectDiff}%`
+                        : `${simulatedStats.targetSubjectDiff}%`}
                   </div>
                 </div>
 
@@ -430,19 +432,19 @@ export const ResultsView: React.FC = () => {
                     </p>
                     <div className="flex items-baseline gap-1.5 mt-0.5">
                       <span className="text-xs text-slate-400 line-through font-semibold">
-                        {simulatedStats.currentOverall20}
+                        {simulatedStats.currentOverallPct}%
                       </span>
                       <span className="text-slate-500 font-bold text-xs">→</span>
                       <span className="text-base sm:text-lg font-black text-white">
-                        {simulatedStats.newOverall20}
+                        {simulatedStats.newOverallPct}%
                       </span>
-                      <span className="text-xs text-slate-400 font-semibold">/ 20</span>
+                      <span className="text-xs text-slate-400 font-medium ml-1">({simulatedStats.newOverall20}/20)</span>
                     </div>
                   </div>
                   <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold shrink-0 ${
-                    simulatedStats.diffOverall20 >= 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                    simulatedStats.diffPct >= 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                   }`}>
-                    {simulatedStats.diffOverall20 >= 0 ? `+${simulatedStats.diffOverall20}` : simulatedStats.diffOverall20} pts
+                    {simulatedStats.diffPct >= 0 ? `+${simulatedStats.diffPct}%` : `${simulatedStats.diffPct}%`}
                   </div>
                 </div>
 

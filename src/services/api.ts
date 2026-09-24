@@ -144,14 +144,17 @@ class SchoolService {
     return Promise.resolve([...mockSubjectReports]);
   }
 
-  async getOverallAverage(): Promise<{ current: number; classAvg: number; previousTerm: number }> {
+  async getOverallAverage(): Promise<{ current: number; classAvg: number; previousTerm: number; currentPct?: number }> {
     const reports = await this.getSubjectReports();
     const stats = calculateOverallAverage(reports);
+    const currentPct = Number(((stats.current / 20) * 100).toFixed(1));
+    const classAvgPct = Number(((stats.classAvg / 20) * 100).toFixed(1));
 
     return Promise.resolve({
-      current: stats.current,
-      classAvg: stats.classAvg,
-      previousTerm: 15.4
+      current: currentPct,
+      classAvg: classAvgPct,
+      previousTerm: 77.0,
+      currentPct
     });
   }
 

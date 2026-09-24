@@ -339,8 +339,12 @@ export const DashboardView: React.FC = () => {
           {overallStats ? (
             <>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-black text-slate-900">{overallStats.current}</span>
-                <span className="text-xs text-slate-400 font-semibold">/ 20</span>
+                <span className="text-2xl sm:text-3xl font-black text-slate-900">
+                  {overallStats.current > 20
+                    ? overallStats.current
+                    : Number(((overallStats.current / 20) * 100).toFixed(1))}
+                </span>
+                <span className="text-xs text-slate-400 font-semibold">%</span>
               </div>
               <p className="text-[11px] font-semibold text-slate-400 mt-1">
                 {overallStats.totalWeeklyHours
@@ -352,7 +356,7 @@ export const DashboardView: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl sm:text-3xl font-black text-slate-300">--</span>
-                <span className="text-xs text-slate-400 font-semibold">/ 20</span>
+                <span className="text-xs text-slate-400 font-semibold">%</span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium mt-1">
                 Aucune note disponible
