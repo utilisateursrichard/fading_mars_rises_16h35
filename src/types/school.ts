@@ -104,6 +104,7 @@ export interface Grade {
   feedbacks?: string[];
   goals?: GradeGoal[];
   evaluationType?: 'normal' | 'project';
+  isFormative?: boolean;
 }
 
 export interface SubjectReport {
@@ -112,15 +113,16 @@ export interface SubjectReport {
   color: string;
   teacher: string;
   coefficient: number;
-  studentAverage: number;
-  classAverage?: number;
-  minAverage?: number;
-  maxAverage?: number;
+  studentAverage: number | null;
+  classAverage?: number | null;
+  minAverage?: number | null;
+  maxAverage?: number | null;
   grades: Grade[];
   teacherAppreciation?: string;
   hoursPerWeek?: number;
   totalObtained?: number;
   totalPossible?: number;
+  isFormativeOnly?: boolean;
 }
 
 // Structures natives Smartschool Skore API

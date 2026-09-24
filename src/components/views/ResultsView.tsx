@@ -21,6 +21,7 @@ import {
 import { useSchool } from '../../context/SchoolContext';
 import { getSubjectTheme } from '../../utils/theme';
 import { Grade } from '../../types/school';
+import { isSubjectFormativeOnly, isGradeFormative } from '../../utils/grades';
 
 export const ResultsView: React.FC = () => {
   const { 
@@ -84,21 +85,34 @@ export const ResultsView: React.FC = () => {
   const simulatedStats = useMemo(() => {
     if (!hasSimulated || !activeSimSubject || filteredReports.length === 0) return null;
 
+    const targetRep = filteredReports.find(r => r.subjectCode === activeSimSubject);
+    const isTargetInitialFormative = targetRep ? isSubjectFormativeOnly(targetRep) : false;
+
     let totalWeightedPct = 0;
     let totalWeeklyHours = 0;
-    let targetSubjectOldPct = 0;
+    let targetSubjectOldPct: number | null = null;
     let targetSubjectNewPct = 0;
 
     filteredReports.forEach(rep => {
+      const isTarget = rep.subjectCode === activeSimSubject;
       const hours = rep.hoursPerWeek || rep.coefficient || 1;
+      const isFormative = isSubjectFormativeOnly(rep);
+
+      if (isFormative && !isTarget) {
+        // Ignorer les matières uniquement formatives dans le calcul global
+        return;
+      }
+
       let subjectPct = rep.totalPossible && rep.totalPossible > 0
         ? ((rep.totalObtained || 0) / rep.totalPossible) * 100
-        : (rep.studentAverage > 20 ? rep.studentAverage : (rep.studentAverage / 20) * 100);
+        : (rep.studentAverage !== null && rep.studentAverage !== undefined
+            ? (rep.studentAverage > 20 ? rep.studentAverage : (rep.studentAverage / 20) * 100)
+            : 0);
 
-      if (rep.subjectCode === activeSimSubject) {
-        targetSubjectOldPct = subjectPct;
-        const currentObt = rep.totalObtained ?? (rep.studentAverage > 20 ? rep.studentAverage : (rep.studentAverage / 20) * 100);
-        const currentTot = rep.totalPossible ?? (rep.studentAverage > 0 ? 100 : 0);
+      if (isTarget) {
+        targetSubjectOldPct = isTargetInitialFormative ? null : subjectPct;
+        const currentObt = isTargetInitialFormative ? 0 : (rep.totalObtained ?? (rep.studentAverage ? (rep.studentAverage > 20 ? rep.studentAverage : (rep.studentAverage / 20) * 100) : 0));
+        const currentTot = isTargetInitialFormative ? 0 : (rep.totalPossible ?? (rep.studentAverage ? 100 : 0));
 
         const newObt = currentObt + simObtained;
         const newTot = currentTot + simTotal;
@@ -117,12 +131,28 @@ export const ResultsView: React.FC = () => {
     const currentOverallPct = overallStats?.currentPct ?? (overallStats?.current ? (overallStats.current / 20) * 100 : 0);
     const diffPct = Number((newOverallPct - currentOverallPct).toFixed(1));
 
+    const targetSubjectOld20 = targetSubjectOldPct !== null ? Number(((targetSubjectOldPct / 100) * 20).toFixed(2)) : null;
+    const targetSubjectNew20 = Number(((targetSubjectNewPct / 100) * 20).toFixed(2));
+    const targetSubjectDiff20 = targetSubjectOld20 !== null ? Number((targetSubjectNew20 - targetSubjectOld20).toFixed(2)) : null;
+
+    const currentOverall20 = Number(((currentOverallPct / 100) * 20).toFixed(2));
+    const newOverall20 = Number(((newOverallPct / 100) * 20).toFixed(2));
+    const diffOverall20 = Number((newOverall20 - currentOverall20).toFixed(2));
+
     return {
-      newOverallPct: Number(newOverallPct.toFixed(1)),
-      newOverall20: Number(((newOverallPct / 100) * 20).toFixed(2)),
-      diffPct,
+      targetSubjectName: targetRep?.subject || activeSimSubject,
+      targetSubjectOldPct,
+      targetSubjectOld20,
       targetSubjectNewPct: Number(targetSubjectNewPct.toFixed(1)),
-      targetSubjectDiff: Number((targetSubjectNewPct - targetSubjectOldPct).toFixed(1))
+      targetSubjectNew20,
+      targetSubjectDiff: targetSubjectOldPct !== null ? Number((targetSubjectNewPct - targetSubjectOldPct).toFixed(1)) : null,
+      targetSubjectDiff20,
+      isTargetInitialFormative,
+      newOverallPct: Number(newOverallPct.toFixed(1)),
+      newOverall20,
+      diffPct,
+      diffOverall20,
+      currentOverall20
     };
   }, [hasSimulated, activeSimSubject, simObtained, simTotal, filteredReports, overallStats]);
 
@@ -356,19 +386,72 @@ export const ResultsView: React.FC = () => {
 
           <div className="mt-4 pt-4 border-t border-slate-100">
             {hasSimulated && simulatedStats ? (
-              <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-bold text-indigo-900">Nouvelle moyenne générale :</p>
-                  <div className="flex items-baseline gap-1 mt-0.5">
-                    <span className="text-2xl font-black text-indigo-700">{simulatedStats.newOverallPct}</span>
-                    <span className="text-xs font-bold text-indigo-400">/ 100</span>
+              <div className="space-y-2.5">
+                {/* 1. Impact sur la matière sélectionnée */}
+                <div className="p-3 rounded-2xl bg-indigo-50/70 border border-indigo-100/80 flex items-center justify-between">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-900/80 truncate">
+                      Moyenne en {simulatedStats.targetSubjectName}
+                    </p>
+                    <div className="flex items-baseline gap-1.5 mt-0.5">
+                      <span className="text-xs text-slate-400 line-through font-semibold">
+                        {simulatedStats.targetSubjectOld20 !== null
+                          ? `${simulatedStats.targetSubjectOld20}/20`
+                          : 'N/A'}
+                      </span>
+                      <span className="text-slate-400 font-bold text-xs">→</span>
+                      <span className="text-base sm:text-lg font-black text-indigo-700">
+                        {simulatedStats.targetSubjectNew20}
+                      </span>
+                      <span className="text-xs text-indigo-400 font-semibold">/ 20</span>
+                      <span className="text-[10px] text-indigo-500 font-bold ml-1">({simulatedStats.targetSubjectNewPct}%)</span>
+                    </div>
+                  </div>
+                  <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold shrink-0 ${
+                    simulatedStats.targetSubjectDiff20 === null
+                      ? 'bg-indigo-100 text-indigo-700'
+                      : simulatedStats.targetSubjectDiff20 >= 0
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-rose-100 text-rose-700'
+                  }`}>
+                    {simulatedStats.targetSubjectDiff20 === null
+                      ? '1ère note'
+                      : simulatedStats.targetSubjectDiff20 >= 0
+                        ? `+${simulatedStats.targetSubjectDiff20} pts`
+                        : `${simulatedStats.targetSubjectDiff20} pts`}
                   </div>
                 </div>
-                <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold ${
-                  simulatedStats.diffPct >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-                }`}>
-                  {simulatedStats.diffPct >= 0 ? `+${simulatedStats.diffPct}` : `${simulatedStats.diffPct}`} pts
+
+                {/* 2. Impact sur la moyenne générale */}
+                <div className="p-3 rounded-2xl bg-slate-900 text-white flex items-center justify-between shadow-subtle">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Moyenne Générale
+                    </p>
+                    <div className="flex items-baseline gap-1.5 mt-0.5">
+                      <span className="text-xs text-slate-400 line-through font-semibold">
+                        {simulatedStats.currentOverall20}
+                      </span>
+                      <span className="text-slate-500 font-bold text-xs">→</span>
+                      <span className="text-base sm:text-lg font-black text-white">
+                        {simulatedStats.newOverall20}
+                      </span>
+                      <span className="text-xs text-slate-400 font-semibold">/ 20</span>
+                    </div>
+                  </div>
+                  <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold shrink-0 ${
+                    simulatedStats.diffOverall20 >= 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                  }`}>
+                    {simulatedStats.diffOverall20 >= 0 ? `+${simulatedStats.diffOverall20}` : simulatedStats.diffOverall20} pts
+                  </div>
                 </div>
+
+                <button
+                  onClick={() => setHasSimulated(false)}
+                  className="w-full py-1 text-center text-[11px] font-semibold text-slate-400 hover:text-indigo-600 transition-colors"
+                >
+                  Réinitialiser la simulation
+                </button>
               </div>
             ) : (
               <button
@@ -436,13 +519,23 @@ export const ResultsView: React.FC = () => {
 
                   <div className="flex items-center justify-between sm:justify-end gap-6 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                     <div className="text-right">
-                      <div className="flex items-baseline gap-1 justify-end">
-                        <span className="text-2xl font-black text-slate-900">{coursePct}</span>
-                        <span className="text-xs text-slate-400 font-semibold">/ 100</span>
-                      </div>
+                      {isSubjectFormativeOnly(report) ? (
+                        <div className="flex items-baseline gap-1 justify-end">
+                          <span className="text-2xl font-black text-slate-400">N/A</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-baseline gap-1 justify-end">
+                          <span className="text-2xl font-black text-slate-900">{coursePct}</span>
+                          <span className="text-xs text-slate-400 font-semibold">/ 100</span>
+                        </div>
+                      )}
                       {report.totalPossible ? (
                         <p className="text-[11px] text-slate-400">
                           Cumul : {report.totalObtained} / {report.totalPossible} pts
+                        </p>
+                      ) : isSubjectFormativeOnly(report) ? (
+                        <p className="text-[11px] text-amber-600 font-semibold">
+                          Formatif uniquement
                         </p>
                       ) : null}
                     </div>

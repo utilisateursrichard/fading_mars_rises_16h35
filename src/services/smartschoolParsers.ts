@@ -345,8 +345,44 @@ export const extractMetadataFromPlanner = (
     if (!schoolName && item.locations?.[0]?.platformName) {
       schoolName = item.locations[0].platformName;
     }
-    if (!studentClass && item.participants?.groups?.[0]?.name) {
-      studentClass = item.participants.groups[0].name;
+    if (!studentClass) {
+      // 1. Liste exhaustive de toutes les structures possibles retournées par Smartschool
+      const candidateValues = [
+        item.participants?.groups?.[0]?.name,
+        item.participants?.groups?.[0]?.title,
+        item.participants?.groups?.[0]?.code,
+        item.participants?.classes?.[0]?.name,
+        item.groups?.[0]?.name,
+        item.groups?.[0]?.title,
+        item.groups?.[0]?.code,
+        item.group?.name,
+        item.group?.title,
+        typeof item.group === 'string' ? item.group : null,
+        item.courses?.[0]?.group?.name,
+        item.courses?.[0]?.groups?.[0]?.name,
+        item.courses?.[0]?.group,
+        item.courses?.[0]?.class,
+        item.class?.name,
+        item.className,
+        item.studentClass
+      ];
+
+      for (const val of candidateValues) {
+        if (typeof val === 'string' && val.trim().length > 0) {
+          studentClass = val.trim();
+          break;
+        }
+      }
+
+      // 2. Si aucune propriété directe, tester si un scheduleCode ou nom de cours contient un pattern de classe (ex: '4T1', '3G1', '6TT')
+      if (!studentClass && item.courses?.[0]) {
+        const c = item.courses[0];
+        const combined = `${c.scheduleCodes?.join(' ') || ''} ${c.name || ''} ${c.title || ''}`;
+        const match = combined.match(/\b([1-6][A-Za-z]+[0-9]*)\b/);
+        if (match && match[1]) {
+          studentClass = match[1];
+        }
+      }
     }
 
     // 1. Recherche directe de l'élève par son userId dans les participants ou organisateurs

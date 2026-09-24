@@ -152,20 +152,42 @@ export const discoverStudentProfile = async (): Promise<Partial<Student> | null>
         key: 'exactAvatar', 
         selector: 'button.js-btn-profile img, .topnav__btn--profile img, .js-btn-profile img', 
         attr: 'src' 
+      },
+      {
+        key: 'studentClass',
+        selector: '.js-user-group, .topnav__user-group, .user-group, [data-user-group], .user__group, .js-user-class, .student-class, .current-class, .user-info__group, .topnav__badge',
+        attr: 'text'
       }
     ]);
 
     if (domRes.ok && domRes.results) {
       const rawName = domRes.results.exactName ? String(domRes.results.exactName).trim() : '';
       const avatar = domRes.results.exactAvatar || cached?.avatar || '';
+      let studentClass = domRes.results.studentClass ? String(domRes.results.studentClass).trim() : cached?.studentClass;
 
-      if (rawName || avatar) {
+      if (!studentClass) {
+        try {
+          const hostInfo = await getHostPageInfo();
+          if (hostInfo.ok && hostInfo.data?.html) {
+            const match = hostInfo.data.html.match(/(?:class="[^"]*(?:user-group|user__group|student-class)[^"]*">|data-user-group=")([^<"]+)/i) ||
+                          hostInfo.data.html.match(/"groupName"\s*:\s*"([^"]+)"/i) ||
+                          hostInfo.data.html.match(/"className"\s*:\s*"([^"]+)"/i) ||
+                          hostInfo.data.html.match(/"userGroup"\s*:\s*"([^"]+)"/i);
+            if (match && match[1]) {
+              studentClass = match[1].trim();
+            }
+          }
+        } catch {}
+      }
+
+      if (rawName || avatar || studentClass) {
         const splitted = rawName ? splitFullName(rawName) : { firstName: '', lastName: '' };
         const updated: Partial<Student> = {
           ...(cached || {}),
           ...(splitted.firstName ? { firstName: splitted.firstName } : {}),
           ...(splitted.lastName ? { lastName: splitted.lastName } : {}),
-          ...(avatar ? { avatar } : {})
+          ...(avatar ? { avatar } : {}),
+          ...(studentClass ? { studentClass } : {})
         };
 
         if (typeof window !== 'undefined') {
@@ -188,9 +210,11 @@ export const discoverStudentProfile = async (): Promise<Partial<Student> | null>
           if (!btn) return null;
           var s = btn.querySelector('.hlp-vert-box > span:not(.topnav__btn__light), .hlp-vert-box > span:first-child');
           var img = btn.querySelector('img');
+          var grp = document.querySelector('.js-user-group, .topnav__user-group, .user-group, [data-user-group], .user__group, .student-class, .current-class, .topnav__badge');
           return {
             fullName: s ? (s.innerText || s.textContent || '').trim() : null,
-            avatar: img ? img.src : null
+            avatar: img ? img.src : null,
+            studentClass: grp ? (grp.innerText || grp.textContent || '').trim() : null
           };
         } catch(e) { return null; }
       })()
@@ -199,14 +223,16 @@ export const discoverStudentProfile = async (): Promise<Partial<Student> | null>
     if (evalRes.ok && evalRes.result) {
       const rawName = evalRes.result.fullName ? String(evalRes.result.fullName).trim() : '';
       const avatar = evalRes.result.avatar || '';
+      const studentClass = evalRes.result.studentClass ? String(evalRes.result.studentClass).trim() : cached?.studentClass;
 
-      if (rawName || avatar) {
+      if (rawName || avatar || studentClass) {
         const splitted = rawName ? splitFullName(rawName) : { firstName: '', lastName: '' };
         const updated: Partial<Student> = {
           ...(cached || {}),
           ...(splitted.firstName ? { firstName: splitted.firstName } : {}),
           ...(splitted.lastName ? { lastName: splitted.lastName } : {}),
-          ...(avatar ? { avatar } : {})
+          ...(avatar ? { avatar } : {}),
+          ...(studentClass ? { studentClass } : {})
         };
         if (typeof window !== 'undefined') {
           localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(updated));
