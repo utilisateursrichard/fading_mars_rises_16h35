@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useSchool, TabType } from '../../context/SchoolContext';
 import { isFeatureReadyInLive } from '../../utils/featureFlags';
+import { cleanStudentClass } from '../../utils/student';
 
 interface MobileNavProps {
   isDrawerOpen: boolean;
@@ -127,7 +128,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
                   <h4 className="font-bold text-sm text-slate-900">
                     {student ? `${student.firstName} ${student.lastName}`.trim() || 'Élève' : 'Élève'}
                   </h4>
-                  <p className="text-xs text-slate-500">{student?.studentClass || (isDemoMode ? 'Classe' : 'Non connecté')}</p>
+                  <p className="text-xs text-slate-500">{cleanStudentClass(student?.studentClass) || (isDemoMode ? 'Classe' : 'Non connecté')}</p>
                   {student?.ineNumber ? (
                     <p className="text-[10px] text-slate-400 font-mono mt-0.5">ID: {student.ineNumber}</p>
                   ) : null}

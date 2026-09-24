@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useSchool, TabType } from '../../context/SchoolContext';
 import { isFeatureReadyInLive } from '../../utils/featureFlags';
+import { cleanStudentClass } from '../../utils/student';
 
 export const Sidebar: React.FC = () => {
   const { 
@@ -184,7 +185,7 @@ export const Sidebar: React.FC = () => {
                 {student ? `${student.firstName} ${student.lastName}`.trim() || 'Élève' : 'Élève'}
               </p>
               <p className="text-[11px] text-slate-400 truncate">
-                {student?.studentClass || (isDemoMode ? 'Classe' : 'Non connecté')}
+                {cleanStudentClass(student?.studentClass) || (isDemoMode ? 'Classe' : 'Non connecté')}
               </p>
             </div>
           )}

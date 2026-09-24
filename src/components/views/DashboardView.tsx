@@ -14,6 +14,7 @@ import {
 import { useSchool } from '../../context/SchoolContext';
 import { getSubjectTheme } from '../../utils/theme';
 import { calculateHomeworkImportance } from '../../utils/homeworkImportance';
+import { cleanStudentClass } from '../../utils/student';
 
 const importanceClasses = [
   'bg-white border-slate-200/70 hover:border-slate-300',
@@ -236,8 +237,8 @@ export const DashboardView: React.FC = () => {
             {student?.firstName ? `${greeting}, ${student.firstName}` : greeting}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5 capitalize">
-            {todayFormatted} {student?.studentClass ? (
-              <>• <span className="text-indigo-600 font-semibold">{student.studentClass}</span></>
+            {todayFormatted} {cleanStudentClass(student?.studentClass) ? (
+              <>• <span className="text-indigo-600 font-semibold">{cleanStudentClass(student?.studentClass)}</span></>
             ) : null}
           </p>
         </div>

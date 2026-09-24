@@ -17,6 +17,7 @@ import {
   SkoreEvaluation
 } from '../types/school';
 import { calculateHomeworkImportance, getHomeworkPriority } from '../utils/homeworkImportance';
+import { isInvalidClassCandidate } from '../utils/student';
 
 // Palette de correspondance des couleurs Smartschool vers BetterSchool
 const COLOR_MAP: Record<string, string> = {
@@ -337,6 +338,7 @@ export const extractMetadataFromPlanner = (
 ): PlannerMetadata => {
   let schoolName: string | undefined;
   let studentClass: string | undefined;
+  let fallbackClass: string | undefined;
   let firstName: string | undefined;
   let lastName: string | undefined;
   let avatar: string | undefined;
@@ -346,41 +348,58 @@ export const extractMetadataFromPlanner = (
       schoolName = item.locations[0].platformName;
     }
     if (!studentClass) {
-      // 1. Liste exhaustive de toutes les structures possibles retournées par Smartschool
-      const candidateValues = [
-        item.participants?.groups?.[0]?.name,
-        item.participants?.groups?.[0]?.title,
-        item.participants?.groups?.[0]?.code,
-        item.participants?.classes?.[0]?.name,
-        item.groups?.[0]?.name,
-        item.groups?.[0]?.title,
-        item.groups?.[0]?.code,
+      const rawCandidates: any[] = [
+        item.class?.name,
+        item.className,
+        item.studentClass,
         item.group?.name,
         item.group?.title,
         typeof item.group === 'string' ? item.group : null,
         item.courses?.[0]?.group?.name,
         item.courses?.[0]?.groups?.[0]?.name,
         item.courses?.[0]?.group,
-        item.courses?.[0]?.class,
-        item.class?.name,
-        item.className,
-        item.studentClass
+        item.courses?.[0]?.class
       ];
 
-      for (const val of candidateValues) {
-        if (typeof val === 'string' && val.trim().length > 0) {
-          studentClass = val.trim();
-          break;
-        }
+      if (Array.isArray(item.participants?.groups)) {
+        item.participants.groups.forEach((g: any) => {
+          rawCandidates.push(g?.name, g?.title, g?.code);
+        });
+      }
+      if (Array.isArray(item.participants?.classes)) {
+        item.participants.classes.forEach((c: any) => {
+          rawCandidates.push(c?.name, c?.title, c?.code);
+        });
+      }
+      if (Array.isArray(item.groups)) {
+        item.groups.forEach((g: any) => {
+          rawCandidates.push(g?.name, g?.title, g?.code);
+        });
+      }
+      if (Array.isArray(item.courses)) {
+        item.courses.forEach((c: any) => {
+          if (Array.isArray(c?.scheduleCodes)) {
+            c.scheduleCodes.forEach((sc: string) => rawCandidates.push(sc));
+          }
+          rawCandidates.push(c?.name, c?.title);
+        });
       }
 
-      // 2. Si aucune propriété directe, tester si un scheduleCode ou nom de cours contient un pattern de classe (ex: '4T1', '3G1', '6TT')
-      if (!studentClass && item.courses?.[0]) {
-        const c = item.courses[0];
-        const combined = `${c.scheduleCodes?.join(' ') || ''} ${c.name || ''} ${c.title || ''}`;
-        const match = combined.match(/\b([1-6][A-Za-z]+[0-9]*)\b/);
-        if (match && match[1]) {
+      for (const raw of rawCandidates) {
+        if (typeof raw !== 'string') continue;
+        const val = raw.trim();
+        if (!val || isInvalidClassCandidate(val)) continue;
+
+        // Détection prioritaire : motif de classe standard (ex: 4T1, 3GT, 5TT2, 6G-LAT, 1C2)
+        const match = val.match(/\b([1-7][A-Za-z]+[0-9]*)\b/);
+        if (match && match[1] && !isInvalidClassCandidate(match[1])) {
           studentClass = match[1];
+          break;
+        }
+
+        // Candidat valide secondaire (non générique)
+        if (!fallbackClass && val.length <= 25) {
+          fallbackClass = val;
         }
       }
     }
@@ -442,7 +461,7 @@ export const extractMetadataFromPlanner = (
     if (schoolName && studentClass && firstName && avatar) break;
   }
 
-  return { schoolName, studentClass, firstName, lastName, avatar };
+  return { schoolName, studentClass: studentClass || fallbackClass, firstName, lastName, avatar };
 };
 
 // ==========================================

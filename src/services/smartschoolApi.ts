@@ -13,6 +13,7 @@ import {
   extractMetadataFromPlanner,
   splitFullName
 } from './smartschoolParsers';
+import { isInvalidClassCandidate, cleanStudentClass } from '../utils/student';
 
 const REAL_STORAGE_KEYS = {
   USER_ID: 'betterschool_real_user_id',
@@ -163,7 +164,7 @@ export const discoverStudentProfile = async (): Promise<Partial<Student> | null>
     if (domRes.ok && domRes.results) {
       const rawName = domRes.results.exactName ? String(domRes.results.exactName).trim() : '';
       const avatar = domRes.results.exactAvatar || cached?.avatar || '';
-      let studentClass = domRes.results.studentClass ? String(domRes.results.studentClass).trim() : cached?.studentClass;
+      let studentClass = cleanStudentClass(domRes.results.studentClass) || cleanStudentClass(cached?.studentClass) || undefined;
 
       if (!studentClass) {
         try {
@@ -171,16 +172,18 @@ export const discoverStudentProfile = async (): Promise<Partial<Student> | null>
             (function() {
               try {
                 var html = document.body ? document.body.innerHTML : '';
-                var match = html.match(/(?:class="[^"]*(?:user-group|user__group|student-class)[^"]*">|data-user-group=")([^<"]+)/i) ||
-                            html.match(/"groupName"\\s*:\\s*"([^"]+)"/i) ||
+                var match = html.match(/(?:class="[^"]*(?:student-class|current-class|js-user-class)[^"]*">)([^<"]+)/i) ||
                             html.match(/"className"\\s*:\\s*"([^"]+)"/i) ||
-                            html.match(/"userGroup"\\s*:\\s*"([^"]+)"/i);
+                            html.match(/"studentClass"\\s*:\\s*"([^"]+)"/i);
                 return match && match[1] ? match[1].trim() : null;
               } catch(e) { return null; }
             })()
           `);
           if (evalClass.ok && evalClass.result && typeof evalClass.result === 'string') {
-            studentClass = evalClass.result.trim();
+            const candidate = evalClass.result.trim();
+            if (!isInvalidClassCandidate(candidate)) {
+              studentClass = candidate;
+            }
           }
         } catch {}
       }
@@ -215,11 +218,19 @@ export const discoverStudentProfile = async (): Promise<Partial<Student> | null>
           if (!btn) return null;
           var s = btn.querySelector('.hlp-vert-box > span:not(.topnav__btn__light), .hlp-vert-box > span:first-child');
           var img = btn.querySelector('img');
-          var grp = document.querySelector('.js-user-group, .topnav__user-group, .user-group, [data-user-group], .user__group, .student-class, .current-class, .topnav__badge');
+          var grpEls = document.querySelectorAll('.student-class, .current-class, [data-student-class], .js-user-class, .user-info__group, .js-user-group, .topnav__user-group, .user-group, [data-user-group], .user__group, .topnav__badge');
+          var cls = null;
+          for (var i = 0; i < grpEls.length; i++) {
+            var txt = (grpEls[i].innerText || grpEls[i].textContent || '').trim();
+            if (txt && !/tout\s+le\s+monde|iedereen|tous\s+les|élèves?|leerling|user|non\s+connecté/i.test(txt)) {
+              cls = txt;
+              break;
+            }
+          }
           return {
             fullName: s ? (s.innerText || s.textContent || '').trim() : null,
             avatar: img ? img.src : null,
-            studentClass: grp ? (grp.innerText || grp.textContent || '').trim() : null
+            studentClass: cls
           };
         } catch(e) { return null; }
       })()
@@ -228,7 +239,7 @@ export const discoverStudentProfile = async (): Promise<Partial<Student> | null>
     if (evalRes.ok && evalRes.result) {
       const rawName = evalRes.result.fullName ? String(evalRes.result.fullName).trim() : '';
       const avatar = evalRes.result.avatar || '';
-      const studentClass = evalRes.result.studentClass ? String(evalRes.result.studentClass).trim() : cached?.studentClass;
+      const studentClass = cleanStudentClass(evalRes.result.studentClass) || cleanStudentClass(cached?.studentClass) || undefined;
 
       if (rawName || avatar || studentClass) {
         const splitted = rawName ? splitFullName(rawName) : { firstName: '', lastName: '' };
@@ -659,7 +670,14 @@ export const getCachedRealStudent = (): Partial<Student> | null => {
   try {
     const stored = localStorage.getItem(REAL_STORAGE_KEYS.STUDENT);
     if (!stored) return null;
-    return JSON.parse(stored);
+    const parsed: Partial<Student> = JSON.parse(stored);
+    if (parsed && isInvalidClassCandidate(parsed.studentClass)) {
+      parsed.studentClass = undefined;
+      try {
+        localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(parsed));
+      } catch {}
+    }
+    return parsed;
   } catch {
     return null;
   }

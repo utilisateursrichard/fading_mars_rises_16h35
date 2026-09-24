@@ -23,6 +23,7 @@ import {
   unresolveSmartschoolHomework
 } from '../services/smartschoolApi';
 import { buildSubjectReportsFromEvaluations } from '../services/smartschoolParsers';
+import { cleanStudentClass } from '../utils/student';
 
 export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'tutor' | 'book';
 
@@ -282,7 +283,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             lastName: res.student?.lastName || prev?.lastName || '',
             email: res.student?.email || prev?.email || '',
             avatar: res.student?.avatar || prev?.avatar || '',
-            studentClass: res.student?.studentClass || prev?.studentClass || '',
+            studentClass: cleanStudentClass(res.student?.studentClass) || cleanStudentClass(prev?.studentClass) || '',
             schoolName: res.student?.schoolName || prev?.schoolName || '',
             academicYear: res.student?.academicYear || prev?.academicYear || '',
             ineNumber: res.student?.ineNumber || prev?.ineNumber || '',
@@ -324,7 +325,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             lastName: realStudentData.lastName || '',
             email: realStudentData.email || '',
             avatar: realStudentData.avatar || '',
-            studentClass: realStudentData.studentClass || '',
+            studentClass: cleanStudentClass(realStudentData.studentClass) || '',
             schoolName: realStudentData.schoolName || '',
             academicYear: realStudentData.academicYear || '',
             ineNumber: realStudentData.ineNumber || '',
@@ -379,7 +380,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                   lastName: res.student?.lastName || prev?.lastName || '',
                   email: res.student?.email || prev?.email || '',
                   avatar: res.student?.avatar || prev?.avatar || '',
-                  studentClass: res.student?.studentClass || prev?.studentClass || '',
+                  studentClass: cleanStudentClass(res.student?.studentClass) || cleanStudentClass(prev?.studentClass) || '',
                   schoolName: res.student?.schoolName || prev?.schoolName || '',
                   academicYear: res.student?.academicYear || prev?.academicYear || '',
                   ineNumber: res.student?.ineNumber || prev?.ineNumber || '',
