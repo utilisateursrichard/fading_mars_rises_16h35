@@ -652,6 +652,7 @@ export const parseSkoreEvaluationToGrade = (
     date: ev.date ? ev.date.substring(0, 10) : '',
     period: ev.period?.name || 'Septembre - Décembre',
     type: isSommatif ? 'Sommatif' : 'Formatif',
+    isFormative: !isSommatif,
     obtainedPoints: score?.obtained,
     totalPoints: score?.total,
     rawScoreText: score?.rawText || ev.graphic?.description || '—',
@@ -761,11 +762,12 @@ export const buildSubjectReportsFromEvaluations = (
       color: '#6366f1',
       teacher: data.teacherName,
       coefficient: data.hours,
-      studentAverage: coursePct, // Moyenne du cours sur 100
+      studentAverage: hasGrades ? coursePct : null, // Moyenne du cours sur 100
       grades,
       hoursPerWeek: data.hours,
       totalObtained: sumObtained,
-      totalPossible: sumTotal
+      totalPossible: sumTotal,
+      isFormativeOnly: !hasGrades
     });
   }
 

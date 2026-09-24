@@ -489,7 +489,9 @@ export const ResultsView: React.FC = () => {
             const theme = getSubjectTheme(report.subjectCode);
             const coursePct = report.totalPossible && report.totalPossible > 0
               ? Math.round(((report.totalObtained || 0) / report.totalPossible) * 100)
-              : Math.round(report.studentAverage > 20 ? report.studentAverage : (report.studentAverage / 20) * 100);
+              : (report.studentAverage !== null && report.studentAverage !== undefined
+                  ? Math.round(report.studentAverage > 20 ? report.studentAverage : (report.studentAverage / 20) * 100)
+                  : 0);
 
             return (
               <div

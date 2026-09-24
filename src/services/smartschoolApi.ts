@@ -167,15 +167,20 @@ export const discoverStudentProfile = async (): Promise<Partial<Student> | null>
 
       if (!studentClass) {
         try {
-          const hostInfo = await getHostPageInfo();
-          if (hostInfo.ok && hostInfo.data?.html) {
-            const match = hostInfo.data.html.match(/(?:class="[^"]*(?:user-group|user__group|student-class)[^"]*">|data-user-group=")([^<"]+)/i) ||
-                          hostInfo.data.html.match(/"groupName"\s*:\s*"([^"]+)"/i) ||
-                          hostInfo.data.html.match(/"className"\s*:\s*"([^"]+)"/i) ||
-                          hostInfo.data.html.match(/"userGroup"\s*:\s*"([^"]+)"/i);
-            if (match && match[1]) {
-              studentClass = match[1].trim();
-            }
+          const evalClass = await evalHostExpression(`
+            (function() {
+              try {
+                var html = document.body ? document.body.innerHTML : '';
+                var match = html.match(/(?:class="[^"]*(?:user-group|user__group|student-class)[^"]*">|data-user-group=")([^<"]+)/i) ||
+                            html.match(/"groupName"\\s*:\\s*"([^"]+)"/i) ||
+                            html.match(/"className"\\s*:\\s*"([^"]+)"/i) ||
+                            html.match(/"userGroup"\\s*:\\s*"([^"]+)"/i);
+                return match && match[1] ? match[1].trim() : null;
+              } catch(e) { return null; }
+            })()
+          `);
+          if (evalClass.ok && evalClass.result && typeof evalClass.result === 'string') {
+            studentClass = evalClass.result.trim();
           }
         } catch {}
       }
