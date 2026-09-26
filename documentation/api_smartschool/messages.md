@@ -20,6 +20,7 @@ Ce document répertorie l'intégralité des spécifications techniques, endpoint
 | :--- | :---: | :---: | :--- | :--- |
 | `?module=Messages&file=index&function=getSearchConfig` | `GET` | JSON | Récupère la structure et les options des filtres de recherche (dossiers, champs, périodes). | Aucun |
 | `/Messages/Xhr/archivemessages` | `POST` | JSON | Archive en masse un ou plusieurs messages. | `msgIDs[]=<id>` |
+| `?module=Messages&file=searchUsers` | `POST` | XML | Autocomplétion et recherche de destinataires (élèves, enseignants, classes). | `val`, `type`, `parentNodeId`, `xml`, `uniqueUsc` |
 | `?module=Messages&file=searchUsers&function=countUsers` | `POST` | JSON | Vérifie le nombre de destinataires et les quotas autorisés avant envoi. | `uniqueUsc=<uscToken>` |
 | `?module=Messages&file=download&fileID={fileID}&target=0` | `GET` | Binaire | Téléchargement direct d'une pièce jointe. | Paramètre URL `fileID` |
 | `?module=Messages&file=wopi&fileID={fileID}&target=0` | `GET` | HTML/Redirect | Visionneuse Office 365 en ligne (WOPI) pour Word/Excel/PPT. | Paramètre URL `fileID` |
@@ -311,10 +312,87 @@ Chaque élément retourné dans `attachment list` comporte **7 attributs** :
 
 ### Déroulement de l'envoi :
 1. **Réservation de la session :** attribution d'un `draftID`, d'un `uniqueUsc` et d'un répertoire temporaire `randomDir`.
-2. **Ajout de pièces jointes temporaires :** téléversement dans `/Upload/?dir={randomDir}&mode=1` et inspection via `listattachments`.
-3. **Sélection et vérification des destinataires :** contrôlé par `POST ?module=Messages&file=searchUsers&function=countUsers`.
-4. **Expédition finale (`subsystem: draft`, `action: save draft`) :**
-   Déclenchée par l'argument `<param name="send"><![CDATA[refresh]]></param>`.
+2. **Recherche et sélection des destinataires :** autocomplétion en direct via `POST ?module=Messages&file=searchUsers`.
+3. **Contrôle des quotas :** vérification du nombre de personnes contactées via `POST ?module=Messages&file=searchUsers&function=countUsers`.
+4. **Ajout de pièces jointes temporaires :** téléversement dans `/Upload/?dir={randomDir}&mode=1` et inspection via `listattachments`.
+5. **Sauvegarde automatique / Envoi définitif :** via `subsystem: draft`, `action: save draft`.
+
+---
+
+### A. Autocomplétion des Destinataires (`searchUsers`)
+
+Lorsqu'un utilisateur tape les premières lettres d'un destinataire dans le champ "À :", une requête POST AJAX est envoyée en temps réel :
+
+```http
+POST /?module=Messages&file=searchUsers HTTP/2
+Host: <ecole>.smartschool.be
+Content-Type: application/x-www-form-urlencoded
+```
+
+#### Paramètres envoyés :
+* **`val`** : Texte de recherche tapé (ex: `"richar"`).
+* **`type`** : Type de recherche (`"0"` pour destinataires standards).
+* **`parentNodeId`** : Identifiant du conteneur DOM (ex: `"insertSearchFieldContainer_0_0"`).
+* **`xml`** : Structure XML de base (ex: `"<results></results>"`).
+* **`uniqueUsc`** : Jeton de session unique (ex: `"4907sWCVC7Hj25ktf8UZCcSsEzh6e17904244754907"`).
+
+#### Exemple de Réponse XML Serveur :
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<results>
+  <type>0</type>
+  <ssID>4907</ssID>
+  <parentNodeId>insertSearchFieldContainer_0_0</parentNodeId>
+  <groups />
+  <users>
+    <user>
+      <userID>5748</userID>
+      <text>&lt;span class="searchDivHighlight"&gt;Richar&lt;/span&gt;d De Gandt - 4T1</text>
+      <value>Richard De Gandt</value>
+      <selectable>on</selectable>
+      <ssID>4907</ssID>
+      <ssPlName />
+      <userLT>0</userLT>
+      <coaccountname />
+      <classname>Classe: 4T1</classname>
+      <schoolname />
+      <picture>https://userpicture20.smartschool.be/User/Userimage/hashimage/hash/4907_a96a6549-09ac-4372-920d-ecec6bfe0e4a/plain/1/square/1/res/48</picture>
+    </user>
+  </users>
+  <sgrdetails>
+    <sgrselect />
+    <dosgrsearch />
+  </sgrdetails>
+</results>
+```
+
+---
+
+### B. Sauvegarde Automatique d'un Brouillon Vide
+
+Si un brouillon est sauvegardé alors que l'objet et le message sont encore vides :
+* Le serveur renvoie une action avec la commande `draftnotsavedempty` sans créer d'entrée inutile en base :
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<server>
+  <response>
+    <status>ok</status>
+    <actions>
+      <action>
+        <subsystem>draft</subsystem>
+        <command>draftnotsavedempty</command>
+        <data />
+      </action>
+    </actions>
+  </response>
+</server>
+```
+
+---
+
+### C. Expédition Finale (`subsystem: draft`, `action: save draft`)
+
+L'envoi effectif du message est déclenché par le paramètre `<param name="send"><![CDATA[refresh]]></param>` :
 
 ```xml
 <request>
@@ -326,8 +404,8 @@ Chaque élément retourné dans `attachment list` comporte **7 attributs** :
 			<param name="send"><![CDATA[refresh]]></param>
 			<param name="origMsgID"><![CDATA[0]]></param>
 			<param name="composeAction"><![CDATA[0]]></param>
-			<param name="randomDir"><![CDATA[yUvaDIKthC74s6VChAQ3syzfD179042234959885748]]></param>
-			<param name="uniqueUsc"><![CDATA[4907e6yNh9rQ92iQpeNEgBBv8SkNw17904223494907]]></param>
+			<param name="randomDir"><![CDATA[FWaCpQ8tr5UkvHzJ3n5XNALwc179042447546265748]]></param>
+			<param name="uniqueUsc"><![CDATA[4907sWCVC7Hj25ktf8UZCcSsEzh6e17904244754907]]></param>
 			<param name="subject"><![CDATA[test2 (sujet)]]></param>
 			<param name="bcc"><![CDATA[0]]></param>
 			<param name="composeType"><![CDATA[0]]></param>
@@ -527,6 +605,30 @@ export class SmartschoolMessageCommunicator {
         ]
       }
     ]);
+  }
+
+  /**
+   * Recherche et autocomplète des destinataires (élèves / enseignants)
+   */
+  public async searchUsers(query: string, uniqueUsc: string): Promise<Document> {
+    const formData = new URLSearchParams();
+    formData.append('val', query);
+    formData.append('type', '0');
+    formData.append('parentNodeId', 'insertSearchFieldContainer_0_0');
+    formData.append('xml', '<results></results>');
+    formData.append('uniqueUsc', uniqueUsc);
+
+    const res = await fetch('/?module=Messages&file=searchUsers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: formData.toString()
+    });
+
+    const responseText = await res.text();
+    const parser = new DOMParser();
+    return parser.parseFromString(responseText, 'text/xml');
   }
 }
 ```

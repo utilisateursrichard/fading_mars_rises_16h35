@@ -213,6 +213,82 @@ export interface MessageAttachment {
   type: string;
 }
 
+export type SmartschoolBoxType = 'inbox' | 'outbox' | 'draft' | 'trash' | 'scheduled';
+export type SmartschoolFlagColor = 'none' | 'green' | 'yellow' | 'red' | 'blue';
+
+export interface SmartschoolAttachment {
+  fileID: string;
+  name: string;
+  mime: string;
+  size: string;
+  icon: string;
+  wopiAllowed: boolean;
+  order?: number;
+}
+
+export interface SmartschoolMessageRecipient {
+  name: string;
+  unread?: boolean;
+}
+
+export interface SmartschoolMessageSummary {
+  id: string;
+  from: string;
+  fromImage: string;
+  subject: string;
+  date: string;
+  status: 'read' | 'unread';
+  hasAttachment: boolean;
+  attachmentCount: number;
+  unread: boolean;
+  label: SmartschoolFlagColor;
+  deleted: boolean;
+  allowReply: boolean;
+  allowReplyEnabled: boolean;
+  hasReply: boolean;
+  hasForward: boolean;
+  realBox: string;
+  snippet?: string;
+}
+
+export interface SmartschoolMessageDetail {
+  id: string;
+  from: string;
+  to: string;
+  subject: string;
+  date: string;
+  bodyHtml: string;
+  status: 'read' | 'unread';
+  hasAttachment: boolean;
+  label: SmartschoolFlagColor;
+  receivers: SmartschoolMessageRecipient[];
+  ccReceivers: SmartschoolMessageRecipient[];
+  bccReceivers: SmartschoolMessageRecipient[];
+  userPictureHash: string;
+  fromOauth: boolean;
+  allowReply: boolean;
+  hasReply: boolean;
+  hasForward: boolean;
+  sendDate?: string;
+  attachments: SmartschoolAttachment[];
+}
+
+export interface SmartschoolContact {
+  userID: number;
+  name: string;
+  className: string;
+  avatar: string;
+  textHighlight?: string;
+}
+
+export interface SmartschoolMailCounters {
+  inbox: number;
+  outbox: number;
+  trash: number;
+  draft: number;
+  scheduled: number;
+}
+
 export interface Message {
   id: string;
   conversationId: string;

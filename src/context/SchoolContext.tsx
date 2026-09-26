@@ -7,10 +7,26 @@ import {
   Conversation,
   Message,
   SubjectCourse,
-  SkoreEvaluation
+  SkoreEvaluation,
+  SmartschoolBoxType,
+  SmartschoolFlagColor,
+  SmartschoolMessageSummary,
+  SmartschoolMessageDetail,
+  SmartschoolAttachment,
+  SmartschoolContact,
+  SmartschoolMailCounters
 } from '../types/school';
 import { schoolService } from '../services/api';
 import { mockNotifications } from '../data/mockData';
+import { 
+  mockMailCounters, 
+  mockContacts, 
+  mockInboxSummaries, 
+  mockOutboxSummaries, 
+  mockDraftSummaries, 
+  mockTrashSummaries, 
+  mockMessageDetails 
+} from '../data/mockMessages';
 import { isInsideSmartschool } from '../utils/platform';
 import { 
   getCachedRealEvents, 
@@ -22,6 +38,19 @@ import {
   resolveSmartschoolHomework,
   unresolveSmartschoolHomework
 } from '../services/smartschoolApi';
+import {
+  fetchSmartschoolMessagesList,
+  fetchSmartschoolMessageDetail,
+  sendSmartschoolMessage,
+  markSmartschoolMessageUnread,
+  saveSmartschoolMessageLabel,
+  deleteSmartschoolMessage,
+  archiveSmartschoolMessages,
+  getCachedMailMessages,
+  setCachedMailMessages,
+  getCachedMailCounters,
+  setCachedMailCounters
+} from '../services/smartschoolMessages';
 import { buildSubjectReportsFromEvaluations } from '../services/smartschoolParsers';
 import { cleanStudentClass } from '../utils/student';
 
@@ -51,7 +80,35 @@ interface SchoolContextType {
   addHomework: (hw: Omit<Homework, 'id'>) => Promise<void>;
   isNewHomeworkModalOpen: boolean;
   setIsNewHomeworkModalOpen: (open: boolean) => void;
-  // Messagerie
+  // Messagerie Smartschool M3E Pro
+  activeMailbox: SmartschoolBoxType;
+  setActiveMailbox: (box: SmartschoolBoxType) => void;
+  mailMessages: SmartschoolMessageSummary[];
+  selectedMailId: string | null;
+  setSelectedMailId: (id: string | null) => void;
+  selectedMailDetail: SmartschoolMessageDetail | null;
+  isMailLoading: boolean;
+  isMailDetailLoading: boolean;
+  mailCounters: SmartschoolMailCounters;
+  mailSearchQuery: string;
+  setMailSearchQuery: (query: string) => void;
+  selectedFlagFilter: SmartschoolFlagColor | 'all';
+  setSelectedFlagFilter: (flag: SmartschoolFlagColor | 'all') => void;
+  isComposeModalOpen: boolean;
+  setIsComposeModalOpen: (open: boolean) => void;
+  composeInitialRecipient: SmartschoolContact | null;
+  composeInitialSubject: string;
+  openComposeModal: (recipient?: SmartschoolContact | null, initialSubject?: string) => void;
+  closeComposeModal: () => void;
+  refreshMailList: () => Promise<void>;
+  loadMailDetail: (id: string) => Promise<SmartschoolMessageDetail | null>;
+  sendSmartschoolMail: (payload: { recipientUserIds: (string | number)[]; subject: string; bodyHtml: string; origMsgId?: string | number }) => Promise<{ success: boolean; error?: string }>;
+  replyToMail: (bodyHtml: string) => Promise<{ success: boolean; error?: string }>;
+  toggleMailFlag: (id: string, color: SmartschoolFlagColor) => Promise<boolean>;
+  setMailUnread: (id: string) => Promise<boolean>;
+  deleteMail: (id: string) => Promise<boolean>;
+  archiveMail: (id: string) => Promise<boolean>;
+  // Messagerie Legacy (compatibilité)
   conversations: Conversation[];
   activeConversationId: string;
   setActiveConversationId: (id: string) => void;
@@ -185,6 +242,20 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       localStorage.setItem('betterschool_demo_mode', String(enabled));
     } catch {}
   };
+
+  // Messagerie Smartschool M3E Pro
+  const [activeMailbox, setActiveMailboxState] = useState<SmartschoolBoxType>('inbox');
+  const [mailMessages, setMailMessages] = useState<SmartschoolMessageSummary[]>([]);
+  const [selectedMailId, setSelectedMailId] = useState<string | null>(null);
+  const [selectedMailDetail, setSelectedMailDetail] = useState<SmartschoolMessageDetail | null>(null);
+  const [isMailLoading, setIsMailLoading] = useState<boolean>(false);
+  const [isMailDetailLoading, setIsMailDetailLoading] = useState<boolean>(false);
+  const [mailCounters, setMailCounters] = useState<SmartschoolMailCounters>(() => getCachedMailCounters());
+  const [mailSearchQuery, setMailSearchQuery] = useState<string>('');
+  const [selectedFlagFilter, setSelectedFlagFilter] = useState<SmartschoolFlagColor | 'all'>('all');
+  const [isComposeModalOpen, setIsComposeModalOpen] = useState<boolean>(false);
+  const [composeInitialRecipient, setComposeInitialRecipient] = useState<SmartschoolContact | null>(null);
+  const [composeInitialSubject, setComposeInitialSubject] = useState<string>('');
 
   // Skore Réel
   const [skoreEvaluations, setSkoreEvaluations] = useState<SkoreEvaluation[]>(() => {
@@ -526,15 +597,233 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }, 1500);
   };
 
+  // --- Gestion de la Messagerie Smartschool M3E Pro ---
+
+  const loadMailbox = async (box: SmartschoolBoxType) => {
+    setIsMailLoading(true);
+    if (!isDemoMode) {
+      const cached = getCachedMailMessages(box);
+      if (cached && cached.length > 0) {
+        setMailMessages(cached);
+      }
+      try {
+        const msgs = await fetchSmartschoolMessagesList(box);
+        if (msgs) {
+          setMailMessages(msgs);
+          setCachedMailMessages(box, msgs);
+          const unreadCount = msgs.filter(m => m.unread).length;
+          setMailCounters(prev => ({
+            ...prev,
+            [box]: unreadCount
+          }));
+        }
+      } catch (e) {
+        console.warn('Erreur chargement messages Smartschool:', e);
+      } finally {
+        setIsMailLoading(false);
+      }
+    } else {
+      let demoList: SmartschoolMessageSummary[] = [];
+      switch (box) {
+        case 'inbox': demoList = mockInboxSummaries; break;
+        case 'outbox': demoList = mockOutboxSummaries; break;
+        case 'draft': demoList = mockDraftSummaries; break;
+        case 'trash': demoList = mockTrashSummaries; break;
+        default: demoList = []; break;
+      }
+      setMailMessages(demoList);
+      setMailCounters(mockMailCounters);
+      setIsMailLoading(false);
+    }
+  };
+
+  const setActiveMailbox = (box: SmartschoolBoxType) => {
+    setActiveMailboxState(box);
+    setSelectedMailId(null);
+    setSelectedMailDetail(null);
+  };
+
+  useEffect(() => {
+    loadMailbox(activeMailbox);
+  }, [isDemoMode, activeMailbox]);
+
+  const loadMailDetail = async (id: string): Promise<SmartschoolMessageDetail | null> => {
+    setIsMailDetailLoading(true);
+    try {
+      if (!isDemoMode) {
+        const detail = await fetchSmartschoolMessageDetail(id, activeMailbox);
+        if (detail) {
+          setSelectedMailDetail(detail);
+          setMailMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'read', unread: false } : m));
+          setMailCounters(prev => ({
+            ...prev,
+            inbox: Math.max(0, prev.inbox - 1)
+          }));
+          return detail;
+        }
+        return null;
+      } else {
+        const detail = mockMessageDetails[id] || null;
+        if (detail) {
+          setSelectedMailDetail(detail);
+          setMailMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'read', unread: false } : m));
+          setMailCounters(prev => ({
+            ...prev,
+            inbox: Math.max(0, prev.inbox - 1)
+          }));
+          return detail;
+        }
+        return null;
+      }
+    } finally {
+      setIsMailDetailLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedMailId) {
+      loadMailDetail(selectedMailId);
+    } else {
+      setSelectedMailDetail(null);
+    }
+  }, [selectedMailId]);
+
+  const openComposeModal = (recipient?: SmartschoolContact | null, initialSubject?: string) => {
+    setComposeInitialRecipient(recipient || null);
+    setComposeInitialSubject(initialSubject || '');
+    setIsComposeModalOpen(true);
+  };
+
+  const closeComposeModal = () => {
+    setIsComposeModalOpen(false);
+    setComposeInitialRecipient(null);
+    setComposeInitialSubject('');
+  };
+
+  const refreshMailList = async () => {
+    await loadMailbox(activeMailbox);
+  };
+
+  const sendSmartschoolMail = async (payload: { 
+    recipientUserIds: (string | number)[]; 
+    subject: string; 
+    bodyHtml: string; 
+    origMsgId?: string | number 
+  }): Promise<{ success: boolean; error?: string }> => {
+    if (!isDemoMode) {
+      return await sendSmartschoolMessage({
+        userIDs: payload.recipientUserIds,
+        subject: payload.subject,
+        bodyHtml: payload.bodyHtml,
+        origMsgId: payload.origMsgId ? Number(payload.origMsgId) : undefined
+      });
+    } else {
+      const newOutboxMsg: SmartschoolMessageSummary = {
+        id: `msg-out-${Date.now()}`,
+        from: 'Moi (Richard De Gandt)',
+        fromImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
+        subject: payload.subject,
+        date: 'À l\'instant',
+        status: 'read',
+        unread: false,
+        hasAttachment: false,
+        attachmentCount: 0,
+        label: 'none',
+        deleted: false,
+        allowReply: true,
+        allowReplyEnabled: true,
+        hasReply: false,
+        hasForward: false,
+        realBox: 'outbox',
+        snippet: payload.bodyHtml.replace(/<[^>]*>/g, '').slice(0, 100)
+      };
+      setMailCounters(prev => ({ ...prev, outbox: prev.outbox + 1 }));
+      if (activeMailbox === 'outbox') {
+        setMailMessages(prev => [newOutboxMsg, ...prev]);
+      }
+      return { success: true };
+    }
+  };
+
+  const replyToMail = async (bodyHtml: string): Promise<{ success: boolean; error?: string }> => {
+    if (!selectedMailDetail) return { success: false, error: 'Aucun message sélectionné' };
+    const replySubject = selectedMailDetail.subject.startsWith('Re:') 
+      ? selectedMailDetail.subject 
+      : `Re: ${selectedMailDetail.subject}`;
+
+    return await sendSmartschoolMail({
+      recipientUserIds: [1],
+      subject: replySubject,
+      bodyHtml,
+      origMsgId: selectedMailDetail.id
+    });
+  };
+
+  const toggleMailFlag = async (id: string, color: SmartschoolFlagColor): Promise<boolean> => {
+    setMailMessages(prev => prev.map(m => m.id === id ? { ...m, label: color } : m));
+    if (selectedMailDetail && selectedMailDetail.id === id) {
+      setSelectedMailDetail(prev => prev ? { ...prev, label: color } : null);
+    }
+    if (!isDemoMode) {
+      return await saveSmartschoolMessageLabel(id, activeMailbox, color);
+    }
+    return true;
+  };
+
+  const setMailUnread = async (id: string): Promise<boolean> => {
+    setMailMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'unread', unread: true } : m));
+    setMailCounters(prev => ({ ...prev, inbox: prev.inbox + 1 }));
+    if (!isDemoMode) {
+      return await markSmartschoolMessageUnread(id, activeMailbox);
+    }
+    return true;
+  };
+
+  const deleteMail = async (id: string): Promise<boolean> => {
+    setMailMessages(prev => prev.filter(m => m.id !== id));
+    if (selectedMailId === id) {
+      setSelectedMailId(null);
+      setSelectedMailDetail(null);
+    }
+    setMailCounters(prev => ({
+      ...prev,
+      [activeMailbox]: Math.max(0, (prev[activeMailbox] || 1) - 1),
+      trash: prev.trash + 1
+    }));
+    if (!isDemoMode) {
+      return await deleteSmartschoolMessage(id, activeMailbox);
+    }
+    return true;
+  };
+
+  const archiveMail = async (id: string): Promise<boolean> => {
+    setMailMessages(prev => prev.filter(m => m.id !== id));
+    if (selectedMailId === id) {
+      setSelectedMailId(null);
+      setSelectedMailDetail(null);
+    }
+    if (!isDemoMode) {
+      return await archiveSmartschoolMessages([id]);
+    }
+    return true;
+  };
+
   const markNotificationsAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
   const startDirectMessageWithTeacher = (teacherName: string) => {
-    const conv = conversations.find(c => c.name.toLowerCase().includes(teacherName.toLowerCase()) || teacherName.toLowerCase().includes(c.name.toLowerCase()));
-    if (conv) {
-      setActiveConversationId(conv.id);
-    }
+    const contact = mockContacts.find(c => 
+      c.name.toLowerCase().includes(teacherName.toLowerCase()) || 
+      teacherName.toLowerCase().includes(c.name.toLowerCase())
+    ) || {
+      userID: Date.now(),
+      name: teacherName,
+      className: 'Professeur',
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120'
+    };
+    
+    openComposeModal(contact, `Question concernant le cours`);
     setActiveTab('messages');
   };
 
@@ -543,8 +832,11 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [notifications]);
 
   const unreadMessagesTotal = useMemo(() => {
+    if (mailCounters.inbox > 0) return mailCounters.inbox;
+    const inboxUnread = mailMessages.filter(m => m.realBox === 'inbox' && m.unread).length;
+    if (inboxUnread > 0) return inboxUnread;
     return conversations.reduce((acc, c) => acc + c.unreadCount, 0);
-  }, [conversations]);
+  }, [mailCounters.inbox, mailMessages, conversations]);
 
   const pendingHomeworksTotal = useMemo(() => {
     return homeworks.filter(h => !h.isCompleted).length;
@@ -565,6 +857,35 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         addHomework,
         isNewHomeworkModalOpen,
         setIsNewHomeworkModalOpen,
+        // Messagerie Smartschool M3E Pro
+        activeMailbox,
+        setActiveMailbox,
+        mailMessages,
+        selectedMailId,
+        setSelectedMailId,
+        selectedMailDetail,
+        isMailLoading,
+        isMailDetailLoading,
+        mailCounters,
+        mailSearchQuery,
+        setMailSearchQuery,
+        selectedFlagFilter,
+        setSelectedFlagFilter,
+        isComposeModalOpen,
+        setIsComposeModalOpen,
+        composeInitialRecipient,
+        composeInitialSubject,
+        openComposeModal,
+        closeComposeModal,
+        refreshMailList,
+        loadMailDetail,
+        sendSmartschoolMail,
+        replyToMail,
+        toggleMailFlag,
+        setMailUnread,
+        deleteMail,
+        archiveMail,
+        // Messagerie Legacy (compatibilité)
         conversations,
         activeConversationId,
         setActiveConversationId,
