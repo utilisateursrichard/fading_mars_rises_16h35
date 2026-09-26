@@ -22,9 +22,9 @@ Ce dossier documente les points d'accès internes (endpoints HTTP, requêtes AJA
 | Module | Fichier de doc | Statut | Endpoint principal |
 | :--- | :--- | :---: | :--- |
 | 📅 **Agenda / Planning** | [`agenda.md`](./agenda.md) | 🟡 En cours | `GET /planner` |
-| 👤 **Profil & Établissement** | [`profil.md`](./profil.md) | ⚪ À documenter | `GET /` (lecture DOM / headers) |
-| 💬 **Messagerie** | [`messages.md`](./messages.md) | ⚪ À documenter | `GET /messages` |
-| 📊 **Résultats (Skore)** | [`resultats.md`](./resultats.md) | ⚪ À documenter | `GET /results` |
+| 👤 **Profil & Établissement** | [`profil.md`](./profil.md) | 🟢 Documenté | `POST /Studentcard/Student/getStudents` |
+| 💬 **Messagerie** | [`messages.md`](./messages.md) | 🟡 En cours | `POST /?module=Messages&file=dispatcher` |
+| 📊 **Résultats (Skore)** | [`resultats.md`](./resultats.md) | 🟢 Documenté | `GET /results/api/v1/evaluations/` |
 | 📚 **Espace Cours** | [`cours.md`](./cours.md) | ⚪ À documenter | `GET /courses` |
 
 ---
