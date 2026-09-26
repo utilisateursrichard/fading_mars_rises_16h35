@@ -27,6 +27,10 @@ Ce dossier documente les points d'accès internes (endpoints HTTP, requêtes AJA
 | 📊 **Résultats (Skore)** | [`resultats.md`](./resultats.md) | 🟢 Documenté | `GET /results/api/v1/evaluations/` |
 | 📚 **Espace Cours** | [`cours.md`](./cours.md) | ⚪ À documenter | `GET /courses` |
 
+> [!IMPORTANT]
+> **Activation dans l'application (`isReadyInLive`) :**
+> Dès qu'un module est documenté et branché dans BetterSchool, **activez impérativement son flag à `true` dans [`src/utils/featureFlags.ts`](../../src/utils/featureFlags.ts)**. Sans cette activation, l'application affichera l'écran d'attente `LiveModeEmptyState` en Mode Réel.
+
 ---
 
 ## 3. 🔍 Méthode pour capturer de nouvelles routes

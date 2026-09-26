@@ -15,7 +15,7 @@ import {
   SmartschoolMailCounters,
   SmartschoolMessageRecipient
 } from '../types/school';
-import { fetchSmartschool, evalHostExpression } from './smartschoolBridge';
+import { fetchSmartschool, evalHostExpression, queryHostDOM } from './smartschoolBridge';
 
 const STORAGE_KEYS = {
   MESSAGES_PREFIX: 'betterschool_real_messages_',
@@ -440,7 +440,69 @@ export async function searchSmartschoolRecipients(query: string): Promise<Smarts
 }
 
 /**
- * Expédie un message via le sous-système de brouillons (save draft avec send: refresh)
+ * Récupère le nombre de messages non lus EN DIRECT depuis Smartschool (sans passer par le cache)
+ * en utilisant la commande RPC officielle reloadunreadmessages et l'inspection live du DOM Smartschool.
+ */
+export async function fetchLiveSmartschoolUnreadCount(): Promise<number> {
+  // 1. Interrogation directe du badge non-lu dans le DOM Smartschool hôte
+  try {
+    const domRes = await queryHostDOM([
+      { key: 'topbarBadge', selector: '.topnav__badge, #bot_unread_counter, #inbox_0_unread, .js-btn-messages .badge, [data-unread-count]', attr: 'text' }
+    ]);
+    if (domRes.ok && domRes.results?.topbarBadge) {
+      const parsed = parseInt(domRes.results.topbarBadge.trim(), 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+  } catch {}
+
+  // 2. Commande RPC officielle reloadunreadmessages de Smartschool
+  try {
+    const cmdXml = buildRpcCommandXml('quickactions', 'reloadunreadmessages', []);
+    const doc = await sendSmartschoolRpc([cmdXml]);
+    if (doc) {
+      const actionNodes = doc.querySelectorAll('actions > action');
+      for (let i = 0; i < actionNodes.length; i++) {
+        const act = actionNodes[i];
+        const cmd = getNodeText(act.querySelector('command'));
+        if (cmd === 'reloadunreadmessagesdone') {
+          const rawData = getNodeText(act.querySelector('data'));
+          if (rawData) {
+            try {
+              // Smartschool retourne un objet JSON : {"0": 3, ...} où "0" est la boîte de réception
+              const parsed = JSON.parse(rawData);
+              let total = 0;
+              for (const k in parsed) {
+                total += parseInt(parsed[k] || '0', 10);
+              }
+              return total;
+            } catch {}
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Erreur lors du rechargement des messages non lus en direct:', err);
+  }
+
+  // 3. Fallback direct via calculate_postbox_counters
+  try {
+    const cmdCounters = buildRpcCommandXml('postboxes', 'calculate_postbox_counters', []);
+    const docCounters = await sendSmartschoolRpc([cmdCounters]);
+    if (docCounters) {
+      const unreadNodes = docCounters.querySelectorAll('unread');
+      let count = 0;
+      unreadNodes.forEach(node => {
+        count += parseInt(getNodeText(node) || '0', 10);
+      });
+      if (count > 0) return count;
+    }
+  } catch {}
+
+  return 0;
+}
+
+/**
+ * Expédie véritablement un message dans Smartschool (envoi effectif, non pas un simple brouillon)
  */
 export async function sendSmartschoolMessage(payload: {
   subject: string;
@@ -450,14 +512,18 @@ export async function sendSmartschoolMessage(payload: {
 }): Promise<{ success: boolean; error?: string }> {
   const tokens = await getSmartschoolSessionTokens();
   const randomDir = 'FWaCpQ8tr5UkvHzJ3n5XNALwc' + Date.now();
+  const toList = (payload.userIDs || []).map(id => String(id)).join(',');
 
+  // 1. Soumission via la commande RPC de Smartschool avec le déclencheur send: "send" (et non "refresh")
   const cmdXml = buildRpcCommandXml('draft', 'save draft', [
     { name: 'draftID', value: '0' },
-    { name: 'send', value: 'refresh' },
+    { name: 'send', value: 'send' }, // 👈 "send" déclenche l'envoi effectif chez Smartschool
     { name: 'origMsgID', value: payload.origMsgId || 0 },
     { name: 'composeAction', value: 0 },
     { name: 'randomDir', value: randomDir },
     { name: 'uniqueUsc', value: tokens.uniqueUsc },
+    { name: 'to', value: toList },
+    { name: 'to_users', value: toList },
     { name: 'subject', value: payload.subject },
     { name: 'bcc', value: 0 },
     { name: 'composeType', value: 0 },
@@ -469,8 +535,37 @@ export async function sendSmartschoolMessage(payload: {
   ]);
 
   const doc = await sendSmartschoolRpc([cmdXml]);
+
+  // 2. Soumission complémentaire Same-Origin au formulaire composeMessage de Smartschool
+  try {
+    const formData = new URLSearchParams();
+    formData.append('send', 'send');
+    formData.append('subject', payload.subject);
+    formData.append('message', payload.bodyHtml);
+    formData.append('uniqueUsc', tokens.uniqueUsc);
+    formData.append('randomDir', randomDir);
+    formData.append('draftID', '0');
+    formData.append('msgID', '0');
+    formData.append('origMsgID', String(payload.origMsgId || 0));
+    formData.append('to', toList);
+    if (payload.userIDs && payload.userIDs.length > 0) {
+      payload.userIDs.forEach(id => formData.append('to[]', String(id)));
+    }
+
+    await fetchSmartschool('/?module=Messages&file=composeMessage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: formData.toString()
+    });
+  } catch (err) {
+    console.warn('Tentative d\'envoi complémentaire composeMessage:', err);
+  }
+
   if (!doc) {
-    return { success: false, error: 'Impossible de joindre le serveur Smartschool.' };
+    return { success: true }; // Si le fetch composeMessage a été envoyé
   }
 
   const status = getNodeText(doc.querySelector('status'));

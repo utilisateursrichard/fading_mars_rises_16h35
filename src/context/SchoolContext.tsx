@@ -41,6 +41,7 @@ import {
 import {
   fetchSmartschoolMessagesList,
   fetchSmartschoolMessageDetail,
+  fetchLiveSmartschoolUnreadCount,
   sendSmartschoolMessage,
   markSmartschoolMessageUnread,
   saveSmartschoolMessageLabel,
@@ -101,6 +102,7 @@ interface SchoolContextType {
   openComposeModal: (recipient?: SmartschoolContact | null, initialSubject?: string) => void;
   closeComposeModal: () => void;
   refreshMailList: () => Promise<void>;
+  syncLiveUnreadMessages: () => Promise<void>;
   loadMailDetail: (id: string) => Promise<SmartschoolMessageDetail | null>;
   sendSmartschoolMail: (payload: { recipientUserIds: (string | number)[]; subject: string; bodyHtml: string; origMsgId?: string | number }) => Promise<{ success: boolean; error?: string }>;
   replyToMail: (bodyHtml: string) => Promise<{ success: boolean; error?: string }>;
@@ -250,7 +252,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [selectedMailDetail, setSelectedMailDetail] = useState<SmartschoolMessageDetail | null>(null);
   const [isMailLoading, setIsMailLoading] = useState<boolean>(false);
   const [isMailDetailLoading, setIsMailDetailLoading] = useState<boolean>(false);
-  const [mailCounters, setMailCounters] = useState<SmartschoolMailCounters>(() => getCachedMailCounters());
+  const [mailCounters, setMailCounters] = useState<SmartschoolMailCounters>(() => ({ inbox: 0, outbox: 0, trash: 0, draft: 0, scheduled: 0 }));
+  const [liveUnreadCount, setLiveUnreadCount] = useState<number | null>(null);
   const [mailSearchQuery, setMailSearchQuery] = useState<string>('');
   const [selectedFlagFilter, setSelectedFlagFilter] = useState<SmartschoolFlagColor | 'all'>('all');
   const [isComposeModalOpen, setIsComposeModalOpen] = useState<boolean>(false);
@@ -599,6 +602,18 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // --- Gestion de la Messagerie Smartschool M3E Pro ---
 
+  const syncLiveUnreadMessages = async () => {
+    if (!isDemoMode) {
+      try {
+        const count = await fetchLiveSmartschoolUnreadCount();
+        setLiveUnreadCount(count);
+        setMailCounters(prev => ({ ...prev, inbox: count }));
+      } catch (err) {
+        console.warn('Erreur synchro non lus en direct:', err);
+      }
+    }
+  };
+
   const loadMailbox = async (box: SmartschoolBoxType) => {
     setIsMailLoading(true);
     if (!isDemoMode) {
@@ -611,12 +626,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (msgs) {
           setMailMessages(msgs);
           setCachedMailMessages(box, msgs);
-          const unreadCount = msgs.filter(m => m.unread).length;
-          setMailCounters(prev => ({
-            ...prev,
-            [box]: unreadCount
-          }));
         }
+        // Interrogation directe des non-lus depuis Smartschool (sans passer par le cache)
+        await syncLiveUnreadMessages();
       } catch (e) {
         console.warn('Erreur chargement messages Smartschool:', e);
       } finally {
@@ -701,8 +713,17 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const refreshMailList = async () => {
-    await loadMailbox(activeMailbox);
+    await Promise.all([
+      loadMailbox(activeMailbox),
+      syncLiveUnreadMessages()
+    ]);
   };
+
+  useEffect(() => {
+    if (activeTab === 'messages' && !isDemoMode) {
+      syncLiveUnreadMessages();
+    }
+  }, [activeTab, isDemoMode]);
 
   const sendSmartschoolMail = async (payload: { 
     recipientUserIds: (string | number)[]; 
@@ -711,12 +732,16 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     origMsgId?: string | number 
   }): Promise<{ success: boolean; error?: string }> => {
     if (!isDemoMode) {
-      return await sendSmartschoolMessage({
+      const res = await sendSmartschoolMessage({
         userIDs: payload.recipientUserIds,
         subject: payload.subject,
         bodyHtml: payload.bodyHtml,
         origMsgId: payload.origMsgId ? Number(payload.origMsgId) : undefined
       });
+      if (res.success) {
+        await refreshMailList();
+      }
+      return res;
     } else {
       const newOutboxMsg: SmartschoolMessageSummary = {
         id: `msg-out-${Date.now()}`,
@@ -832,11 +857,14 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [notifications]);
 
   const unreadMessagesTotal = useMemo(() => {
-    if (mailCounters.inbox > 0) return mailCounters.inbox;
+    if (!isDemoMode) {
+      if (liveUnreadCount !== null) return liveUnreadCount;
+      const liveInboxUnread = mailMessages.filter(m => m.realBox === 'inbox' && m.unread).length;
+      return liveInboxUnread;
+    }
     const inboxUnread = mailMessages.filter(m => m.realBox === 'inbox' && m.unread).length;
-    if (inboxUnread > 0) return inboxUnread;
-    return conversations.reduce((acc, c) => acc + c.unreadCount, 0);
-  }, [mailCounters.inbox, mailMessages, conversations]);
+    return inboxUnread > 0 ? inboxUnread : (mailCounters.inbox || 0);
+  }, [isDemoMode, liveUnreadCount, mailMessages, mailCounters.inbox]);
 
   const pendingHomeworksTotal = useMemo(() => {
     return homeworks.filter(h => !h.isCompleted).length;
@@ -878,6 +906,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         openComposeModal,
         closeComposeModal,
         refreshMailList,
+        syncLiveUnreadMessages,
         loadMailDetail,
         sendSmartschoolMail,
         replyToMail,
