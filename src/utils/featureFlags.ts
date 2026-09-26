@@ -48,7 +48,7 @@ export const FEATURES_REGISTRY: Record<FeatureKey, FeatureConfig> = {
     id: 'messages',
     label: "Messagerie",
     description: "Boîte de réception et fils de discussion",
-    isReadyInLive: false,
+    isReadyInLive: true,
   },
   results: {
     id: 'results',

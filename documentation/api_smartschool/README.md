@@ -23,7 +23,7 @@ Ce dossier documente les points d'accès internes (endpoints HTTP, requêtes AJA
 | :--- | :--- | :---: | :--- |
 | 📅 **Agenda / Planning** | [`agenda.md`](./agenda.md) | 🟡 En cours | `GET /planner` |
 | 👤 **Profil & Établissement** | [`profil.md`](./profil.md) | 🟢 Documenté | `POST /Studentcard/Student/getStudents` |
-| 💬 **Messagerie** | [`messages.md`](./messages.md) | 🟡 En cours | `POST /?module=Messages&file=dispatcher` |
+| 💬 **Messagerie** | [`messages.md`](./messages.md) | 🟢 Documenté | `POST /?module=Messages&file=dispatcher` |
 | 📊 **Résultats (Skore)** | [`resultats.md`](./resultats.md) | 🟢 Documenté | `GET /results/api/v1/evaluations/` |
 | 📚 **Espace Cours** | [`cours.md`](./cours.md) | ⚪ À documenter | `GET /courses` |
 

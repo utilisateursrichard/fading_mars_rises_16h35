@@ -57,12 +57,14 @@ npm run preview
 - **Modale de cours enrichie** : Au clic sur une séance, affichage de la salle, du professeur, des devoirs associés, des documents de cours et lien direct de contact.
 - **Ajout de devoirs** : Formulaire d'ajout rapide de devoirs ou rappels personnels.
 
-### 3. 💬 Messagerie Interactive (100% Fonctionnelle)
-- **Canaux classés** : *Professeurs*, *Vie Scolaire / Administration*, *Groupes de projet*.
-- **Envoi de messages en temps réel** : Saisie de message avec affichage instantané dans le fil de discussion.
-- **Réponses automatiques simulées** : Réception d'une réponse contextuelle après 1.5s pour illustrer la réactivité.
-- **Statut en ligne** et compteurs de messages non lus.
-- **Responsive mobile** : Sur smartphone, bascule automatique entre la liste des conversations et le chat plein écran avec bouton retour.
+### 3. 💬 Messagerie Scolaire Complète (Smartschool M3E Pro)
+- **Architecture de messagerie réelle** : Boîte de réception (`inbox`), messages envoyés (`outbox`), brouillons (`draft`) et corbeille (`trash`).
+- **Protocole RPC XML Smartschool** : Connecté directement au `Communicator` de Smartschool (`POST /?module=Messages&file=dispatcher`) avec exécution groupée (batching).
+- **Pièces jointes complètes** : Téléchargement direct et prévisualisation intégrée Office 365 / WOPI.
+- **Réponse rapide & raccourcis** : Boîte de réponse intégrée avec envoi instantané (<kbd>Ctrl</kbd> + <kbd>Entrée</kbd>).
+- **Filtres par drapeaux colorés** : Organisation des messages par pastilles de couleur officielles (Vert, Jaune, Rouge, Bleu).
+- **Nouveau message & autocomplétion** : Modale M3E Pro avec recherche en temps réel des élèves et professeurs (`searchUsers`).
+- **Responsive 3 volets** : Sur desktop, layout Bento 3 colonnes ; sur mobile, navigation fluide par tiroir de dossiers et volet de lecture dédié.
 
 ### 4. 🏆 Résultats & Notes
 - **Synthèse globale** : Moyenne générale sur 20, comparaison avec la moyenne de classe, note la plus haute et la plus basse.
@@ -82,6 +84,42 @@ npm run preview
 - **Mobile First** : Barre de navigation inférieure fixe (*Bottom Nav Bar*) sur smartphone avec badges de notification.
 - **Menu Tiroir (Drawer)** : Menu coulissant pour accéder au profil, actions rapides et vie scolaire.
 - **Desktop Sidebar** : Navigation latérale structurée avec raccourcis et profil élève.
+
+---
+
+## 🚩 Gestion des Feature Flags (`isReadyInLive`)
+
+L'application gère une double réalité via [`src/utils/featureFlags.ts`](./src/utils/featureFlags.ts) :
+1. **Mode Démo (`isDemoMode = true`) :** Affiche la maquette avec des données fictives complètes.
+2. **Mode Réel (`isDemoMode = false`, défaut) :** Affiche uniquement les modules connectés à Smartschool.
+
+> [!IMPORTANT]
+> ### ⚠️ RÈGLE D'OR POUR LES DÉVELOPPEURS & AGENTS IA :
+> Dès qu'un nouveau module est documenté, développé ou branché sur l'API Smartschool, **vous devez OBLIGATOIREMENT passer son flag à `true` dans [`src/utils/featureFlags.ts`](./src/utils/featureFlags.ts)** :
+> ```typescript
+> export const FEATURES_REGISTRY: Record<FeatureKey, FeatureConfig> = {
+>   messages: {
+>     id: 'messages',
+>     label: "Messagerie",
+>     description: "Boîte de réception et fils de discussion",
+>     isReadyInLive: true, // 👈 INDISPENSABLE : sans ça, l'UI affiche LiveModeEmptyState ("Module non connecté")
+>   },
+>   // ...
+> };
+> ```
+> **Si vous oubliez d'activer ce flag :** Le module reste masqué derrière l'écran `LiveModeEmptyState` en Mode Réel, même si votre code est 100% fonctionnel et prêt !
+
+### Matrice Actuelle des Modules (`FEATURES_REGISTRY`) :
+
+| Module | Identifiant | Statut en Mode Réel (`isReadyInLive`) | Description & Source |
+| :--- | :---: | :---: | :--- |
+| 🏠 **Vue d'ensemble** | `dashboard` | 🟢 `true` | Tableau de bord et KPI du jour |
+| 📅 **Agenda** | `agenda` | 🟢 `true` | Emploi du temps via `/planner/api/v1/` |
+| 💬 **Messagerie** | `messages` | 🟢 `true` | RPC XML Smartschool (`Communicator`) |
+| 🏆 **Résultats** | `results` | 🟢 `true` | Évaluations Skore via `/results/api/v1/` |
+| 📚 **Espace Cours** | `courses` | ⚪ `false` | *En attente de connexion Smartschool* |
+| 🤖 **Tuteur IA** | `tutor` | 🟢 `true` | Assistant méthodologique contextuel |
+| 🔖 **Bookmarklet** | `book` | 🟢 `true` | Page d'installation du favori Chrome |
 
 ---
 
