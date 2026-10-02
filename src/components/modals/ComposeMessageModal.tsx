@@ -19,6 +19,7 @@ export const ComposeMessageModal: React.FC = () => {
     closeComposeModal, 
     composeInitialRecipient, 
     composeInitialSubject,
+    composeOrigMsgId,
     sendSmartschoolMail,
     isDemoMode
   } = useSchool();
@@ -39,6 +40,19 @@ export const ComposeMessageModal: React.FC = () => {
     if (isComposeModalOpen) {
       if (composeInitialRecipient) {
         setSelectedContacts([composeInitialRecipient]);
+        // Si le contact n'a pas encore de userID valide (ex: réponse directe), tenter une résolution immédiate
+        if (composeInitialRecipient.userID === 0 && !isDemoMode) {
+          const cleanName = composeInitialRecipient.name.split(' - ')[0].trim();
+          searchSmartschoolRecipients(cleanName).then(results => {
+            if (results && results.length > 0 && results[0].userID) {
+              setSelectedContacts([{
+                ...composeInitialRecipient,
+                userID: results[0].userID,
+                avatar: results[0].avatar || composeInitialRecipient.avatar
+              }]);
+            }
+          }).catch(() => {});
+        }
       } else {
         setSelectedContacts([]);
       }
@@ -48,7 +62,7 @@ export const ComposeMessageModal: React.FC = () => {
       setRecipientResults([]);
       setErrorMessage(null);
     }
-  }, [isComposeModalOpen, composeInitialRecipient, composeInitialSubject]);
+  }, [isComposeModalOpen, composeInitialRecipient, composeInitialSubject, isDemoMode]);
 
   // Fermeture par touche Echap
   useEffect(() => {
@@ -135,11 +149,35 @@ export const ComposeMessageModal: React.FC = () => {
     setErrorMessage(null);
 
     try {
+      let contactIds = selectedContacts.map(c => c.userID);
+      // En mode réel, s'assurer que tous les contacts ont un véritable userID > 0
+      if (!isDemoMode && contactIds.some(id => !id || id === 0)) {
+        const resolvedList: number[] = [];
+        for (const c of selectedContacts) {
+          if (c.userID && c.userID !== 0) {
+            resolvedList.push(c.userID);
+          } else {
+            const cleanName = c.name.split(' - ')[0].trim();
+            const results = await searchSmartschoolRecipients(cleanName).catch(() => []);
+            if (results && results.length > 0 && results[0].userID) {
+              resolvedList.push(results[0].userID);
+            }
+          }
+        }
+        contactIds = resolvedList;
+        if (contactIds.length === 0) {
+          setErrorMessage('Impossible d\'identifier le destinataire dans Smartschool. Veuillez le sélectionner via la recherche.');
+          setIsSending(false);
+          return;
+        }
+      }
+
       const formattedHtml = `<p>${body.trim().replace(/\n/g, '<br/>')}</p>`;
       const res = await sendSmartschoolMail({
-        recipientUserIds: selectedContacts.map(c => c.userID),
+        recipientUserIds: contactIds,
         subject: subject.trim(),
-        bodyHtml: formattedHtml
+        bodyHtml: formattedHtml,
+        origMsgId: composeOrigMsgId ? Number(composeOrigMsgId) : undefined
       });
 
       if (res.success) {

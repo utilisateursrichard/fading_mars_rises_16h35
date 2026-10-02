@@ -47,6 +47,7 @@ import {
   saveSmartschoolMessageLabel,
   deleteSmartschoolMessage,
   archiveSmartschoolMessages,
+  searchSmartschoolRecipients,
   getCachedMailMessages,
   setCachedMailMessages,
   getCachedMailCounters,
@@ -99,7 +100,8 @@ interface SchoolContextType {
   setIsComposeModalOpen: (open: boolean) => void;
   composeInitialRecipient: SmartschoolContact | null;
   composeInitialSubject: string;
-  openComposeModal: (recipient?: SmartschoolContact | null, initialSubject?: string) => void;
+  composeOrigMsgId: string | number | null;
+  openComposeModal: (recipient?: SmartschoolContact | null, initialSubject?: string, origMsgId?: string | number | null) => void;
   closeComposeModal: () => void;
   refreshMailList: () => Promise<void>;
   syncLiveUnreadMessages: () => Promise<void>;
@@ -259,6 +261,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isComposeModalOpen, setIsComposeModalOpen] = useState<boolean>(false);
   const [composeInitialRecipient, setComposeInitialRecipient] = useState<SmartschoolContact | null>(null);
   const [composeInitialSubject, setComposeInitialSubject] = useState<string>('');
+  const [composeOrigMsgId, setComposeOrigMsgId] = useState<string | number | null>(null);
 
   // Skore Réel
   const [skoreEvaluations, setSkoreEvaluations] = useState<SkoreEvaluation[]>(() => {
@@ -700,9 +703,14 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [selectedMailId]);
 
-  const openComposeModal = (recipient?: SmartschoolContact | null, initialSubject?: string) => {
+  const openComposeModal = (
+    recipient?: SmartschoolContact | null, 
+    initialSubject?: string, 
+    origMsgId?: string | number | null
+  ) => {
     setComposeInitialRecipient(recipient || null);
     setComposeInitialSubject(initialSubject || '');
+    setComposeOrigMsgId(origMsgId || null);
     setIsComposeModalOpen(true);
   };
 
@@ -710,6 +718,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setIsComposeModalOpen(false);
     setComposeInitialRecipient(null);
     setComposeInitialSubject('');
+    setComposeOrigMsgId(null);
   };
 
   const refreshMailList = async () => {
@@ -739,7 +748,12 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         origMsgId: payload.origMsgId ? Number(payload.origMsgId) : undefined
       });
       if (res.success) {
-        await refreshMailList();
+        // Rediriger vers la boîte des messages envoyés pour confirmer visuellement l'expédition
+        setActiveMailbox('outbox');
+        await Promise.all([
+          loadMailbox('outbox'),
+          syncLiveUnreadMessages()
+        ]);
       }
       return res;
     } else {
@@ -763,9 +777,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         snippet: payload.bodyHtml.replace(/<[^>]*>/g, '').slice(0, 100)
       };
       setMailCounters(prev => ({ ...prev, outbox: prev.outbox + 1 }));
-      if (activeMailbox === 'outbox') {
-        setMailMessages(prev => [newOutboxMsg, ...prev]);
-      }
+      setActiveMailbox('outbox');
+      setMailMessages(prev => [newOutboxMsg, ...prev]);
       return { success: true };
     }
   };
@@ -776,8 +789,18 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       ? selectedMailDetail.subject 
       : `Re: ${selectedMailDetail.subject}`;
 
+    // Tenter de retrouver le vrai userID du destinataire (sans valeur arbitraire hardcodée)
+    let recipientUserIds: (string | number)[] = [];
+    try {
+      const cleanName = selectedMailDetail.from.split(' - ')[0].trim();
+      const found = await searchSmartschoolRecipients(cleanName);
+      if (found.length > 0 && found[0].userID) {
+        recipientUserIds = [found[0].userID];
+      }
+    } catch {}
+
     return await sendSmartschoolMail({
-      recipientUserIds: [1],
+      recipientUserIds,
       subject: replySubject,
       bodyHtml,
       origMsgId: selectedMailDetail.id
@@ -903,6 +926,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setIsComposeModalOpen,
         composeInitialRecipient,
         composeInitialSubject,
+        composeOrigMsgId,
         openComposeModal,
         closeComposeModal,
         refreshMailList,

@@ -502,7 +502,8 @@ export async function fetchLiveSmartschoolUnreadCount(): Promise<number> {
 }
 
 /**
- * Expédie véritablement un message dans Smartschool (envoi effectif, non pas un simple brouillon)
+ * Expédie véritablement un message dans Smartschool via le formulaire composeMessage (CheckForm)
+ * Ne déclenche PAS d'enregistrement de brouillon (qui serait déplacé dans la corbeille)
  */
 export async function sendSmartschoolMessage(payload: {
   subject: string;
@@ -512,12 +513,76 @@ export async function sendSmartschoolMessage(payload: {
 }): Promise<{ success: boolean; error?: string }> {
   const tokens = await getSmartschoolSessionTokens();
   const randomDir = 'FWaCpQ8tr5UkvHzJ3n5XNALwc' + Date.now();
+  const validUserIds = (payload.userIDs || [])
+    .map(id => String(id).trim())
+    .filter(id => id && id !== '0');
+  const toList = validUserIds.join(',');
+
+  const isReply = Boolean(payload.origMsgId && payload.origMsgId > 0);
+  const composeType = isReply ? '1' : '0';
+  const msgId = isReply ? String(payload.origMsgId) : '0';
+  const boxType = 'inbox';
+
+  const formData = new URLSearchParams();
+  formData.append('send', 'send');
+  formData.append('boxType', boxType);
+  formData.append('composeType', composeType);
+  formData.append('msgID', msgId);
+  formData.append('origMsgID', msgId);
+  formData.append('draftID', '0');
+  formData.append('subject', payload.subject);
+  formData.append('message', payload.bodyHtml);
+  formData.append('uniqueUsc', tokens.uniqueUsc);
+  formData.append('randomDir', randomDir);
+  formData.append('encryptedSender', tokens.encryptedSender);
+  formData.append('sendDate', '');
+
+  if (toList) {
+    formData.append('to', toList);
+    formData.append('to_users', toList);
+    validUserIds.forEach(id => {
+      formData.append('to[]', id);
+    });
+  }
+
+  // Soumission HTTP identique à document.form.submit() dans CheckForm()
+  const endpoint = `/?module=Messages&file=composeMessage&boxType=${boxType}&composeType=${composeType}&msgID=${msgId}`;
+
+  const res = await fetchSmartschool(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+    },
+    body: formData.toString()
+  });
+
+  if (!res.ok && res.status !== 302 && res.status !== 200) {
+    return {
+      success: false,
+      error: res.error || `Erreur serveur (${res.status}) lors de l'envoi du message.`
+    };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Enregistre un brouillon dans Smartschool via le sous-système draft (RPC)
+ */
+export async function saveSmartschoolDraft(payload: {
+  draftId?: string | number;
+  subject: string;
+  bodyHtml: string;
+  userIDs?: (string | number)[];
+  origMsgId?: number;
+}): Promise<{ success: boolean; error?: string }> {
+  const tokens = await getSmartschoolSessionTokens();
+  const randomDir = 'FWaCpQ8tr5UkvHzJ3n5XNALwc' + Date.now();
   const toList = (payload.userIDs || []).map(id => String(id)).join(',');
 
-  // 1. Soumission via la commande RPC de Smartschool avec le déclencheur send: "send" (et non "refresh")
   const cmdXml = buildRpcCommandXml('draft', 'save draft', [
-    { name: 'draftID', value: '0' },
-    { name: 'send', value: 'send' }, // 👈 "send" déclenche l'envoi effectif chez Smartschool
+    { name: 'draftID', value: payload.draftId || '0' },
+    { name: 'send', value: 'refresh' }, // "refresh" = enregistrement de brouillon uniquement
     { name: 'origMsgID', value: payload.origMsgId || 0 },
     { name: 'composeAction', value: 0 },
     { name: 'randomDir', value: randomDir },
@@ -526,8 +591,8 @@ export async function sendSmartschoolMessage(payload: {
     { name: 'to_users', value: toList },
     { name: 'subject', value: payload.subject },
     { name: 'bcc', value: 0 },
-    { name: 'composeType', value: 0 },
-    { name: 'msgID', value: 0 },
+    { name: 'composeType', value: payload.origMsgId ? 1 : 0 },
+    { name: 'msgID', value: payload.origMsgId || 0 },
     { name: 'message', value: payload.bodyHtml },
     { name: 'preload_type', value: '' },
     { name: 'encryptedSender', value: tokens.encryptedSender },
@@ -535,46 +600,10 @@ export async function sendSmartschoolMessage(payload: {
   ]);
 
   const doc = await sendSmartschoolRpc([cmdXml]);
-
-  // 2. Soumission complémentaire Same-Origin au formulaire composeMessage de Smartschool
-  try {
-    const formData = new URLSearchParams();
-    formData.append('send', 'send');
-    formData.append('subject', payload.subject);
-    formData.append('message', payload.bodyHtml);
-    formData.append('uniqueUsc', tokens.uniqueUsc);
-    formData.append('randomDir', randomDir);
-    formData.append('draftID', '0');
-    formData.append('msgID', '0');
-    formData.append('origMsgID', String(payload.origMsgId || 0));
-    formData.append('to', toList);
-    if (payload.userIDs && payload.userIDs.length > 0) {
-      payload.userIDs.forEach(id => formData.append('to[]', String(id)));
-    }
-
-    await fetchSmartschool('/?module=Messages&file=composeMessage', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      body: formData.toString()
-    });
-  } catch (err) {
-    console.warn('Tentative d\'envoi complémentaire composeMessage:', err);
-  }
-
-  if (!doc) {
-    return { success: true }; // Si le fetch composeMessage a été envoyé
-  }
+  if (!doc) return { success: false, error: 'Échec de transmission RPC brouillon' };
 
   const status = getNodeText(doc.querySelector('status'));
-  if (status === 'ok') {
-    return { success: true };
-  }
-
-  const errorMsg = getNodeText(doc.querySelector('message')) || 'Une erreur est survenue lors de l\'envoi.';
-  return { success: false, error: errorMsg };
+  return { success: status === 'ok' };
 }
 
 /**
