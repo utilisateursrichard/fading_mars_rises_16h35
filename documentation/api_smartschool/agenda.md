@@ -151,12 +151,19 @@ export async function getWeeklyCourses(userId: string, fromDateISO: string, toDa
   "organisers": {
     "users": [
       {
-        "id": "4907_6050_0",
-        "pictureUrl": "https://userpicture20.smartschool.be/...",
+        "id": "4907_4664_0",
+        "pictureHash": "initials_DD",
+        "pictureUrl": "https://userpicture20.smartschool.be/User/Userimage/hashimage/hash/initials_DD/plain/1/res/128",
+        "description": {
+          "startingWithFirstName": "",
+          "startingWithLastName": ""
+        },
         "name": {
-          "startingWithFirstName": "VL Verheylewegen",
-          "startingWithLastName": "Verheylewegen VL"
-        }
+          "startingWithFirstName": "DR Deridder",
+          "startingWithLastName": "Deridder DR"
+        },
+        "sort": "deridder-andre",
+        "deleted": false
       }
     ]
   },
@@ -217,7 +224,10 @@ export async function getWeeklyCourses(userId: string, fromDateISO: string, toDa
 | `id` | `id` | `"025ba09b-..."` |
 | `courses[0].name` | `subject` | `"Anglais"` |
 | `courses[0].scheduleCodes[0]` | `subjectCode` | `"ANG2"` |
-| `organisers.users[0].name.startingWithFirstName` | `teacher` | `"VL Verheylewegen"` |
+| `organisers.users[0].sort` | `teacher.lastName`, `teacher.firstName` | `"deridder-andre"` -> Nom: Deridder, Prénom: André |
+| `organisers.users[0].name.startingWithLastName` | `teacher.lastName` + trigramme | `"Deridder DR"` -> Nom: Deridder, Trigramme: DR |
+| `organisers.users[0].name.startingWithFirstName` | `teacher` (legacy) | `"DR Deridder"` |
+| `organisers.users[0].pictureUrl` | `teacher.pictureUrl` | URL photo ou hash `initials_DD` |
 | `locations[0].title` | `room` | `"D21"` |
 | `period.dateTimeFrom` (heure) | `startTime` | `"15:30"` |
 | `period.dateTimeTo` (heure) | `endTime` | `"16:20"` |

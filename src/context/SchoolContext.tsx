@@ -14,7 +14,8 @@ import {
   SmartschoolMessageDetail,
   SmartschoolAttachment,
   SmartschoolContact,
-  SmartschoolMailCounters
+  SmartschoolMailCounters,
+  Teacher
 } from '../types/school';
 import { schoolService } from '../services/api';
 import { mockNotifications } from '../data/mockData';
@@ -33,6 +34,8 @@ import {
   getCachedRealHomeworks, 
   getCachedRealStudent, 
   getCachedRealEvaluations,
+  getCachedRealTeachers,
+  fetchRealTeachers,
   syncAllSmartschoolData,
   toggleCachedRealHomework,
   resolveSmartschoolHomework,
@@ -58,7 +61,7 @@ import {
 import { buildSubjectReportsFromEvaluations } from '../services/smartschoolParsers';
 import { cleanStudentClass } from '../utils/student';
 
-export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'tutor' | 'book';
+export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'teachers' | 'tutor' | 'book';
 
 export interface AppNotification {
   id: string;
@@ -136,6 +139,10 @@ interface SchoolContextType {
   courses: SubjectCourse[];
   selectedCourseId: string | null;
   setSelectedCourseId: (id: string | null) => void;
+  // Professeurs
+  teachers: Teacher[];
+  teachersLoading: boolean;
+  refreshTeachers: () => Promise<void>;
   // Notifications & UI
   notifications: AppNotification[];
   markNotificationsAsRead: () => void;
@@ -332,6 +339,27 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [courses, setCourses] = useState<SubjectCourse[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
 
+  // Professeurs
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [teachersLoading, setTeachersLoading] = useState<boolean>(false);
+
+  const refreshTeachers = async () => {
+    setTeachersLoading(true);
+    try {
+      if (isDemoMode) {
+        const t = await schoolService.getTeachers();
+        setTeachers(t);
+      } else {
+        const t = await fetchRealTeachers();
+        setTeachers(t);
+      }
+    } catch (err) {
+      console.warn('Erreur lors du rafraîchissement des professeurs:', err);
+    } finally {
+      setTeachersLoading(false);
+    }
+  };
+
   const [globalSearch, setGlobalSearch] = useState('');
 
   const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications);
@@ -396,7 +424,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const realHomeworks = getCachedRealHomeworks();
         const realStudentData = getCachedRealStudent();
         const realEvals = getCachedRealEvaluations();
+        const realTeachers = getCachedRealTeachers();
         setSkoreEvaluations(realEvals);
+        setTeachers(realTeachers);
 
         if (realStudentData) {
           setStudent({
@@ -446,6 +476,11 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               if (res.evaluations) {
                 setSkoreEvaluations(res.evaluations);
               }
+              if (res.teachers && res.teachers.length > 0) {
+                setTeachers(res.teachers);
+              } else {
+                setTeachers(getCachedRealTeachers());
+              }
               const curDay = new Date().getDay();
               const day = (curDay === 0 ? 7 : curDay);
               setTodayEvents(
@@ -469,12 +504,16 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               }
             }
           });
+        } else if (realTeachers.length === 0) {
+          fetchRealTeachers().then(t => {
+            if (t && t.length > 0) setTeachers(t);
+          });
         }
         return;
       }
 
       // En mode Démo : chargement de la maquette avec fausses données
-      const [stu, evts, tEvents, hws, convs, reports, stats, crss] = await Promise.all([
+      const [stu, evts, tEvents, hws, convs, reports, stats, crss, tchrs] = await Promise.all([
         schoolService.getStudent(),
         schoolService.getAgendaEvents(),
         schoolService.getTodayEvents(),
@@ -482,7 +521,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         schoolService.getConversations(),
         schoolService.getSubjectReports(),
         schoolService.getOverallAverage(),
-        schoolService.getCourses()
+        schoolService.getCourses(),
+        schoolService.getTeachers()
       ]);
 
       setStudent(stu);
@@ -493,6 +533,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setSubjectReports(reports);
       setOverallStats(stats);
       setCourses(crss);
+      setTeachers(tchrs);
       setNotifications(mockNotifications);
 
       if (convs.length > 0) {
@@ -1011,6 +1052,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         courses,
         selectedCourseId,
         setSelectedCourseId,
+        teachers,
+        teachersLoading,
+        refreshTeachers,
         notifications,
         markNotificationsAsRead,
         unreadNotificationsCount,

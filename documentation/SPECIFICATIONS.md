@@ -130,6 +130,19 @@ L'un des objectifs fondamentaux de la refonte est de **supprimer la surcharge co
     2. *Devoirs & Rendu en ligne :* Suivi des consignes, barème et simulateur de téléversement de fichier.
     3. *Contact Enseignant :* Courriel académique et raccourci de messagerie instantanée.
 
+### 4.6. 👨‍🏫 Annuaire des Professeurs (`TeachersView`)
+* Annuaire interactif complet de tous les enseignants et titulaires de classe.
+* **Extraction dynamique depuis Smartschool :**
+  * Analyse des organisateurs (`organisers.users[]`) du planning REST API v1 (`/planner/api/v1/planned-elements/user/...`).
+  * Utilisation de la clé interne Smartschool `"sort": "nom-prenom"` (ex: `"deridder-andre"` -> Nom: *Deridder*, Prénom: *André*) pour séparer avec exactitude le nom de famille et le prénom, sans confusion avec les trigrammes/initiales enseignants (ex: "DR").
+  * Extraction des trigrammes officiels (ex: "DR", "DD"), photos de profil et badges des professeurs titulaires de classe.
+  * Agrégation automatique des matières enseignées et des salles de cours associées.
+* **Ergonomie M3E Pro :**
+  * Recherche instantanée multi-champs (Nom, Prénom, Matière, Trigramme, Salle).
+  * Filtres par matière et filtre dédié « Titulaires ».
+  * Double affichage commutable : Vue Cartes en Grille ou Vue Liste Compacte.
+  * Bouton d'action directe pour initier une conversation ou envoyer un message à l'enseignant.
+
 ---
 
 ## 5. Architecture Technique & Modèle de Données

@@ -147,7 +147,25 @@ export interface SkoreTeacher {
     startingWithFirstName?: string;
     startingWithLastName?: string;
   };
+  sort?: string;
   deleted?: boolean;
+}
+
+export interface Teacher {
+  id: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  fullNameLastNameFirst?: string;
+  sort?: string;
+  trigram?: string;
+  pictureUrl?: string;
+  pictureHash?: string;
+  subjects: string[];
+  subjectCodes?: string[];
+  rooms: string[];
+  email?: string;
+  isTitulaire?: boolean;
 }
 
 export interface SkoreCourse {

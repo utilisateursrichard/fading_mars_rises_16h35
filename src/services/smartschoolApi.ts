@@ -5,12 +5,13 @@
  * et stocke les données réelles de l'élève en cache local.
  */
 
-import { CourseEvent, Homework, Student, SkoreEvaluation } from '../types/school';
+import { CourseEvent, Homework, Student, SkoreEvaluation, Teacher } from '../types/school';
 import { fetchSmartschool, queryHostDOM, getHostPageInfo, evalHostExpression } from './smartschoolBridge';
 import { 
   parseSmartschoolCourse, 
   parseSmartschoolHomework, 
   extractMetadataFromPlanner,
+  extractTeachersFromPlanner,
   splitFullName
 } from './smartschoolParsers';
 import { isInvalidClassCandidate, cleanStudentClass } from '../utils/student';
@@ -21,7 +22,8 @@ const REAL_STORAGE_KEYS = {
   HOMEWORKS: 'betterschool_real_homeworks',
   STUDENT: 'betterschool_real_student',
   LAST_SYNC: 'betterschool_real_last_sync',
-  EVALUATIONS: 'betterschool_real_evaluations'
+  EVALUATIONS: 'betterschool_real_evaluations',
+  TEACHERS: 'betterschool_real_teachers'
 };
 
 export interface SmartschoolStudentcardTeacher {
@@ -162,6 +164,26 @@ export const fetchRealStudentcardProfile = async (): Promise<Partial<Student> | 
 
         if (typeof window !== 'undefined') {
           localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(updated));
+        }
+
+        // Si des titulaires sont déclarés dans Studentcard, les marquer
+        if (Array.isArray(studentItem.titu) && studentItem.titu.length > 0) {
+          try {
+            const cachedTeachers = getCachedRealTeachers();
+            if (cachedTeachers.length > 0) {
+              const tituNames = studentItem.titu.map(t => (t.surname || t.name || '').toLowerCase());
+              let changed = false;
+              for (const t of cachedTeachers) {
+                if (tituNames.some(tn => tn && (t.lastName.toLowerCase().includes(tn) || tn.includes(t.lastName.toLowerCase())))) {
+                  t.isTitulaire = true;
+                  changed = true;
+                }
+              }
+              if (changed) {
+                setCachedRealTeachers(cachedTeachers);
+              }
+            }
+          } catch {}
         }
 
         return updated;
@@ -478,6 +500,7 @@ export interface SyncResult {
   homeworks: Homework[];
   student: Partial<Student> | null;
   evaluations: SkoreEvaluation[];
+  teachers?: Teacher[];
   error?: string;
 }
 
@@ -547,6 +570,39 @@ export const fetchRealAgenda = async (userId?: string | null, targetDate?: Date)
     if (typeof window !== 'undefined') {
       localStorage.setItem(REAL_STORAGE_KEYS.STUDENT, JSON.stringify(updatedStudent));
     }
+  }
+
+  // Extraction et agrégation immédiate de la liste des professeurs via sort: "nom-prenom"
+  const extractedTeachers = extractTeachersFromPlanner(items, effectiveUserId);
+  if (extractedTeachers.length > 0 && typeof window !== 'undefined') {
+    const existingTeachers = getCachedRealTeachers();
+    const tMap = new Map<string, Teacher>();
+    for (const t of existingTeachers) tMap.set(t.id, t);
+    for (const t of extractedTeachers) {
+      if (tMap.has(t.id)) {
+        const prev = tMap.get(t.id)!;
+        tMap.set(t.id, {
+          ...prev,
+          ...t,
+          subjects: Array.from(new Set([...prev.subjects, ...t.subjects])),
+          subjectCodes: Array.from(new Set([...(prev.subjectCodes || []), ...(t.subjectCodes || [])])),
+          rooms: Array.from(new Set([...prev.rooms, ...t.rooms])),
+          pictureUrl: t.pictureUrl || prev.pictureUrl,
+          pictureHash: t.pictureHash || prev.pictureHash,
+          sort: t.sort || prev.sort,
+          trigram: t.trigram || prev.trigram,
+          isTitulaire: prev.isTitulaire || t.isTitulaire
+        });
+      } else {
+        tMap.set(t.id, t);
+      }
+    }
+    const mergedList = Array.from(tMap.values()).sort((a, b) => {
+      const comp = a.lastName.localeCompare(b.lastName, 'fr', { sensitivity: 'base' });
+      if (comp !== 0) return comp;
+      return a.firstName.localeCompare(b.firstName, 'fr', { sensitivity: 'base' });
+    });
+    setCachedRealTeachers(mergedList);
   }
 
   // Sauvegarder en cache
@@ -713,6 +769,7 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       homeworks: getCachedRealHomeworks(),
       student: partialStudent,
       evaluations: getCachedRealEvaluations(),
+      teachers: getCachedRealTeachers(),
       error: 'Identifiant élève non trouvé'
     };
   }
@@ -741,7 +798,8 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       events,
       homeworks,
       student: finalStudent,
-      evaluations
+      evaluations,
+      teachers: getCachedRealTeachers()
     };
   } catch (err: any) {
     return {
@@ -750,6 +808,7 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       homeworks: getCachedRealHomeworks(),
       student: getCachedRealStudent() || partialStudent,
       evaluations: getCachedRealEvaluations(),
+      teachers: getCachedRealTeachers(),
       error: err.message || 'Erreur de synchronisation'
     };
   }
@@ -765,6 +824,40 @@ export const getCachedRealEvents = (): CourseEvent[] => {
     return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
+  }
+};
+
+export const getCachedRealTeachers = (): Teacher[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(REAL_STORAGE_KEYS.TEACHERS);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const setCachedRealTeachers = (teachers: Teacher[]): void => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(REAL_STORAGE_KEYS.TEACHERS, JSON.stringify(teachers));
+    } catch {}
+  }
+};
+
+/**
+ * Récupère la liste des professeurs réels soit depuis le cache, soit en appelant l'API d'agenda
+ */
+export const fetchRealTeachers = async (userId?: string | null): Promise<Teacher[]> => {
+  const cached = getCachedRealTeachers();
+  if (cached && cached.length > 0) {
+    return cached;
+  }
+  try {
+    await fetchRealAgenda(userId);
+    return getCachedRealTeachers();
+  } catch {
+    return cached;
   }
 };
 

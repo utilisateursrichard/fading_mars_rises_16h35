@@ -14,7 +14,8 @@ import {
   LogOut,
   Bot,
   Bookmark,
-  User
+  User,
+  Users
 } from 'lucide-react';
 import { useSchool, TabType } from '../../context/SchoolContext';
 import { isFeatureReadyInLive } from '../../utils/featureFlags';
@@ -64,6 +65,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isDrawerOpen, onCloseDrawe
     { id: 'messages', label: 'Messages', icon: MessageSquareText, badge: unreadMessagesTotal > 0 ? unreadMessagesTotal : undefined },
     { id: 'results', label: 'Notes', icon: Award },
     { id: 'courses', label: 'Cours', icon: BookOpen },
+    { id: 'teachers', label: 'Professeurs', icon: Users },
     { id: 'tutor', label: 'Tuteur IA', icon: Bot },
   ];
 

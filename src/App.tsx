@@ -8,6 +8,7 @@ import { AgendaView } from './components/views/AgendaView';
 import { MessagesView } from './components/views/MessagesView';
 import { ResultsView } from './components/views/ResultsView';
 import { CoursesView } from './components/views/CoursesView';
+import { TeachersView } from './components/views/TeachersView';
 import { TutorView } from './components/views/TutorView';
 import { BookmarkView } from './components/views/BookmarkView';
 import { LiveModeEmptyState } from './components/common/LiveModeEmptyState';
@@ -36,6 +37,8 @@ const MainLayout: React.FC = () => {
         return <ResultsView />;
       case 'courses':
         return <CoursesView />;
+      case 'teachers':
+        return <TeachersView />;
       case 'tutor':
         return <TutorView />;
       case 'book':

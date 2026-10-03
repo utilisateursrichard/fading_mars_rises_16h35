@@ -17,6 +17,7 @@ export type FeatureKey =
   | 'messages'
   | 'results'
   | 'courses'
+  | 'teachers'
   | 'tutor'
   | 'book';
 
@@ -61,6 +62,12 @@ export const FEATURES_REGISTRY: Record<FeatureKey, FeatureConfig> = {
     label: "Espace Cours",
     description: "Supports pédagogiques et documents partagés",
     isReadyInLive: false,
+  },
+  teachers: {
+    id: 'teachers',
+    label: "Professeurs",
+    description: "Annuaire officiel des enseignants et titulaires",
+    isReadyInLive: true,
   },
   tutor: {
     id: 'tutor',

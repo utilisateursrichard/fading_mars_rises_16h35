@@ -6,7 +6,8 @@ import {
   SubjectReport,
   Conversation,
   Message,
-  SubjectCourse
+  SubjectCourse,
+  Teacher
 } from '../types/school';
 
 // -------------------------------------------------------------
@@ -95,6 +96,115 @@ export const TEACHERS: Record<string, TeacherProfile> = {
     room: 'Gymnase',
   }
 };
+
+export const mockTeachers: Teacher[] = [
+  {
+    id: '4907_4664_0',
+    firstName: 'André',
+    lastName: 'Deridder',
+    fullName: 'André Deridder',
+    fullNameLastNameFirst: 'Deridder André',
+    sort: 'deridder-andre',
+    trigram: 'DR',
+    pictureUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
+    pictureHash: 'initials_DD',
+    subjects: ['Histoire-Géographie'],
+    subjectCodes: ['HIST-GEO'],
+    rooms: ['Salle A102'],
+    email: 'deridder@betterschool.be',
+    isTitulaire: true
+  },
+  {
+    id: 'teacher-math',
+    firstName: 'Sophie',
+    lastName: 'Imena',
+    fullName: 'Sophie Imena',
+    fullNameLastNameFirst: 'Imena Sophie',
+    sort: 'imena-sophie',
+    trigram: 'IM',
+    pictureUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80',
+    pictureHash: 'initials_SI',
+    subjects: ['Mathématiques'],
+    subjectCodes: ['MATH'],
+    rooms: ['Salle B204'],
+    email: 'imena@betterschool.be'
+  },
+  {
+    id: 'teacher-nsi',
+    firstName: 'Claire',
+    lastName: 'Nootens',
+    fullName: 'Claire Nootens',
+    fullNameLastNameFirst: 'Nootens Claire',
+    sort: 'nootens-claire',
+    trigram: 'NOOT',
+    pictureUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+    pictureHash: 'initials_CN',
+    subjects: ['Sciences'],
+    subjectCodes: ['SCI'],
+    rooms: ['Labo Science'],
+    email: 'nootens@betterschool.be'
+  },
+  {
+    id: 'teacher-ang',
+    firstName: 'Thomas',
+    lastName: 'Le Gay',
+    fullName: 'Thomas Le Gay',
+    fullNameLastNameFirst: 'Le Gay Thomas',
+    sort: 'le-gay-thomas',
+    trigram: 'LG',
+    pictureUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80',
+    pictureHash: 'initials_TL',
+    subjects: ['Anglais LV1'],
+    subjectCodes: ['ANG'],
+    rooms: ['Salle C105'],
+    email: 'mr.legay@betterschool.be'
+  },
+  {
+    id: 'teacher-pc',
+    firstName: 'Marie',
+    lastName: 'Dury',
+    fullName: 'Marie Dury',
+    fullNameLastNameFirst: 'Dury Marie',
+    sort: 'dury-marie',
+    trigram: 'DY',
+    pictureUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
+    pictureHash: 'initials_MD',
+    subjects: ['Physique-Chimie'],
+    subjectCodes: ['PC'],
+    rooms: ['Labo Chimie 2'],
+    email: 'dury@betterschool.be'
+  },
+  {
+    id: 'teacher-philo',
+    firstName: 'Pape',
+    lastName: 'Kialuta',
+    fullName: 'Pape Kialuta',
+    fullNameLastNameFirst: 'Kialuta Pape',
+    sort: 'kialuta-pape',
+    trigram: 'PK',
+    pictureUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80',
+    pictureHash: 'initials_PK',
+    subjects: ['Philosophie & Citoyenneté'],
+    subjectCodes: ['PHILO'],
+    rooms: ['Salle B108'],
+    email: 'pape.kialuta@betterschool.be'
+  },
+  {
+    id: 'teacher-eps',
+    firstName: 'Marc',
+    lastName: 'Bailleux',
+    fullName: 'Marc Bailleux',
+    fullNameLastNameFirst: 'Bailleux Marc',
+    sort: 'bailleux-marc',
+    trigram: 'BX',
+    pictureUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80',
+    pictureHash: 'initials_MB',
+    subjects: ['Éducation Physique & Sportive'],
+    subjectCodes: ['EPS'],
+    rooms: ['Gymnase'],
+    email: 'bailleux@betterschool.be'
+  }
+];
 
 // Informations de l'élève connecté
 export const mockStudent: Student = {

@@ -14,7 +14,8 @@ import {
   Grade,
   GradeGoal,
   SubjectReport,
-  SkoreEvaluation
+  SkoreEvaluation,
+  Teacher
 } from '../types/school';
 import { calculateHomeworkImportance, getHomeworkPriority } from '../utils/homeworkImportance';
 import { isInvalidClassCandidate } from '../utils/student';
@@ -85,7 +86,10 @@ export const parseSmartschoolCourse = (raw: any): CourseEvent | null => {
     
     // Organisateur / Enseignant
     const teacherUser = raw.organisers?.users?.[0];
-    const teacher = teacherUser?.name?.startingWithFirstName || 
+    const parsedTeacher = teacherUser ? parseSmartschoolUser(teacherUser) : null;
+    const teacher = parsedTeacher?.fullNameLastNameFirst ||
+                    parsedTeacher?.fullName ||
+                    teacherUser?.name?.startingWithFirstName || 
                     teacherUser?.name?.startingWithLastName || 
                     teacherUser?.name?.formatted || 
                     raw.organisers?.groups?.[0]?.name || 
@@ -293,22 +297,184 @@ export const parseSmartschoolHomework = (raw: any): Homework | null => {
   }
 };
 
+export interface ParsedPersonName {
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  fullNameLastNameFirst: string;
+  trigram?: string;
+}
+
 /**
- * Découpe un nom complet en prénom et nom de famille
+ * Nettoie et met en majuscule la première lettre de chaque mot (avec support des tirets).
+ * Ex: "jean-pierre" -> "Jean-Pierre", "deridder" -> "Deridder"
+ */
+export const capitalizeWords = (str: string): string => {
+  if (!str) return '';
+  return str
+    .split(/([\s-]+)/)
+    .map(part => {
+      if (part === ' ' || part === '-') return part;
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    })
+    .join('');
+};
+
+/**
+ * Extrait le nom, prénom et trigramme depuis un objet utilisateur Smartschool
+ * (tel que présent dans organisers.users[] du planning ou titu[] de Studentcard).
+ *
+ * Exploite prioritairement la propriété clé `sort` découverte dans l'API Smartschool :
+ * "sort": "nom-prenom" (ex: "deridder-andre")
+ * 
+ * Et corrèle avec :
+ * - `name.startingWithLastName`: "Deridder DR" (Nom + trigramme à la fin)
+ * - `name.startingWithFirstName`: "DR Deridder" (Trigramme au début + Nom)
+ */
+export const parseSmartschoolUser = (user: any): ParsedPersonName => {
+  if (!user) {
+    return { firstName: '', lastName: '', fullName: '', fullNameLastNameFirst: '' };
+  }
+
+  if (typeof user === 'string') {
+    const s = splitFullName(user);
+    const fn = `${s.firstName} ${s.lastName}`.trim();
+    const lnFn = `${s.lastName} ${s.firstName}`.trim();
+    return {
+      firstName: s.firstName,
+      lastName: s.lastName,
+      fullName: fn || s.lastName || s.firstName,
+      fullNameLastNameFirst: lnFn || s.lastName || s.firstName
+    };
+  }
+
+  const sortVal: string = (user.sort || '').trim();
+  const startingWithFirst: string = (user.name?.startingWithFirstName || '').trim();
+  const startingWithLast: string = (user.name?.startingWithLastName || '').trim();
+  const explicitFirst: string = (user.name?.firstName || user.firstName || '').trim();
+  const explicitLast: string = (user.name?.lastName || user.lastName || '').trim();
+
+  let trigram = '';
+  // Détection du trigramme (2 à 4 lettres majuscules)
+  const trigramMatchLast = startingWithLast.match(/\s+([A-Z0-9]{2,4})$/);
+  if (trigramMatchLast) {
+    trigram = trigramMatchLast[1];
+  } else {
+    const trigramMatchFirst = startingWithFirst.match(/^([A-Z0-9]{2,4})\s+/);
+    if (trigramMatchFirst) {
+      trigram = trigramMatchFirst[1];
+    }
+  }
+
+  // Base du Nom extrait sans trigramme
+  let baseLastName = explicitLast;
+  if (!baseLastName && startingWithLast) {
+    baseLastName = startingWithLast.replace(/\s+[A-Z0-9]{2,4}$/, '').trim();
+  }
+  if (!baseLastName && startingWithFirst) {
+    baseLastName = startingWithFirst.replace(/^[A-Z0-9]{2,4}\s+/, '').trim();
+  }
+
+  let firstName = explicitFirst;
+  let lastName = baseLastName;
+
+  // Analyse prioritaire via le champ "sort": "nom-prenom" (ex: "deridder-andre")
+  if (sortVal) {
+    // Normaliser baseLastName pour retrouver où commence le prénom dans sort
+    const normBaseLast = (baseLastName || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-');
+
+    if (normBaseLast && sortVal.toLowerCase().startsWith(normBaseLast + '-')) {
+      const remainingSort = sortVal.slice(normBaseLast.length + 1);
+      if (!firstName && remainingSort) {
+        firstName = capitalizeWords(remainingSort);
+      }
+      if (!lastName) {
+        lastName = baseLastName || capitalizeWords(normBaseLast);
+      }
+    } else {
+      const sortParts = sortVal.split('-');
+      if (sortParts.length >= 2) {
+        const sortNom = sortParts[0];
+        const sortPrenom = sortParts.slice(1).join('-');
+        if (!lastName) {
+          lastName = baseLastName || capitalizeWords(sortNom);
+        }
+        if (!firstName) {
+          firstName = capitalizeWords(sortPrenom);
+        }
+      } else if (sortParts.length === 1 && !lastName) {
+        lastName = capitalizeWords(sortParts[0]);
+      }
+    }
+  }
+
+  // Si le prénom est toujours manquant
+  if (!firstName && startingWithFirst) {
+    const withoutTrigram = startingWithFirst.replace(/^[A-Z0-9]{2,4}\s+/, '').trim();
+    if (withoutTrigram && withoutTrigram !== lastName) {
+      const split = splitFullName(withoutTrigram);
+      if (split.firstName && split.firstName !== lastName) {
+        firstName = split.firstName;
+      }
+    }
+  }
+
+  const cleanFirst = firstName.trim();
+  const cleanLast = lastName.trim();
+
+  let fullName = '';
+  let fullNameLastNameFirst = '';
+
+  if (cleanFirst && cleanLast) {
+    fullName = `${cleanFirst} ${cleanLast}`;
+    fullNameLastNameFirst = `${cleanLast} ${cleanFirst}`;
+  } else {
+    fullName = cleanFirst || cleanLast || startingWithFirst || startingWithLast || 'Professeur';
+    fullNameLastNameFirst = cleanLast || cleanFirst || startingWithLast || startingWithFirst || 'Professeur';
+  }
+
+  return {
+    firstName: cleanFirst,
+    lastName: cleanLast,
+    fullName,
+    fullNameLastNameFirst,
+    trigram: trigram || undefined
+  };
+};
+
+/**
+ * Découpe un nom complet en prénom et nom de famille.
+ * Évite d'inverser le prénom et le nom si un trigramme professeur (ex: "DR Deridder") est présent.
  */
 export const splitFullName = (fullName: string): { firstName: string; lastName: string } => {
   if (!fullName) return { firstName: '', lastName: '' };
   const clean = fullName.trim();
   if (!clean) return { firstName: '', lastName: '' };
 
+  // Retirer un éventuel trigramme au début (ex: "DR Deridder")
+  const trigramStart = clean.match(/^([A-Z0-9]{2,4})\s+(.+)$/);
+  if (trigramStart && trigramStart[1].length <= 3) {
+    return { firstName: '', lastName: trigramStart[2].trim() };
+  }
+
+  // Retirer un éventuel trigramme à la fin (ex: "Deridder DR")
+  const trigramEnd = clean.match(/^(.+)\s+([A-Z0-9]{2,4})$/);
+  if (trigramEnd && trigramEnd[2].length <= 3) {
+    return { firstName: '', lastName: trigramEnd[1].trim() };
+  }
+
   const parts = clean.split(/\s+/);
   if (parts.length === 1) {
     return { firstName: parts[0], lastName: '' };
   }
 
-  // Détection si le format est "NOM Prénom" (ex: "DUPONT Jean" où le nom est en majuscules)
+  // Format "NOM Prénom" si le premier mot est en majuscules d'au moins 3 lettres
   if (parts.length === 2) {
-    const isFirstUpper = parts[0] === parts[0].toUpperCase() && parts[0].length >= 2;
+    const isFirstUpper = parts[0] === parts[0].toUpperCase() && parts[0].length >= 3;
     const isSecondMixed = parts[1] !== parts[1].toUpperCase();
     if (isFirstUpper && isSecondMixed) {
       return { firstName: parts[1], lastName: parts[0] };
@@ -415,19 +581,14 @@ export const extractMetadataFromPlanner = (
         if (!avatar && match.pictureUrl) {
           avatar = match.pictureUrl;
         }
-        if (!firstName && match.name) {
-          if (match.name.firstName) {
+        if (!firstName) {
+          const parsed = parseSmartschoolUser(match);
+          if (parsed.firstName) {
+            firstName = parsed.firstName;
+            lastName = parsed.lastName;
+          } else if (match.name?.firstName) {
             firstName = match.name.firstName;
-          }
-          if (match.name.lastName) {
-            lastName = match.name.lastName;
-          }
-          if (!firstName && match.name.startingWithFirstName) {
-            const splitted = splitFullName(match.name.startingWithFirstName);
-            if (splitted.firstName) {
-              firstName = splitted.firstName;
-              lastName = splitted.lastName;
-            }
+            lastName = match.name.lastName || '';
           }
         }
       }
@@ -440,19 +601,14 @@ export const extractMetadataFromPlanner = (
         if (!avatar && organiser.pictureUrl) {
           avatar = organiser.pictureUrl;
         }
-        if (!firstName && organiser.name) {
-          if (organiser.name.firstName) {
+        if (!firstName) {
+          const parsed = parseSmartschoolUser(organiser);
+          if (parsed.firstName) {
+            firstName = parsed.firstName;
+            lastName = parsed.lastName;
+          } else if (organiser.name?.firstName) {
             firstName = organiser.name.firstName;
-          }
-          if (organiser.name.lastName) {
-            lastName = organiser.name.lastName;
-          }
-          if (!firstName && organiser.name.startingWithFirstName) {
-            const splitted = splitFullName(organiser.name.startingWithFirstName);
-            if (splitted.firstName) {
-              firstName = splitted.firstName;
-              lastName = splitted.lastName;
-            }
+            lastName = organiser.name.lastName || '';
           }
         }
       }
@@ -633,8 +789,10 @@ export const parseSkoreEvaluationToGrade = (
   const course = ev.courses?.[0];
   const subjectName = course?.name || 'Matière';
   const teacherObj = ev.gradebookOwner || course?.teachers?.[0];
-
-  const teacherName = teacherObj?.name?.startingWithFirstName || 
+  const parsedTeacherObj = teacherObj ? parseSmartschoolUser(teacherObj) : null;
+  const teacherName = parsedTeacherObj?.fullNameLastNameFirst ||
+                      parsedTeacherObj?.fullName ||
+                      teacherObj?.name?.startingWithFirstName || 
                       teacherObj?.name?.startingWithLastName || 
                       'Enseignant';
 
@@ -725,7 +883,10 @@ export const buildSubjectReportsFromEvaluations = (
   for (const ev of filteredEvals) {
     const course = ev.courses?.[0];
     const courseName = course?.name || 'Autre matière';
-    const teacherName = ev.gradebookOwner?.name?.startingWithFirstName || 
+    const parsedOwner = ev.gradebookOwner ? parseSmartschoolUser(ev.gradebookOwner) : null;
+    const teacherName = parsedOwner?.fullNameLastNameFirst ||
+                        parsedOwner?.fullName ||
+                        ev.gradebookOwner?.name?.startingWithFirstName || 
                         ev.gradebookOwner?.name?.startingWithLastName || 
                         'Enseignant';
 
@@ -807,5 +968,91 @@ export const buildSubjectReportsFromEvaluations = (
     totalWeeklyHours: totalActiveHours,
     periods
   };
+};
+
+/**
+ * Extrait et agrège la liste complète des enseignants depuis les éléments d'agenda Smartschool.
+ * Analyse les organisateurs de chaque cours (raw.organisers.users[]),
+ * extrait nom, prénom grâce au champ clé "sort": "nom-prenom", trigramme, photo,
+ * ainsi que les matières et salles de classe associées.
+ */
+export const extractTeachersFromPlanner = (items: any[], effectiveUserId?: string | null): Teacher[] => {
+  if (!Array.isArray(items) || items.length === 0) return [];
+
+  const teachersMap = new Map<string, Teacher>();
+
+  for (const item of items) {
+    if (!item) continue;
+
+    // Ignorer les to-dos personnels
+    if (item.plannedElementType === 'planned-to-dos' || item.type === 'planned-to-dos') {
+      continue;
+    }
+
+    const organisers: any[] = item.organisers?.users || [];
+    const courseNames: string[] = (item.courses || []).map((c: any) => c?.name?.trim()).filter(Boolean);
+    const scheduleCodes: string[] = (item.courses || []).flatMap((c: any) => c?.scheduleCodes || []).map((s: string) => s?.trim()).filter(Boolean);
+    const locationTitles: string[] = (item.locations || []).map((l: any) => l?.title?.trim() || l?.name?.trim()).filter(Boolean);
+
+    for (const org of organisers) {
+      if (!org || org.deleted === true) continue;
+      // Ne pas ajouter l'élève lui-même s'il apparaît dans ses propres événements
+      if (effectiveUserId && String(org.id) === String(effectiveUserId)) continue;
+
+      const parsed = parseSmartschoolUser(org);
+      if (!parsed.lastName && !parsed.fullName) continue;
+
+      const teacherId = String(org.id || `${parsed.lastName}_${parsed.firstName}`);
+
+      if (!teachersMap.has(teacherId)) {
+        teachersMap.set(teacherId, {
+          id: teacherId,
+          firstName: parsed.firstName,
+          lastName: parsed.lastName,
+          fullName: parsed.fullName,
+          fullNameLastNameFirst: parsed.fullNameLastNameFirst,
+          sort: org.sort || undefined,
+          trigram: parsed.trigram || undefined,
+          pictureUrl: org.pictureUrl || undefined,
+          pictureHash: org.pictureHash || undefined,
+          subjects: [...courseNames],
+          subjectCodes: [...scheduleCodes],
+          rooms: [...locationTitles]
+        });
+      } else {
+        const existing = teachersMap.get(teacherId)!;
+        // Enrichir avec de nouvelles matières / salles si observées sur d'autres créneaux
+        for (const c of courseNames) {
+          if (!existing.subjects.includes(c)) existing.subjects.push(c);
+        }
+        for (const sc of scheduleCodes) {
+          if (!existing.subjectCodes) existing.subjectCodes = [];
+          if (!existing.subjectCodes.includes(sc)) existing.subjectCodes.push(sc);
+        }
+        for (const r of locationTitles) {
+          if (!existing.rooms.includes(r)) existing.rooms.push(r);
+        }
+        if (!existing.pictureUrl && org.pictureUrl) {
+          existing.pictureUrl = org.pictureUrl;
+        }
+        if (!existing.pictureHash && org.pictureHash) {
+          existing.pictureHash = org.pictureHash;
+        }
+        if (!existing.sort && org.sort) {
+          existing.sort = org.sort;
+        }
+        if (!existing.trigram && parsed.trigram) {
+          existing.trigram = parsed.trigram;
+        }
+      }
+    }
+  }
+
+  // Trier par nom de famille alphabétique, puis prénom
+  return Array.from(teachersMap.values()).sort((a, b) => {
+    const comp = a.lastName.localeCompare(b.lastName, 'fr', { sensitivity: 'base' });
+    if (comp !== 0) return comp;
+    return a.firstName.localeCompare(b.firstName, 'fr', { sensitivity: 'base' });
+  });
 };
 

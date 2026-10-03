@@ -20,7 +20,8 @@ import {
   Message,
   SubjectCourse,
   Grade,
-  EventStatus
+  EventStatus,
+  Teacher
 } from '../types/school';
 
 import {
@@ -30,7 +31,8 @@ import {
   mockSubjectReports,
   mockConversations,
   mockMessages,
-  mockCourses
+  mockCourses,
+  mockTeachers
 } from '../data/mockData';
 import { calculateOverallAverage } from '../utils/grades';
 
@@ -211,6 +213,10 @@ class SchoolService {
   async submitAssignment(courseId: string, assignmentId: string, fileName: string): Promise<boolean> {
     console.log(`[API Mock] Dépôt pour ${courseId}/${assignmentId} : ${fileName}`);
     return Promise.resolve(true);
+  }
+  // 7. Annuaire Professeurs
+  async getTeachers(): Promise<Teacher[]> {
+    return Promise.resolve([...mockTeachers]);
   }
 }
 
