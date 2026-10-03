@@ -88,11 +88,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
           <h1 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">
             {getPageTitle()}
           </h1>
-
-          <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100/80">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Semaine A</span>
-          </span>
         </div>
 
       </div>

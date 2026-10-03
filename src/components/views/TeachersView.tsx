@@ -140,7 +140,7 @@ export const TeachersView: React.FC = () => {
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Corps professoral
+              Liste de professeurs
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
               Liste complète des professeurs déduite de votre agenda Smartschool avec nom, prénom et contact direct.

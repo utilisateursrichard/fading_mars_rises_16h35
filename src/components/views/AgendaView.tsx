@@ -237,16 +237,6 @@ export const AgendaView: React.FC = () => {
     return `${startDay} - ${endDay} ${month}`;
   }, [weekDates]);
 
-  // Type de semaine A ou B
-  const weekType = useMemo(() => {
-    const d = new Date(Date.UTC(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-    return weekNo % 2 === 0 ? 'Semaine B' : 'Semaine A';
-  }, [targetDate]);
-
   // Synchronisation automatique des données de la semaine
   useEffect(() => {
     syncWeek(targetDate);
@@ -382,9 +372,6 @@ export const AgendaView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2.5">
               <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Agenda</h2>
-              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60">
-                {weekType}
-              </span>
             </div>
             <p className="text-xs text-slate-400 font-medium mt-0.5">
               Séances de cours, horaires, salles et devoirs associés
