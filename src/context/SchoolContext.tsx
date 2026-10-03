@@ -43,6 +43,7 @@ import {
   fetchSmartschoolMessageDetail,
   fetchLiveSmartschoolUnreadCount,
   sendSmartschoolMessage,
+  sendSmartschoolQuickReply,
   markSmartschoolMessageUnread,
   saveSmartschoolMessageLabel,
   deleteSmartschoolMessage,
@@ -788,6 +789,14 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const replySubject = selectedMailDetail.subject.startsWith('Re:') 
       ? selectedMailDetail.subject 
       : `Re: ${selectedMailDetail.subject}`;
+
+    if (!isDemoMode) {
+      const res = await sendSmartschoolQuickReply({ msgId: selectedMailDetail.id, bodyHtml });
+      if (res.success) {
+        await Promise.all([loadMailbox(activeMailbox), syncLiveUnreadMessages()]);
+      }
+      return res;
+    }
 
     // Tenter de retrouver le vrai userID du destinataire (sans valeur arbitraire hardcodée)
     let recipientUserIds: (string | number)[] = [];

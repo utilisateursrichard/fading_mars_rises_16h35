@@ -257,13 +257,23 @@ export function parseUserContact(node: Element): SmartschoolContact | null {
 // --- Fonctions de Synchronisation & API ---
 
 /**
+ * Interface pour les jetons de session de composition Smartschool
+ */
+export interface SmartschoolComposeSession {
+  uniqueUsc: string;
+  encryptedSender: string;
+  randomDir: string;
+  ssid: string;
+}
+
+/**
  * Récupère les jetons de session active de Smartschool
  */
 export async function getSmartschoolSessionTokens(): Promise<{ uniqueUsc: string; encryptedSender: string }> {
   try {
     const res = await evalHostExpression(`({
       uniqueUsc: window._UNIQUE_USC || (document.getElementById("msgFormuniqueUsc") ? document.getElementById("msgFormuniqueUsc").value : "") || "",
-      encryptedSender: (document.getElementById("msgFormencryptedSender") ? document.getElementById("msgFormencryptedSender").value : "") || ""
+      encryptedSender: (document.getElementById("msgEncryptedSender") ? document.getElementById("msgEncryptedSender").value : "") || (document.getElementById("msgFormencryptedSender") ? document.getElementById("msgFormencryptedSender").value : "") || ""
     })`);
     if (res.ok && res.result && typeof res.result === 'object') {
       const tokens = res.result as any;
@@ -283,6 +293,113 @@ export async function getSmartschoolSessionTokens(): Promise<{ uniqueUsc: string
 
   return { uniqueUsc: '', encryptedSender: '' };
 }
+
+/**
+ * Initialise une véritable session de composition Smartschool en chargeant la page de rédaction.
+ * Cette étape est INDISPENSABLE car Smartschool génère côté serveur un contexte de session PHP
+ * (avec un uniqueUsc, un randomDir d'upload et un encryptedSender propres à la rédaction).
+ */
+export async function fetchSmartschoolComposeSession(boxType = 'inbox', composeType = '0', msgId = '0'): Promise<SmartschoolComposeSession> {
+  const url = `/?module=Messages&file=composeMessage&boxType=${boxType}&composeType=${composeType}&msgID=${msgId}`;
+  const res = await fetchSmartschool(url);
+
+  let uniqueUsc = '';
+  let encryptedSender = '';
+  let randomDir = '';
+  let ssid = '';
+
+  if (res.ok && res.body) {
+    const html = res.body;
+
+    // Extraction de uniqueUsc
+    const uscMatch = html.match(/id=["']msgFormuniqueUsc["'][^>]*value=["']([^"']+)["']/i) ||
+                     html.match(/name=["']uniqueUsc["'][^>]*value=["']([^"']+)["']/i) ||
+                     html.match(/window\._UNIQUE_USC\s*=\s*['"]([^'"]+)['"]/i);
+    if (uscMatch) uniqueUsc = uscMatch[1];
+
+    // Extraction de encryptedSender
+    const senderMatch = html.match(/id=["']msgEncryptedSender["'][^>]*value=["']([^"']+)["']/i) ||
+                        html.match(/name=["']encryptedSender["'][^>]*value=["']([^"']+)["']/i);
+    if (senderMatch) encryptedSender = senderMatch[1];
+
+    // Extraction de randomDir
+    const dirMatch = html.match(/id=["']msgFormrandomDir["'][^>]*value=["']([^"']+)["']/i) ||
+                     html.match(/name=["']randomDir["'][^>]*value=["']([^"']+)["']/i) ||
+                     html.match(/"msg_attachment_upload_dir":\s*"([^"]+)"/i);
+    if (dirMatch) randomDir = dirMatch[1];
+
+    // Extraction du ssid (code établissement Smartschool)
+    const scopeMatch = html.match(/"initialScope":\s*\{\s*"user":\s*\{\s*"id":\s*"(\d+)_/i);
+    if (scopeMatch) {
+      ssid = scopeMatch[1];
+    } else if (uniqueUsc) {
+      const leadingDigits = uniqueUsc.match(/^(\d+)/);
+      if (leadingDigits) ssid = leadingDigits[1];
+    }
+  }
+
+  // Si extraction partielle, fallback sur les jetons hôtes existants
+  if (!uniqueUsc || !encryptedSender) {
+    const hostTokens = await getSmartschoolSessionTokens();
+    if (!uniqueUsc) uniqueUsc = hostTokens.uniqueUsc;
+    if (!encryptedSender) encryptedSender = hostTokens.encryptedSender;
+  }
+
+  if (!randomDir) {
+    randomDir = 'FWaCpQ8tr5UkvHzJ3n5XNALwc' + Date.now();
+  }
+
+  if (!ssid && uniqueUsc) {
+    const m = uniqueUsc.match(/^(\d+)/);
+    if (m) ssid = m[1];
+  }
+
+  const session: SmartschoolComposeSession = { uniqueUsc, encryptedSender, randomDir, ssid: ssid || '0' };
+  
+  if (session.uniqueUsc) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.TOKENS, JSON.stringify({ uniqueUsc: session.uniqueUsc, encryptedSender: session.encryptedSender }));
+    } catch {}
+  }
+
+  return session;
+}
+
+/**
+ * Enregistre un destinataire dans la session serveur du formulaire de composition.
+ * C'est l'appel AJAX officiel addUserToSelected qu'effectue Smartschool lors du clic
+ * sur un contact dans l'interface de composition. Sans cet appel, le serveur PHP
+ * considère que le formulaire n'a aucun destinataire sélectionné !
+ */
+export async function addSmartschoolRecipientToComposeSession(params: {
+  uniqueUsc: string;
+  userId: string | number;
+  ssid?: string;
+  type?: '0' | '1' | '2' | '3'; // 0 = À (To), 1 = Co-comptes, 2 = CC, 3 = BCC
+}): Promise<boolean> {
+  const postParams = new URLSearchParams();
+  postParams.append('id', String(params.userId));
+  postParams.append('typeId', 'users');
+  postParams.append('type', params.type || '0');
+  postParams.append('parentNodeId', 'insertSearchFieldContainer_0_0');
+  postParams.append('ssid', params.ssid || '0');
+  postParams.append('userlt', '0');
+  postParams.append('uniqueUsc', params.uniqueUsc);
+
+  try {
+    const res = await fetchSmartschool('/?module=Messages&file=searchUsers&function=addUserToSelected', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+      },
+      body: postParams.toString()
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 
 /**
  * Charge la liste des messages d'un dossier
@@ -502,8 +619,11 @@ export async function fetchLiveSmartschoolUnreadCount(): Promise<number> {
 }
 
 /**
- * Expédie véritablement un message dans Smartschool via le formulaire composeMessage (CheckForm)
- * Ne déclenche PAS d'enregistrement de brouillon (qui serait déplacé dans la corbeille)
+ * Expédie véritablement un message dans Smartschool via le flux officiel de composition :
+ * 1. Initialise une session de rédaction réelle (GET composeMessage) pour obtenir des jetons serveur valides (uniqueUsc, encryptedSender, randomDir)
+ * 2. Enregistre chaque destinataire dans la session de composition via l'appel AJAX officiel addUserToSelected
+ * 3. Soumet le formulaire msgForm en HTTP POST avec send='send' (et non 'refresh' qui ne fait qu'un brouillon)
+ * 4. Valide l'expédition effective en vérifiant la présence du message dans la boîte des messages envoyés (outbox)
  */
 export async function sendSmartschoolMessage(payload: {
   subject: string;
@@ -511,31 +631,60 @@ export async function sendSmartschoolMessage(payload: {
   userIDs?: (string | number)[];
   origMsgId?: number;
 }): Promise<{ success: boolean; error?: string }> {
-  const tokens = await getSmartschoolSessionTokens();
-  const randomDir = 'FWaCpQ8tr5UkvHzJ3n5XNALwc' + Date.now();
-  const validUserIds = (payload.userIDs || [])
-    .map(id => String(id).trim())
-    .filter(id => id && id !== '0');
-  const toList = validUserIds.join(',');
-
   const isReply = Boolean(payload.origMsgId && payload.origMsgId > 0);
   const composeType = isReply ? '1' : '0';
   const msgId = isReply ? String(payload.origMsgId) : '0';
   const boxType = 'inbox';
 
+  const validUserIds = (payload.userIDs || [])
+    .map(id => String(id).trim())
+    .filter(id => id && id !== '0');
+
+  // Si c'est un nouveau message et qu'aucun destinataire n'est fourni
+  if (!isReply && validUserIds.length === 0) {
+    return {
+      success: false,
+      error: 'Veuillez sélectionner au moins un destinataire valide.'
+    };
+  }
+
+  // 1. Initialisation de la session de composition côté serveur
+  const session = await fetchSmartschoolComposeSession(boxType, composeType, msgId);
+  if (!session.uniqueUsc) {
+    return {
+      success: false,
+      error: 'Impossible d\'obtenir un jeton de session de rédaction Smartschool valide.'
+    };
+  }
+
+  // 2. Enregistrement des destinataires dans la session serveur
+  for (const userId of validUserIds) {
+    await addSmartschoolRecipientToComposeSession({
+      uniqueUsc: session.uniqueUsc,
+      userId,
+      ssid: session.ssid
+    });
+  }
+
+  // 3. Préparation et soumission du formulaire msgForm
+  const toList = validUserIds.join(',');
   const formData = new URLSearchParams();
-  formData.append('send', 'send');
-  formData.append('boxType', boxType);
-  formData.append('composeType', composeType);
-  formData.append('msgID', msgId);
+  formData.append('encryptedSender', session.encryptedSender);
+  formData.append('send', 'send'); // 👈 IMPORTANT : 'send' = expédition réelle, 'refresh' = brouillon
   formData.append('origMsgID', msgId);
-  formData.append('draftID', '0');
+  formData.append('composeAction', '0');
+  formData.append('randomDir', session.randomDir);
+  formData.append('uniqueUsc', session.uniqueUsc);
+  formData.append('showTab', 'tab1Container');
+  formData.append('msgFormdelFile', '0');
+  formData.append('delFile', '0');
+  formData.append('composeTypeVal', composeType);
+  formData.append('msgIDVal', msgId);
+  formData.append('msgFormSelectedTab', '');
+  formData.append('sendDate', '');
   formData.append('subject', payload.subject);
   formData.append('message', payload.bodyHtml);
-  formData.append('uniqueUsc', tokens.uniqueUsc);
-  formData.append('randomDir', randomDir);
-  formData.append('encryptedSender', tokens.encryptedSender);
-  formData.append('sendDate', '');
+  formData.append('bcc', '0');
 
   if (toList) {
     formData.append('to', toList);
@@ -563,6 +712,54 @@ export async function sendSmartschoolMessage(payload: {
     };
   }
 
+  // 4. Vérification de la présence effective dans la boîte d'envoi
+  const sent = await verifyMessageInOutbox(payload.subject);
+  if (!sent) {
+    return {
+      success: false,
+      error: "Smartschool n'a pas confirmé l'envoi (message absent de la boîte d'envoi)."
+    };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Vérifie qu'un message portant cet objet figure dans les messages envoyés.
+ */
+async function verifyMessageInOutbox(subject: string): Promise<boolean> {
+  await new Promise(r => setTimeout(r, 800));
+  const outbox = await fetchSmartschoolMessagesList('outbox');
+  const wanted = subject.trim().toLowerCase();
+  return outbox.slice(0, 10).some(m => m.subject.trim().toLowerCase() === wanted);
+}
+
+/**
+ * Réponse rapide : commande RPC native `postboxes / send quick reply`
+ * (params quickreply_id, quickreply_txt, quickreply_all), comme le composant <quick-reply> de Smartschool.
+ * La réponse contient [msgID, titreAlerte, messageAlerte] ; une alerte non vide signale une erreur.
+ */
+export async function sendSmartschoolQuickReply(payload: {
+  msgId: string | number;
+  bodyHtml: string;
+  replyAll?: boolean;
+}): Promise<{ success: boolean; error?: string }> {
+  const cmdXml = buildRpcCommandXml('postboxes', 'send quick reply', [
+    { name: 'quickreply_id', value: payload.msgId },
+    { name: 'quickreply_txt', value: payload.bodyHtml },
+    { name: 'quickreply_all', value: payload.replyAll ? 'true' : 'false' }
+  ]);
+
+  const doc = await sendSmartschoolRpc([cmdXml]);
+  if (!doc) return { success: false, error: 'Échec de transmission de la réponse rapide.' };
+
+  const data = doc.querySelector('actions > action > data');
+  const node = data?.firstElementChild;
+  const alertTitle = node ? getNodeText(node.children[1]) : '';
+  const alertMsg = node ? getNodeText(node.children[2]) : '';
+  if (alertMsg) {
+    return { success: false, error: alertTitle ? `${alertTitle} : ${alertMsg}` : alertMsg };
+  }
   return { success: true };
 }
 
@@ -576,8 +773,7 @@ export async function saveSmartschoolDraft(payload: {
   userIDs?: (string | number)[];
   origMsgId?: number;
 }): Promise<{ success: boolean; error?: string }> {
-  const tokens = await getSmartschoolSessionTokens();
-  const randomDir = 'FWaCpQ8tr5UkvHzJ3n5XNALwc' + Date.now();
+  const session = await fetchSmartschoolComposeSession('inbox', payload.origMsgId ? '1' : '0', String(payload.origMsgId || '0'));
   const toList = (payload.userIDs || []).map(id => String(id)).join(',');
 
   const cmdXml = buildRpcCommandXml('draft', 'save draft', [
@@ -585,8 +781,8 @@ export async function saveSmartschoolDraft(payload: {
     { name: 'send', value: 'refresh' }, // "refresh" = enregistrement de brouillon uniquement
     { name: 'origMsgID', value: payload.origMsgId || 0 },
     { name: 'composeAction', value: 0 },
-    { name: 'randomDir', value: randomDir },
-    { name: 'uniqueUsc', value: tokens.uniqueUsc },
+    { name: 'randomDir', value: session.randomDir },
+    { name: 'uniqueUsc', value: session.uniqueUsc },
     { name: 'to', value: toList },
     { name: 'to_users', value: toList },
     { name: 'subject', value: payload.subject },
@@ -595,7 +791,7 @@ export async function saveSmartschoolDraft(payload: {
     { name: 'msgID', value: payload.origMsgId || 0 },
     { name: 'message', value: payload.bodyHtml },
     { name: 'preload_type', value: '' },
-    { name: 'encryptedSender', value: tokens.encryptedSender },
+    { name: 'encryptedSender', value: session.encryptedSender },
     { name: 'sendDate', value: '' }
   ]);
 

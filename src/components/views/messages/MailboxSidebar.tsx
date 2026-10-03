@@ -5,9 +5,7 @@ import {
   FileEdit, 
   Trash2, 
   PlusCircle, 
-  RotateCw, 
-  CheckCircle2,
-  Sparkles
+  RotateCw
 } from 'lucide-react';
 import { useSchool } from '../../../context/SchoolContext';
 import { SmartschoolBoxType } from '../../../types/school';
@@ -19,9 +17,7 @@ export const MailboxSidebar: React.FC = () => {
     mailCounters, 
     isMailLoading, 
     refreshMailList, 
-    openComposeModal,
-    isDemoMode,
-    isInsideSmartschoolPlatform
+    openComposeModal
   } = useSchool();
 
   const folders: Array<{
@@ -60,15 +56,26 @@ export const MailboxSidebar: React.FC = () => {
 
   return (
     <aside className="w-full lg:w-64 flex flex-col gap-5 shrink-0">
-      {/* Bouton Nouveau Message CTA */}
-      <button
-        type="button"
-        onClick={() => openComposeModal()}
-        className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-input bg-indigo-600 hover:bg-indigo-700 text-white font-display font-bold text-sm shadow-subtle hover:shadow-card m3-press active:scale-[0.97] transition-all"
-      >
-        <PlusCircle className="w-4 h-4" />
-        <span>Nouveau message</span>
-      </button>
+      {/* Bouton Nouveau Message CTA & Rafraîchir */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => openComposeModal()}
+          className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 rounded-input bg-indigo-600 hover:bg-indigo-700 text-white font-display font-bold text-sm shadow-subtle hover:shadow-card m3-press active:scale-[0.97] transition-all"
+        >
+          <PlusCircle className="w-4 h-4" />
+          <span>Nouveau message</span>
+        </button>
+        <button
+          type="button"
+          onClick={refreshMailList}
+          disabled={isMailLoading}
+          title="Rafraîchir les messages"
+          className="p-3 rounded-input bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-subtle m3-press active:scale-[0.97]"
+        >
+          <RotateCw className={`w-4 h-4 ${isMailLoading ? 'animate-spin text-indigo-600' : ''}`} />
+        </button>
+      </div>
 
       {/* Navigation des Dossiers */}
       <nav className="space-y-1">
@@ -111,39 +118,6 @@ export const MailboxSidebar: React.FC = () => {
           );
         })}
       </nav>
-
-      {/* Barre d'état & synchronisation Smartschool */}
-      <div className="mt-auto p-3.5 rounded-card bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {isDemoMode ? (
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
-                <Sparkles className="w-3.5 h-3.5" />
-                Mode Démo
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                {isInsideSmartschoolPlatform ? 'Smartschool Direct' : 'Serveur Connecté'}
-              </span>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={refreshMailList}
-            disabled={isMailLoading}
-            title="Rafraîchir les messages"
-            className="p-1.5 rounded-input text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-700/60 transition-all m3-press active:scale-[0.97]"
-          >
-            <RotateCw className={`w-3.5 h-3.5 ${isMailLoading ? 'animate-spin text-indigo-600' : ''}`} />
-          </button>
-        </div>
-
-        <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-4">
-          Synchronisation Smartschool XML RPC instantanée.
-        </p>
-      </div>
     </aside>
   );
 };

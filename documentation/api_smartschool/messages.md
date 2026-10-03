@@ -118,80 +118,66 @@ Lors de la réception de la réponse, le `Dispatcher` Smartschool achemine l'act
 
 ## 4. 🚀 Envoi de Message & Gestion des Brouillons (Spécification Précise)
 
-### A. Différence Cruciale : Brouillon (`refresh`) vs Envoi Réel (`send`)
+### A. Distinction Fondamentale : Envoi Réel (`composeMessage`) vs Brouillon (`save draft`) vs Réponse Rapide (`send quick reply`)
 
-Dans le moteur Smartschool, la même commande RPC `<subsystem>draft</subsystem><action>save draft</action>` est utilisée à la fois pour l'enregistrement automatique du brouillon et pour l'envoi définitif.
+> [!CAUTION]
+> **Pourquoi les anciens envois finissaient dans la corbeille :**
+> 1. La commande RPC XML `<subsystem>draft</subsystem><action>save draft</action>` sert **exclusivement** à l'enregistrement automatique de brouillons temporaires (avec `send: "refresh"`). Elle n'expédie jamais le message aux destinataires ! Tout message enregistré ainsi finit abandonné dans la corbeille ou dans les brouillons.
+> 2. Le formulaire de composition `msgForm` n'a **pas** de champ `<input name="to">`. Les destinataires sont des conteneurs visuels (`receiverPart0`). Smartschool stocke les destinataires en **session serveur PHP** via un appel AJAX préalable `addUserToSelected`. Sans cet appel, le serveur reçoit un formulaire sans destinataires !
+> 3. Lors du clic sur le bouton "Envoyer", Smartschool exécute `document.form.send.value = "send"` puis soumet le formulaire HTTP POST `msgForm`.
 
-> [!IMPORTANT]
-> **Le comportement dépend intégralement de la valeur du paramètre `send` :**
-> * **`send: "refresh"`** : **Enregistrement de brouillon uniquement** (déclenché automatiquement toutes les quelques secondes par `oDraft`). Ne délivre pas le message aux destinataires. Si le sujet et le corps sont vides, Smartschool retourne l'action `draftnotsavedempty`.
-> * **`send: "send"`** : **Envoi effectif du message** (déclenché lors du clic sur le bouton "Envoyer" via `CheckForm()`). Le serveur valide les destinataires, transfère le message dans la boîte d'envoi (`outbox`), décrémente le compteur de brouillons et notifie les destinataires.
+### B. Flux Réel d'Expédition d'un Nouveau Message (3 Étapes Obligatoires)
 
-### B. Validation Client Smartschool (`CheckForm`)
-Avant d'envoyer le message, la fonction cliente `CheckForm()` effectue les contrôles stricts suivants :
-1. **Contrôle des destinataires (`checkReceivers`) :** Vérifie qu'au moins un destinataire est spécifié dans l'un des 6 types de listes :
-   * `to` (`receiverPart0`) : Destinataires principaux (élèves, professeurs, personnel).
-   * `toco` (`receiverPart1`) : Co-comptes des destinataires principaux (parents / tuteurs).
-   * `tocc` (`receiverPart2`) : Destinataires en copie (`CC`).
-   * `tobcc` (`receiverPart3`) : Destinataires en copie cachée (`BCC`).
-   * `toccco` (`receiverPart4`) : Co-comptes des destinataires en copie (`CC`).
-   * `tobccco` (`receiverPart5`) : Co-comptes des destinataires en copie cachée (`BCC`).
-2. **Contrôle de l'objet (`checkStringLength("subject", 1)`) :** L'objet ne peut pas être vide (au moins 1 caractère requis).
-3. **Comportement de soumission :**
-   * Désactive le bouton d'envoi (`#submitbtn`).
-   * Désactive l'auto-sauvegarde (`oDraft.disableSaving()`).
-   * Affiche l'indicateur de chargement (`#sendLoading`).
-   * Renseigne `document.form.send.value = "send"`.
-   * Soumet le formulaire (`document.form.submit()`).
+#### Étape 1 : Initialisation de la Session de Composition
+Récupérer la page de rédaction pour obtenir les jetons de session PHP frais :
+```http
+GET /?module=Messages&file=composeMessage&boxType=inbox&composeType=0&msgID=0 HTTP/1.1
+```
+Parser les valeurs dynamiques du formulaire :
+* `uniqueUsc` (input caché `#msgFormuniqueUsc` ou variable `window._UNIQUE_USC`)
+* `encryptedSender` (input caché `#msgEncryptedSender`)
+* `randomDir` (input caché `#msgFormrandomDir`)
+* `ssid` (code établissement de l'utilisateur, extrait de `uniqueUsc` ou du scope Sentry)
 
-### C. Structure de la Commande RPC d'Envoi Définitif
+#### Étape 2 : Enregistrement de chaque Destinataire (`addUserToSelected`)
+Pour chaque destinataire sélectionné, envoyer la requête d'association à la session de composition :
+```http
+POST /?module=Messages&file=searchUsers&function=addUserToSelected HTTP/1.1
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+
+id={userID}&typeId=users&type=0&parentNodeId=insertSearchFieldContainer_0_0&ssid={ssid}&userlt=0&uniqueUsc={uniqueUsc}
+```
+* `type=0` : Destinataire principal (À / To).
+* `type=2` : En copie (Cc).
+* `type=3` : En copie cachée (Bcc).
+
+#### Étape 3 : Soumission Définitive du Formulaire (`msgForm`)
+Soumettre le formulaire au endpoint de composition avec `send="send"` :
+```http
+POST /?module=Messages&file=composeMessage&boxType=inbox&composeType=0&msgID=0 HTTP/1.1
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+
+encryptedSender={encryptedSender}&send=send&origMsgID=0&composeAction=0&randomDir={randomDir}&uniqueUsc={uniqueUsc}&showTab=tab1Container&msgFormdelFile=0&composeTypeVal=0&msgIDVal=0&msgFormSelectedTab=&sendDate=&subject={sujet}&message={contenu_html}&bcc=0&to={liste_ids}&to_users={liste_ids}
+```
+
+### C. Réponse Rapide Native (`send quick reply`)
+Pour répondre à un message existant sans ouvrir la fenêtre de composition complète, Smartschool dispose d'une commande RPC native ultra-performante dans le sous-système `postboxes` :
+
 ```xml
 <request>
 	<command>
-		<subsystem>draft</subsystem>
-		<action>save draft</action>
+		<subsystem>postboxes</subsystem>
+		<action>send quick reply</action>
 		<params>
-			<param name="draftID"><![CDATA[0]]></param>
-			<param name="send"><![CDATA[send]]></param> <!-- 👈 "send" = envoi effectif -->
-			<param name="origMsgID"><![CDATA[0]]></param> <!-- ID du message source si réponse/transfert -->
-			<param name="composeAction"><![CDATA[0]]></param>
-			<param name="randomDir"><![CDATA[FWaCpQ8tr5UkvHzJ3n5XNALwc179042447546265748]]></param>
-			<param name="uniqueUsc"><![CDATA[4907sWCVC7Hj25ktf8UZCcSsEzh6e17904244754907]]></param>
-			<param name="to"><![CDATA[5748,5749]]></param> <!-- IDs séparés par des virgules -->
-			<param name="to_users"><![CDATA[5748,5749]]></param>
-			<param name="subject"><![CDATA[Objet du message]]></param>
-			<param name="bcc"><![CDATA[0]]></param>
-			<param name="composeType"><![CDATA[0]]></param>
-			<param name="msgID"><![CDATA[0]]></param>
-			<param name="message"><![CDATA[<p>Contenu HTML riche du message</p>]]></param>
-			<param name="preload_type"><![CDATA[]]></param>
-			<param name="encryptedSender"><![CDATA[f2cf19ee400347bc788c38d6359d9a73]]></param>
-			<param name="sendDate"><![CDATA[]]></param> <!-- Optionnel : date si envoi programmé -->
+			<param name="quickreply_id"><![CDATA[{msgID}]]></param>
+			<param name="quickreply_txt"><![CDATA[{contenu_html}]]></param>
+			<param name="quickreply_all"><![CDATA[false]]></param> <!-- ou true pour répondre à tous -->
 		</params>
 	</command>
 </request>
 ```
+* **Validation du succès :** La réponse XML contient dans `<data>` un tuple `[msgID, titreAlerte, messageAlerte]`. Si `messageAlerte` est vide, la réponse rapide a été expédiée avec succès.
 
-### D. Soumission HTTP Parallèle du Formulaire (`composeMessage`)
-En complément du flux RPC, Smartschool utilise le endpoint Same-Origin :
-```http
-POST /?module=Messages&file=composeMessage HTTP/2
-Content-Type: application/x-www-form-urlencoded; charset=UTF-8
-X-Requested-With: XMLHttpRequest
-```
-
-Avec les paramètres du formulaire :
-* `send=send`
-* `subject=<objet>`
-* `message=<html_du_message>`
-* `uniqueUsc=<uniqueUsc>`
-* `randomDir=<randomDir>`
-* `draftID=0`
-* `msgID=0`
-* `origMsgID=<origMsgId>`
-* `to=<id1,id2>`
-* `to[]=<id1>`
-* `to[]=<id2>`
 
 ---
 
