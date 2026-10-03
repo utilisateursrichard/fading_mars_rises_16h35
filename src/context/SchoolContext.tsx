@@ -614,6 +614,19 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const count = await fetchLiveSmartschoolUnreadCount();
         setLiveUnreadCount(count);
         setMailCounters(prev => ({ ...prev, inbox: count }));
+
+        // Rapprochement avec le compte réel officiel de Smartschool :
+        // Si Smartschool indique formellement 0 message non lu, aucun message de la boîte de réception
+        // ne doit arborer de pastille / statut non lu.
+        if (count === 0) {
+          setMailMessages(prev => {
+            const hasUnread = prev.some(m => m.unread || m.status === 'unread');
+            if (!hasUnread) return prev;
+            const updated = prev.map(m => ({ ...m, unread: false, status: 'read' as const }));
+            setCachedMailMessages('inbox', updated);
+            return updated;
+          });
+        }
       } catch (err) {
         console.warn('Erreur synchro non lus en direct:', err);
       }
@@ -834,7 +847,13 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const setMailRead = async (id: string): Promise<boolean> => {
-    setMailMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'read', unread: false } : m));
+    setMailMessages(prev => {
+      const updated = prev.map(m => m.id === id ? { ...m, status: 'read' as const, unread: false } : m);
+      setCachedMailMessages(activeMailbox, updated);
+      return updated;
+    });
+    setSelectedMailDetail(prev => prev && prev.id === id ? { ...prev, status: 'read' as const } : prev);
+
     if (!isDemoMode) {
       const ok = await markSmartschoolMessageRead(id, activeMailbox);
       await syncLiveUnreadMessages();
@@ -845,7 +864,13 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const setMailUnread = async (id: string): Promise<boolean> => {
-    setMailMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'unread', unread: true } : m));
+    setMailMessages(prev => {
+      const updated = prev.map(m => m.id === id ? { ...m, status: 'unread' as const, unread: true } : m);
+      setCachedMailMessages(activeMailbox, updated);
+      return updated;
+    });
+    setSelectedMailDetail(prev => prev && prev.id === id ? { ...prev, status: 'unread' as const } : prev);
+
     if (!isDemoMode) {
       const ok = await markSmartschoolMessageUnread(id, activeMailbox);
       await syncLiveUnreadMessages();

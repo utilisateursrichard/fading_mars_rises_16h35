@@ -31,9 +31,11 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
     setSelectedMailId,
     toggleMailFlag,
     setMailUnread,
+    setMailRead,
     deleteMail,
     archiveMail,
-    openComposeModal
+    openComposeModal,
+    activeMailbox
   } = useSchool();
 
   const [showAllRecipients, setShowAllRecipients] = useState(false);
@@ -146,15 +148,29 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={() => setMailUnread(selectedMailDetail.id)}
-            title="Marquer comme non lu"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-input text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-xs font-semibold m3-press active:scale-[0.97] transition-all"
-          >
-            <Mail className="w-3.5 h-3.5 text-slate-500" />
-            <span className="hidden sm:inline">Non lu</span>
-          </button>
+          {activeMailbox === 'inbox' && (
+            selectedMailDetail.status === 'unread' ? (
+              <button
+                type="button"
+                onClick={() => setMailRead(selectedMailDetail.id)}
+                title="Marquer comme lu"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-input text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold m3-press active:scale-[0.97] transition-all"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Marquer comme lu</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setMailUnread(selectedMailDetail.id)}
+                title="Marquer comme non lu"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-input text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-xs font-semibold m3-press active:scale-[0.97] transition-all"
+              >
+                <Mail className="w-3.5 h-3.5 text-slate-500" />
+                <span className="hidden sm:inline">Marquer non lu</span>
+              </button>
+            )
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 relative">

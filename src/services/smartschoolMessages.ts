@@ -100,26 +100,55 @@ export async function sendSmartschoolRpc(commandsXml: string[]): Promise<Documen
  * Parse un nœud MessageL (15 sous-nœuds ordonnés)
  */
 export function parseMessageL(node: Element): SmartschoolMessageSummary | null {
-  const c = node.childNodes;
-  if (!c || c.length < 5) return null;
+  // Utilisation des éléments enfants stricts (nodeType === 1) pour éliminer les TextNodes parasites
+  const elements = Array.from(node.children).length > 0
+    ? Array.from(node.children)
+    : Array.from(node.childNodes).filter(n => n.nodeType === 1) as Element[];
 
-  const id = getNodeText(c[0]);
-  const from = getNodeText(c[1]);
-  const fromImage = getNodeText(c[2]);
-  const subject = getNodeText(c[3]);
-  const date = getNodeText(c[4]);
-  const statusStr = getNodeText(c[5]); // '0' = non lu, '1' = lu
-  const attachmentStr = getNodeText(c[6]);
-  const unreadStr = getNodeText(c[7]);
-  const labelStr = getNodeText(c[8]);
-  const deletedStr = getNodeText(c[9]);
-  const allowReplyStr = getNodeText(c[10]);
-  const allowReplyEnabledStr = getNodeText(c[11]);
-  const hasReplyStr = getNodeText(c[12]);
-  const hasForwardStr = getNodeText(c[13]);
-  const realBox = getNodeText(c[14]) || 'inbox';
+  if (elements.length < 5) return null;
+
+  // Récupération par nom de balise XML (prioritaire si disponible) ou par index ordonné
+  const getField = (name: string, index: number): string => {
+    if (typeof node.querySelector === 'function') {
+      const el = node.querySelector(name) || node.getElementsByTagName(name)[0];
+      if (el) return getNodeText(el);
+    }
+    return elements[index] ? getNodeText(elements[index]) : '';
+  };
+
+  const id = getField('id', 0);
+  const from = getField('from', 1);
+  const fromImage = getField('fromImage', 2);
+  const subject = getField('subject', 3);
+  const date = getField('date', 4);
+  const statusStr = getField('status', 5);
+  const attachmentStr = getField('attachment', 6);
+  const unreadStr = getField('unread', 7); // "1" = non lu côté Smartschool, "0" = lu
+  const labelStr = getField('label', 8);
+  const deletedStr = getField('deleted', 9);
+  const allowReplyStr = getField('allowReply', 10);
+  const allowReplyEnabledStr = getField('allowreplyenabled', 11);
+  const hasReplyStr = getField('hasReply', 12);
+  const hasForwardStr = getField('hasForward', 13);
+  const realBox = getField('realBox', 14) || 'inbox';
 
   const attachCount = parseInt(attachmentStr, 10) || 0;
+
+  // Détection stricte Smartschool du statut non lu :
+  // 1. Seule la boîte de réception (inbox) peut avoir des messages non lus (jamais outbox, draft, trash)
+  const isInbox = (realBox || 'inbox').toLowerCase() === 'inbox';
+  
+  // 2. Vérification des marqueurs officiels Smartschool (classe CSS msgNew, attribut msgStatus, balise unread/status)
+  const classAttr = node.getAttribute ? (node.getAttribute('class') || '') : '';
+  const msgStatusAttr = node.getAttribute ? (node.getAttribute('msgStatus') || '') : '';
+  const hasMsgNewClass = classAttr.includes('msgNew');
+  const isExplicitlyRead = statusStr === '1' || unreadStr === '0' || msgStatusAttr === '1' || classAttr.includes('msgRead');
+
+  const isUnread = isInbox && !isExplicitlyRead && (
+    hasMsgNewClass || 
+    unreadStr === '1' || 
+    (msgStatusAttr === '0' && unreadStr !== '0')
+  );
 
   return {
     id,
@@ -127,10 +156,10 @@ export function parseMessageL(node: Element): SmartschoolMessageSummary | null {
     fromImage: fromImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
     subject: subject || '(Sans objet)',
     date,
-    status: statusStr === '0' ? 'unread' : 'read',
+    status: isUnread ? 'unread' : 'read',
     hasAttachment: attachCount > 0,
     attachmentCount: attachCount,
-    unread: unreadStr === '1' || statusStr === '0',
+    unread: isUnread,
     label: mapLabelToColor(labelStr),
     deleted: deletedStr === '1',
     allowReply: allowReplyStr !== '0',
@@ -171,18 +200,30 @@ export function parseAttachment(node: Element): SmartschoolAttachment | null {
  * Parse un nœud MessageR (23 sous-nœuds ordonnés)
  */
 export function parseMessageR(node: Element): SmartschoolMessageDetail | null {
-  const c = node.childNodes;
-  if (!c || c.length < 6) return null;
+  const elements = Array.from(node.children).length > 0
+    ? Array.from(node.children)
+    : Array.from(node.childNodes).filter(n => n.nodeType === 1) as Element[];
 
-  const id = getNodeText(c[0]);
-  const from = getNodeText(c[1]);
-  const to = getNodeText(c[2]);
-  const subject = getNodeText(c[3]);
-  const date = getNodeText(c[4]);
-  const bodyHtml = getNodeText(c[5]); // Contenu HTML riche du message
-  const statusStr = getNodeText(c[6]);
-  const attachmentStr = getNodeText(c[7]);
-  const labelStr = getNodeText(c[9]);
+  if (elements.length < 6) return null;
+
+  const getField = (name: string, index: number): string => {
+    if (typeof node.querySelector === 'function') {
+      const el = node.querySelector(name) || node.getElementsByTagName(name)[0];
+      if (el) return getNodeText(el);
+    }
+    return elements[index] ? getNodeText(elements[index]) : '';
+  };
+
+  const id = getField('id', 0);
+  const from = getField('from', 1);
+  const to = getField('to', 2);
+  const subject = getField('subject', 3);
+  const date = getField('date', 4);
+  const bodyHtml = getField('body', 5); // Contenu HTML riche du message
+  const statusStr = getField('status', 6);
+  const attachmentStr = getField('attachment', 7);
+  const unreadStr = getField('unread', 8); // "1" = non lu, "0" = lu
+  const labelStr = getField('label', 9);
   
   // Destinataires
   const parseReceiversList = (receiverNode: Node | undefined): SmartschoolMessageRecipient[] => {
@@ -200,15 +241,18 @@ export function parseMessageR(node: Element): SmartschoolMessageDetail | null {
     return list;
   };
 
-  const receivers = parseReceiversList(c[10]);
-  const ccReceivers = parseReceiversList(c[11]);
-  const bccReceivers = parseReceiversList(c[12]);
-  const userPictureHash = getNodeText(c[13]);
-  const fromOauth = getNodeText(c[15]) === '1';
-  const allowReply = getNodeText(c[19]) !== '0';
-  const hasReply = getNodeText(c[20]) === '1';
-  const hasForward = getNodeText(c[21]) === '1';
-  const sendDate = getNodeText(c[22]) || undefined;
+  const receivers = parseReceiversList(elements[10]);
+  const ccReceivers = parseReceiversList(elements[11]);
+  const bccReceivers = parseReceiversList(elements[12]);
+  const userPictureHash = getField('userpicture', 13);
+  const fromOauth = getField('fromOauth', 15) === '1';
+  const allowReply = getField('allowReply', 19) !== '0';
+  const hasReply = getField('hasReply', 20) === '1';
+  const hasForward = getField('hasForward', 21) === '1';
+  const sendDate = getField('sendDate', 22) || undefined;
+
+  const isExplicitlyRead = statusStr === '1' || unreadStr === '0';
+  const isUnread = !isExplicitlyRead && unreadStr === '1';
 
   return {
     id,
@@ -217,7 +261,7 @@ export function parseMessageR(node: Element): SmartschoolMessageDetail | null {
     subject: subject || '(Sans objet)',
     date,
     bodyHtml,
-    status: statusStr === '0' ? 'unread' : 'read',
+    status: isUnread ? 'unread' : 'read',
     hasAttachment: (parseInt(attachmentStr, 10) || 0) > 0,
     label: mapLabelToColor(labelStr),
     receivers,

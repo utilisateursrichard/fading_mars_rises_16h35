@@ -308,7 +308,7 @@ Dans la réponse de la commande `message list`, chaque nœud contient **exacteme
 | `4` | **`date`** | `string` | Date formatée (ex: `"Aujourd'hui 09:12"`, `"24.09.26"`). |
 | `5` | **`status`** | `string` | Statut de lecture (`"0"` = non lu, `"1"` = lu). |
 | `6` | **`attachment`** | `string` | Nombre de pièces jointes (`"0"` si aucune). |
-| `7` | **`unread`** | `string` | Indicateur booléen non-lu. |
+| `7` | **`unread`** | `string` | Indicateur booléen non-lu (`"1"` = non lu, `"0"` = lu). |
 | `8` | **`label`** | `string` | Drapeau couleur (`"0"` = aucun, `"1"` = vert, `"2"` = jaune, `"3"` = rouge, `"4"` = bleu). |
 | `9` | **`deleted`** | `string` | Indicateur de suppression (`"0"` ou `"1"`). |
 | `10` | **`allowReply`** | `string` | Droit de réponse autorisé pour l'utilisateur (`"0"` ou `"1"`). |
@@ -316,6 +316,12 @@ Dans la réponse de la commande `message list`, chaque nœud contient **exacteme
 | `12` | **`hasReply`** | `string` | Indique si le message a déjà reçu une réponse (`"0"` ou `"1"`). |
 | `13` | **`hasForward`** | `string` | Indique si le message a été transféré (`"0"` ou `"1"`). |
 | `14` | **`realBox`** | `string` | Dossier physique réel (`"inbox"`, `"outbox"`, etc.). |
+
+> **Règle formelle de détection du statut non-lu dans l'écosystème Smartschool :**
+> - **Dossier :** Un message ne peut être non lu **que dans la boîte de réception** (`realBox === 'inbox'`). Les dossiers d'envoi (`outbox`), brouillons (`draft`) ou corbeille (`trash`) ne comportent jamais de statut ou de pastille non lu.
+> - **Critère lu/non lu :** Un message est considéré lu si `status === '1'`, `unread === '0'`, ou `msgStatus === '1'`. Il est considéré non lu uniquement si la classe `msgNew` est présente ou si `unread === '1'` (avec `status !== '1'`).
+> - **Cohérence live :** Lorsque le compteur global Smartschool (`quickactions / reloadunreadmessages` ou badge DOM `#bot_unread_counter`) renvoie `0`, aucun message de la liste ne doit arborer de pastille.
+> - **Interface UI :** Le bouton de barre d'actions affiche clairement `"Marquer non lu"` (sur un message lu) ou `"Marquer comme lu"` (sur un message non lu), éliminant toute fausse bulle passive qui induirait en erreur l'utilisateur.
 
 ---
 

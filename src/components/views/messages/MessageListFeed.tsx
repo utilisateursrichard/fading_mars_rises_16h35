@@ -162,6 +162,7 @@ export const MessageListFeed: React.FC = () => {
           filteredMessages.map(msg => {
             const isSelected = selectedMailId === msg.id;
             const flagColorClass = getFlagDotColor(msg.label);
+            const isUnread = Boolean(activeMailbox === 'inbox' && (msg.unread || msg.status === 'unread'));
 
             return (
               <article
@@ -170,7 +171,7 @@ export const MessageListFeed: React.FC = () => {
                 className={`p-3.5 rounded-card cursor-pointer transition-all duration-200 border text-left relative m3-press active:scale-[0.99] ${
                   isSelected
                     ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-800/80 shadow-subtle ring-1 ring-indigo-500/20'
-                    : msg.unread
+                    : isUnread
                     ? 'bg-white dark:bg-slate-900 border-indigo-200/60 dark:border-slate-700 shadow-subtle hover:border-indigo-300 dark:hover:border-slate-600'
                     : 'bg-white/70 dark:bg-slate-900/60 border-slate-200/70 dark:border-slate-800/70 hover:bg-white dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
@@ -178,12 +179,12 @@ export const MessageListFeed: React.FC = () => {
                 {/* En-tête : Expéditeur & Date */}
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <div className="flex items-center gap-2 min-w-0">
-                    {msg.unread && (
+                    {isUnread && (
                       <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0 ring-4 ring-indigo-100 dark:ring-indigo-950/60" />
                     )}
                     <span
                       className={`text-xs truncate font-display ${
-                        msg.unread
+                        isUnread
                           ? 'font-extrabold text-slate-900 dark:text-white'
                           : 'font-semibold text-slate-700 dark:text-slate-300'
                       }`}
@@ -200,7 +201,7 @@ export const MessageListFeed: React.FC = () => {
                 {/* Objet */}
                 <h4
                   className={`text-xs line-clamp-1 mb-1 ${
-                    msg.unread
+                    isUnread
                       ? 'font-bold text-slate-800 dark:text-slate-100'
                       : 'font-medium text-slate-600 dark:text-slate-300'
                   }`}
