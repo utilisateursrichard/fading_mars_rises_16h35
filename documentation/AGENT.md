@@ -101,6 +101,15 @@ Pour brancher une vraie route Smartschool :
 2. Passer `isReadyInLive: true` dans `src/utils/featureFlags.ts`.
 3. Aucun composant graphique n'a besoin d'être modifié !
 
+### 4.4. 💬 Architecture Spécifique Messagerie (`src/services/smartschoolMessages.ts`)
+* **Lecture & Actions rapides :** Exécutées via le bus RPC XML unifié `POST /?module=Messages&file=dispatcher`.
+* **Réponse Rapide Native :** Commande RPC `postboxes / send quick reply` permettant de répondre instantanément sans charger le formulaire lourd de composition.
+* **Nouveau Message & Expédition Réelle (3 Étapes) :**
+  1. `fetchSmartschoolComposeSession()` : initialise la session de composition côté serveur et récupère les jetons frais (`uniqueUsc`, `encryptedSender`, `randomDir`, `ssid`).
+  2. `addSmartschoolRecipientToComposeSession()` : lie chaque destinataire à la session PHP via l'appel AJAX officiel `addUserToSelected`.
+  3. `POST /?module=Messages&file=composeMessage` avec `send="send"` : valide l'envoi définitif (ne pas utiliser `send="refresh"` qui n'est qu'un brouillon).
+  4. `verifyMessageInOutbox()` : contrôle la présence effective du message dans la boîte d'envoi (`outbox`).
+
 ---
 
 ## 5. 🛠️ Commandes Utiles

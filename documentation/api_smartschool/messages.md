@@ -243,6 +243,7 @@ Le client Smartschool (`messages.js`) implémente **43 commandes RPC** distribu�
 | `attachment list` | `msgID`, `boxType`, `limitList` | Récupère la liste des pièces jointes associées à un message. |
 | `mark message read` | `msgID`, `boxType` | Marque le message comme lu. |
 | `mark message unread` | `boxType`, `boxID`, `msgID`, `clAction: "status"` | Marque le message comme non-lu. |
+| `send quick reply` | `quickreply_id`, `quickreply_txt`, `quickreply_all` | Expédie une réponse rapide directement sans ouvrir la fenêtre de composition. |
 | `save msglabel` | `boxType`, `msgLabel` (`0`=aucun, `1`=vert, `2`=jaune, `3`=rouge, `4`=bleu), `msgID`, `clAction: "label"` | Associe un drapeau couleur à un message. |
 | `delete messages` | `boxType`, `boxID`, `msgID` | Supprime un ou plusieurs messages sélectionnés. |
 | `quick delete` | `msgID` | Suppression rapide d'un message individuel. |
@@ -257,11 +258,11 @@ Le client Smartschool (`messages.js`) implémente **43 commandes RPC** distribu�
 | `smartbox list` | Aucun | Liste les dossiers virtuels personnalisés. |
 | `smartfolder list` | Aucun | Liste les dossiers intelligents. |
 
-### B. Sous-système `draft` (Brouillons & Envois)
+### B. Sous-système `draft` (Brouillons)
 
 | Action | Paramètres clés | Rôle |
 | :--- | :--- | :--- |
-| `save draft` | `draftID`, `send` (`"send"` ou `"refresh"`), `to`, `to_users`, `subject`, `message`, `randomDir`, `uniqueUsc`, `encryptedSender`, `origMsgID` | Enregistre un brouillon (`refresh`) ou expédie le message (`send`). |
+| `save draft` | `draftID`, `send: "refresh"`, `subject`, `message`, `randomDir`, `uniqueUsc`, `encryptedSender`, `origMsgID` | Enregistrement automatique périodique du brouillon uniquement. Ne délivre pas le message aux destinataires. |
 
 ### C. Sous-système `quickactions` (Actions Rapides)
 
@@ -455,46 +456,87 @@ export class SmartschoolMessageCommunicator {
   }
 
   /**
-   * Expédition effective d'un message
+   * Réponse rapide native (RPC postboxes / send quick reply)
+   */
+  public async sendQuickReply(params: {
+    msgId: string | number;
+    bodyHtml: string;
+    replyAll?: boolean;
+  }): Promise<boolean> {
+    const doc = await this.sendRequest([
+      {
+        subsystem: 'postboxes',
+        action: 'send quick reply',
+        params: [
+          { name: 'quickreply_id', value: params.msgId },
+          { name: 'quickreply_txt', value: params.bodyHtml },
+          { name: 'quickreply_all', value: params.replyAll ? 'true' : 'false' }
+        ]
+      }
+    ]);
+
+    if (!doc) return false;
+    const alertMsg = doc.querySelector('actions > action > data')?.firstElementChild?.children[2]?.textContent;
+    return !alertMsg;
+  }
+
+  /**
+   * Expédition effective d'un message (3 étapes : session, destinataires, soumission form)
    */
   public async sendMessage(params: {
     toUserIds: (string | number)[];
     subject: string;
     bodyHtml: string;
-    uniqueUsc: string;
+    session: { uniqueUsc: string; encryptedSender: string; randomDir: string; ssid: string };
     origMsgId?: string | number;
   }): Promise<boolean> {
-    const randomDir = 'FWaCpQ8tr5UkvHzJ3n5XNALwc' + Date.now();
-    const toList = params.toUserIds.join(',');
+    // 1. Enregistrement de chaque destinataire en session serveur
+    for (const userId of params.toUserIds) {
+      const p = new URLSearchParams();
+      p.append('id', String(userId));
+      p.append('typeId', 'users');
+      p.append('type', '0');
+      p.append('parentNodeId', 'insertSearchFieldContainer_0_0');
+      p.append('ssid', params.session.ssid);
+      p.append('userlt', '0');
+      p.append('uniqueUsc', params.session.uniqueUsc);
+      await fetch('/?module=Messages&file=searchUsers&function=addUserToSelected', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        body: p.toString()
+      });
+    }
 
-    const doc = await this.sendRequest([
-      {
-        subsystem: 'draft',
-        action: 'save draft',
-        params: [
-          { name: 'draftID', value: '0' },
-          { name: 'send', value: 'send' }, // 👈 Envoi effectif
-          { name: 'origMsgID', value: params.origMsgId || 0 },
-          { name: 'composeAction', value: 0 },
-          { name: 'randomDir', value: randomDir },
-          { name: 'uniqueUsc', value: params.uniqueUsc },
-          { name: 'to', value: toList },
-          { name: 'to_users', value: toList },
-          { name: 'subject', value: params.subject },
-          { name: 'bcc', value: 0 },
-          { name: 'composeType', value: 0 },
-          { name: 'msgID', value: 0 },
-          { name: 'message', value: params.bodyHtml },
-          { name: 'preload_type', value: '' },
-          { name: 'encryptedSender', value: '' },
-          { name: 'sendDate', value: '' }
-        ]
-      }
-    ]);
+    // 2. Soumission du formulaire msgForm avec send="send"
+    const form = new URLSearchParams();
+    form.append('encryptedSender', params.session.encryptedSender);
+    form.append('send', 'send'); // 👈 IMPORTANT : 'send' = expédition réelle
+    form.append('origMsgID', String(params.origMsgId || 0));
+    form.append('composeAction', '0');
+    form.append('randomDir', params.session.randomDir);
+    form.append('uniqueUsc', params.session.uniqueUsc);
+    form.append('showTab', 'tab1Container');
+    form.append('msgFormdelFile', '0');
+    form.append('delFile', '0');
+    form.append('composeTypeVal', params.origMsgId ? '1' : '0');
+    form.append('msgIDVal', String(params.origMsgId || 0));
+    form.append('msgFormSelectedTab', '');
+    form.append('sendDate', '');
+    form.append('subject', params.subject);
+    form.append('message', params.bodyHtml);
+    form.append('bcc', '0');
+    form.append('to', params.toUserIds.join(','));
+    form.append('to_users', params.toUserIds.join(','));
 
-    const status = doc.querySelector('status')?.textContent;
-    return status === 'ok';
+    const res = await fetch(`/?module=Messages&file=composeMessage&boxType=inbox&composeType=${params.origMsgId ? '1' : '0'}&msgID=${params.origMsgId || 0}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+      body: form.toString()
+    });
+
+    return res.ok || res.status === 302;
   }
 }
 ```
+
 

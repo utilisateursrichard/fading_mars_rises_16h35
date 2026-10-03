@@ -102,11 +102,19 @@ L'un des objectifs fondamentaux de la refonte est de **supprimer la surcharge co
 * Clic sur un événement : déclenche la modal d'approfondissement `CourseDetailModal` affichant les devoirs associés, le programme de cours et les supports téléchargeables.
 
 ### 4.3. 💬 Messagerie Scolaire (`MessagesView`)
-* **Classification en 4 onglets :** *Tous*, *Professeurs*, *Vie Scolaire*, *Groupes de projet*.
-* **Centralisation stricte des enseignants :** Tous les professeurs affichés correspondent rigoureusement au registre unique `TEACHERS`.
-* **Messages Standardisés :** Tous les messages et réponses automatiques utilisent le format `"message placeholder XXX"` (numérotation aléatoire à 3 chiffres).
-* Simulation réaliste de réponse automatique au bout de 1,5 seconde lors de l'envoi d'un nouveau message.
-* Responsive mobile : bascule fluide entre la liste de discussions et la conversation plein écran avec bouton de retour.
+* **Mode Réel (Intégration directe Smartschool) :**
+  * **Gestion des Boîtes :** Réception (`inbox`), Messages envoyés (`outbox`), Corbeille (`trash`), Brouillons (`draft`).
+  * **Compteurs en direct :** Synchronisation temps réel des messages non lus via la commande RPC native `reloadunreadmessages` et l'interrogation du DOM hôte (sans passer par le cache local).
+  * **Expédition Réelle en 3 étapes :**
+    1. Récupération des jetons de composition frais (`uniqueUsc`, `encryptedSender`, `randomDir`, `ssid`) via `fetchSmartschoolComposeSession`.
+    2. Enregistrement obligatoire de chaque destinataire dans la session serveur du formulaire via l'appel AJAX officiel `addUserToSelected`.
+    3. Soumission du formulaire `msgForm` avec `send='send'` (évitant l'abandon en brouillon ou corbeille).
+    4. Vérification automatique de la présence effective du message dans la boîte des messages envoyés (`outbox`).
+  * **Réponse Rapide Native :** Commande RPC haute performance `postboxes / send quick reply` permettant de répondre instantanément sans ouvrir la fenêtre de rédaction.
+  * **Actions contextuelles :** Drapeaux couleur (`save msglabel`), marquage lu/non-lu (`mark message unread`), déplacement corbeille (`quick delete`).
+* **Mode Démo (Hors-ligne / Vitrine) :**
+  * Classification par dossiers, filtres par catégorie et réponses automatiques simulées.
+  * Responsive mobile complet avec transition fluide liste / détail de message.
 
 ### 4.4. 🏆 Notes & Résultats (`ResultsView`)
 * Récapitulatif trimestriel complet avec calcul de la moyenne pondérée officielle par les coefficients.
