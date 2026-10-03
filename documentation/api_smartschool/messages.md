@@ -241,7 +241,7 @@ Le client Smartschool (`messages.js`) implémente **43 commandes RPC** distribu�
 | `message list` | `boxType`, `boxID`, `sortField`, `sortKey`, `poll`, `poll_ids`, `layout` | Charge la liste des messages (supporte le polling incrémental). |
 | `show message` | `msgID`, `boxType`, `limitList`, `limitListNr` | Charge le contenu complet HTML d'un message. |
 | `attachment list` | `msgID`, `boxType`, `limitList` | Récupère la liste des pièces jointes associées à un message. |
-| `mark message read` | `msgID`, `boxType` | Marque le message comme lu. |
+| `mark message read` | `boxType`, `boxID`, `msgID`, `clAction: "status"` | Marque le message comme lu sur le serveur. |
 | `mark message unread` | `boxType`, `boxID`, `msgID`, `clAction: "status"` | Marque le message comme non-lu. |
 | `send quick reply` | `quickreply_id`, `quickreply_txt`, `quickreply_all` | Expédie une réponse rapide directement sans ouvrir la fenêtre de composition. |
 | `save msglabel` | `boxType`, `msgLabel` (`0`=aucun, `1`=vert, `2`=jaune, `3`=rouge, `4`=bleu), `msgID`, `clAction: "label"` | Associe un drapeau couleur à un message. |

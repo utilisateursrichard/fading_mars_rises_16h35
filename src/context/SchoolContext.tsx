@@ -44,6 +44,7 @@ import {
   fetchLiveSmartschoolUnreadCount,
   sendSmartschoolMessage,
   sendSmartschoolQuickReply,
+  markSmartschoolMessageRead,
   markSmartschoolMessageUnread,
   saveSmartschoolMessageLabel,
   deleteSmartschoolMessage,
@@ -110,6 +111,7 @@ interface SchoolContextType {
   sendSmartschoolMail: (payload: { recipientUserIds: (string | number)[]; subject: string; bodyHtml: string; origMsgId?: string | number }) => Promise<{ success: boolean; error?: string }>;
   replyToMail: (bodyHtml: string) => Promise<{ success: boolean; error?: string }>;
   toggleMailFlag: (id: string, color: SmartschoolFlagColor) => Promise<boolean>;
+  setMailRead: (id: string) => Promise<boolean>;
   setMailUnread: (id: string) => Promise<boolean>;
   deleteMail: (id: string) => Promise<boolean>;
   archiveMail: (id: string) => Promise<boolean>;
@@ -667,14 +669,18 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setIsMailDetailLoading(true);
     try {
       if (!isDemoMode) {
-        const detail = await fetchSmartschoolMessageDetail(id, activeMailbox);
+        const targetMsg = mailMessages.find(m => m.id === id);
+        const wasUnread = targetMsg ? Boolean(targetMsg.unread || targetMsg.status === 'unread') : true;
+
+        const detail = await fetchSmartschoolMessageDetail(id, activeMailbox, wasUnread);
         if (detail) {
           setSelectedMailDetail(detail);
           setMailMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'read', unread: false } : m));
-          setMailCounters(prev => ({
-            ...prev,
-            inbox: Math.max(0, prev.inbox - 1)
-          }));
+          
+          if (wasUnread) {
+            // Synchronisation immédiate avec le compte officiel non-lu de Smartschool
+            await syncLiveUnreadMessages();
+          }
           return detail;
         }
         return null;
@@ -827,12 +833,25 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return true;
   };
 
+  const setMailRead = async (id: string): Promise<boolean> => {
+    setMailMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'read', unread: false } : m));
+    if (!isDemoMode) {
+      const ok = await markSmartschoolMessageRead(id, activeMailbox);
+      await syncLiveUnreadMessages();
+      return ok;
+    }
+    setMailCounters(prev => ({ ...prev, inbox: Math.max(0, prev.inbox - 1) }));
+    return true;
+  };
+
   const setMailUnread = async (id: string): Promise<boolean> => {
     setMailMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'unread', unread: true } : m));
-    setMailCounters(prev => ({ ...prev, inbox: prev.inbox + 1 }));
     if (!isDemoMode) {
-      return await markSmartschoolMessageUnread(id, activeMailbox);
+      const ok = await markSmartschoolMessageUnread(id, activeMailbox);
+      await syncLiveUnreadMessages();
+      return ok;
     }
+    setMailCounters(prev => ({ ...prev, inbox: prev.inbox + 1 }));
     return true;
   };
 
@@ -944,6 +963,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         sendSmartschoolMail,
         replyToMail,
         toggleMailFlag,
+        setMailRead,
         setMailUnread,
         deleteMail,
         archiveMail,

@@ -468,8 +468,10 @@ export async function fetchSmartschoolMessageDetail(
   if (isUnread) {
     commands.push(
       buildRpcCommandXml('postboxes', 'mark message read', [
+        { name: 'boxType', value: boxType },
+        { name: 'boxID', value: 0 },
         { name: 'msgID', value: msgId },
-        { name: 'boxType', value: boxType }
+        { name: 'clAction', value: 'status' }
       ])
     );
   }
@@ -800,6 +802,21 @@ export async function saveSmartschoolDraft(payload: {
 
   const status = getNodeText(doc.querySelector('status'));
   return { success: status === 'ok' };
+}
+
+/**
+ * Marque un message comme lu sur Smartschool via la commande RPC native
+ */
+export async function markSmartschoolMessageRead(msgId: string, boxType: SmartschoolBoxType): Promise<boolean> {
+  const cmdXml = buildRpcCommandXml('postboxes', 'mark message read', [
+    { name: 'boxType', value: boxType },
+    { name: 'boxID', value: 0 },
+    { name: 'msgID', value: msgId },
+    { name: 'clAction', value: 'status' }
+  ]);
+
+  const doc = await sendSmartschoolRpc([cmdXml]);
+  return !!doc && getNodeText(doc.querySelector('status')) === 'ok';
 }
 
 /**
