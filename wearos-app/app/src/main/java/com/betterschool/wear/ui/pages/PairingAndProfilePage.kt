@@ -38,9 +38,8 @@ import com.betterschool.wear.ui.M3ETheme
 import com.betterschool.wear.ui.WearUiState
 
 /**
- * Écran de Connexion M3E Pro (affiché directement si la montre n'est pas connectée)
- * et page de gestion du compte une fois connecté.
- * Conçu pour la Safe Area circulaire d'une montre Wear OS (zéro débordement sur les bords ronds).
+ * Page Compte & Connexion M3E Pro Dark (OLED).
+ * Épurée de toute information technique inutile.
  */
 @Composable
 fun PairingAndProfilePage(
@@ -64,7 +63,6 @@ fun PairingAndProfilePage(
             val formattedCode = if (code.length == 6) "${code.substring(0, 3)} ${code.substring(3, 6)}" else code
 
             if (showFullQr) {
-                // Vue plein centre du QR Code pour un scan facile sur écran rond
                 val matrix = remember(code) { QrMatrixGenerator.encodeCode(code) }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -73,10 +71,9 @@ fun PairingAndProfilePage(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(114.dp)
+                            .size(112.dp)
                             .clip(RoundedCornerShape(16.dp))
                             .background(Color.White)
-                            .border(1.dp, M3ETheme.CardBorder, RoundedCornerShape(16.dp))
                             .padding(8.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -87,7 +84,7 @@ fun PairingAndProfilePage(
                                 for (c in 0 until n) {
                                     if (matrix[r][c]) {
                                         drawRect(
-                                            color = M3ETheme.TextPrimary,
+                                            color = Color(0xFF0F172A),
                                             topLeft = Offset(c * cell, r * cell),
                                             size = Size(cell + 0.4f, cell + 0.4f)
                                         )
@@ -102,26 +99,25 @@ fun PairingAndProfilePage(
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(M3ETheme.TextPrimary)
+                            .background(M3ETheme.SubtleSurface)
+                            .border(1.dp, M3ETheme.CardBorder, CircleShape)
                             .clickable { showFullQr = false }
                             .padding(horizontal = 14.dp, vertical = 5.dp)
                     ) {
                         Text(
-                            text = "Voir code ($formattedCode)",
-                            color = Color.White,
+                            text = "Code : $formattedCode",
+                            color = M3ETheme.TextPrimary,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
             } else {
-                // Vue M3E Pro par défaut : Code à 6 chiffres géant + bouton QR + bouton Démo
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Badge supérieur capsule M3E Pro
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
@@ -137,7 +133,6 @@ fun PairingAndProfilePage(
                         )
                     }
 
-                    // Carte Bento centrale M3E Pro avec le code à 6 chiffres
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -148,7 +143,7 @@ fun PairingAndProfilePage(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Entrez ce code sur le Web",
+                            text = "Code à entrer sur le Web",
                             color = M3ETheme.TextMuted,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
@@ -205,7 +200,6 @@ fun PairingAndProfilePage(
                         }
                     }
 
-                    // Bouton secondaire discret : Essayer le Mode Démo
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
@@ -223,7 +217,7 @@ fun PairingAndProfilePage(
                 }
             }
         } else {
-            // Montre connectée (ou en mode démo volontaire) : Carte Compte M3E Pro
+            // Vue Compte épurée (sans trace technique ni URL brute)
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -241,7 +235,7 @@ fun PairingAndProfilePage(
                         .padding(horizontal = 10.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = if (uiState.isDemoMode) "MODE DÉMO" else "SESSION VÉRIFIÉE",
+                        text = if (uiState.isDemoMode) "MODE DÉMO" else "CONNECTÉ",
                         color = if (uiState.isDemoMode) M3ETheme.AmberText else M3ETheme.EmeraldText,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.ExtraBold
@@ -258,7 +252,7 @@ fun PairingAndProfilePage(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = uiState.profile.fullName.ifEmpty { "Compte Élève" },
+                        text = uiState.profile.fullName.ifEmpty { "Mon Compte" },
                         color = M3ETheme.TextPrimary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.ExtraBold,
@@ -266,37 +260,17 @@ fun PairingAndProfilePage(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    val subtitle = listOfNotNull(
-                        uiState.profile.studentClass.takeIf { it.isNotBlank() },
-                        uiState.profile.schoolName.takeIf { it.isNotBlank() }
-                    ).joinToString(" • ")
-
-                    if (subtitle.isNotEmpty()) {
+                    if (uiState.profile.studentClass.isNotBlank()) {
                         Text(
-                            text = subtitle,
+                            text = "Classe ${uiState.profile.studentClass}",
                             color = M3ETheme.TextMuted,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            maxLines = 1
                         )
                     }
 
-                    if (!uiState.statusBanner.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.height(3.dp))
-                        Text(
-                            text = uiState.statusBanner,
-                            color = M3ETheme.BrandIndigo,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            textAlign = TextAlign.Center,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -306,12 +280,12 @@ fun PairingAndProfilePage(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
-                                    .background(M3ETheme.TextPrimary)
-                                    .clickable { onRefresh() }
+                                    .background(M3ETheme.BrandIndigo)
+                                    .clickable(enabled = !uiState.isLoading) { onRefresh() }
                                     .padding(horizontal = 10.dp, vertical = 5.dp)
                             ) {
                                 Text(
-                                    text = "Actualiser",
+                                    text = if (uiState.isLoading) "Sync..." else "Actualiser",
                                     color = Color.White,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold
@@ -328,7 +302,7 @@ fun PairingAndProfilePage(
                                 .padding(horizontal = 10.dp, vertical = 5.dp)
                         ) {
                             Text(
-                                text = if (uiState.isDemoMode) "Connecter compte" else "Déconnecter",
+                                text = if (uiState.isDemoMode) "Quitter démo" else "Déconnecter",
                                 color = M3ETheme.RoseText,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
@@ -341,9 +315,6 @@ fun PairingAndProfilePage(
     }
 }
 
-/**
- * Encodeur QR Code Version 1-L (21x21 ISO/IEC 18004) pur Kotlin ultra-léger
- */
 object QrMatrixGenerator {
     fun encodeCode(text: String): Array<BooleanArray> {
         val size = 21

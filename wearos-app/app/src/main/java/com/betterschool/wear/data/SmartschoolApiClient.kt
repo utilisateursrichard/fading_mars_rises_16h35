@@ -403,9 +403,16 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
             if (evalType == "project" && identifier.isNotEmpty()) {
                 val existingGoals = evObj.optJSONObject("details")?.optJSONArray("projectGoals")
                 if (existingGoals == null || existingGoals.length() == 0) {
-                    val detailObj = fetchSingleEvaluationDetail(host, identifier)
-                    if (detailObj != null) {
-                        evObj = detailObj
+                    // 1. Vérifier d'abord le cache local persistant pour ne jamais re-télécharger un projet déjà connu
+                    val cachedJson = sessionManager.getCachedProjectEvaluationJson(identifier)
+                    if (!cachedJson.isNullOrBlank()) {
+                        runCatching { JSONObject(cachedJson) }.getOrNull()?.let { evObj = it }
+                    } else {
+                        val detailObj = fetchSingleEvaluationDetail(host, identifier)
+                        if (detailObj != null) {
+                            sessionManager.saveCachedProjectEvaluationJson(identifier, detailObj.toString())
+                            evObj = detailObj
+                        }
                     }
                 }
             }
@@ -448,7 +455,8 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
                         <param name="sortField"><![CDATA[date]]></param>
                         <param name="sortKey"><![CDATA[desc]]></param>
                         <param name="poll"><![CDATA[false]]></param>
-                        <param name="layout"><![CDATA[new]]></param>
+                        <param name="poll_ids"><![CDATA[]]></param>
+                        <param name="layout"><![CDATA[classic]]></param>
                     </params>
                 </command>
             </request>

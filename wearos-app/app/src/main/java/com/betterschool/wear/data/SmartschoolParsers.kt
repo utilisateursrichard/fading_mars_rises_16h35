@@ -1,5 +1,6 @@
 package com.betterschool.wear.data
 
+import android.text.Html
 import com.betterschool.wear.domain.WearCourseEvent
 import com.betterschool.wear.domain.WearGrade
 import com.betterschool.wear.domain.WearHomework
@@ -10,6 +11,7 @@ import org.json.JSONObject
 import org.w3c.dom.Element
 import org.xml.sax.InputSource
 import java.io.StringReader
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -47,6 +49,8 @@ object SmartschoolParsers {
             return Pair(emptyList(), emptyList())
         }
 
+        val todayDate = LocalDate.now()
+        val todayStr = todayDate.toString() // YYYY-MM-DD
         val now = LocalTime.now()
 
         for (i in 0 until array.length()) {
@@ -82,10 +86,21 @@ object SmartschoolParsers {
                 elementType == "planned-lesson-cluster-assignments"
 
             if (isAssignment) {
+                // Ignorer tout devoir dans le passé (comme dans DashboardView.tsx:88)
+                if (dateStr.isNotEmpty() && dateStr < todayStr) continue
+
                 val title = obj.optString("name").takeIf { it.isNotEmpty() } ?: courseName
                 val resolvedStatus = obj.optString("resolvedStatus", "unresolved")
+                val isCompleted = resolvedStatus == "resolved"
                 val assignmentTypeName = obj.optJSONObject("assignmentType")
                     ?.optString("name")?.takeIf { it.isNotEmpty() } ?: "Devoir"
+
+                val importance = calculateHomeworkImportance(
+                    dueDateStr = dateStr,
+                    assignmentTypeName = "$assignmentTypeName $title",
+                    isCompleted = isCompleted,
+                    todayDate = todayDate
+                )
 
                 homeworks.add(
                     WearHomework(
@@ -96,9 +111,10 @@ object SmartschoolParsers {
                         title = title,
                         dueDate = dateStr,
                         dueTime = startTimeStr.ifEmpty { null },
-                        isCompleted = resolvedStatus == "resolved",
+                        isCompleted = isCompleted,
                         typeLabel = assignmentTypeName,
-                        colorHex = colorHex
+                        colorHex = colorHex,
+                        importanceScore = importance
                     )
                 )
             } else {
@@ -122,7 +138,7 @@ object SmartschoolParsers {
                 var remainingMin: Int? = null
                 var progress = 0f
 
-                if (startLocal != null && endLocal != null) {
+                if (dateStr == todayStr && startLocal != null && endLocal != null) {
                     when {
                         !now.isBefore(startLocal) && now.isBefore(endLocal) -> {
                             isCurrent = true
@@ -139,6 +155,8 @@ object SmartschoolParsers {
                             progress = 1f
                         }
                     }
+                } else if (dateStr > todayStr) {
+                    isUpcoming = true
                 }
 
                 courses.add(
@@ -161,9 +179,81 @@ object SmartschoolParsers {
             }
         }
 
-        return Pair(
-            courses.sortedBy { it.startTime },
-            homeworks.sortedWith(compareBy<WearHomework> { it.isCompleted }.thenBy { it.dueDate })
+        // Ne conserver QUE le cours actuel et les cours qui suivront jusqu'à la fin de la journée !
+        // (Et si la journée d'aujourd'hui est finie, afficher les cours du prochain jour de cours).
+        val remainingTodayCourses = courses
+            .filter { it.date == todayStr && (it.isCurrent || it.isUpcoming) }
+            .sortedBy { it.startTime }
+
+        val targetDayCourses = if (remainingTodayCourses.isNotEmpty()) {
+            remainingTodayCourses
+        } else {
+            val nextSchoolDate = courses
+                .filter { it.date > todayStr }
+                .minOfOrNull { it.date }
+            if (nextSchoolDate != null) {
+                courses.filter { it.date == nextSchoolDate }.sortedBy { it.startTime }
+            } else {
+                emptyList()
+            }
+        }
+
+        // Tri des devoirs par ordre d'importance décroissant puis date d'échéance la plus proche
+        // (identique à DashboardView.tsx:111-115)
+        val sortedHomeworks = sortHomeworksByImportance(homeworks)
+
+        return Pair(targetDayCourses, sortedHomeworks)
+    }
+
+    /**
+     * Formule officielle de src/utils/homeworkImportance.ts (échelle 0 à 10) :
+     * - Échéance : 0 à 6 points
+     * - Contrôle / Interro : +2 points
+     * - Examen : +4 points
+     */
+    fun calculateHomeworkImportance(
+        dueDateStr: String,
+        assignmentTypeName: String = "",
+        isCompleted: Boolean = false,
+        todayDate: LocalDate = LocalDate.now()
+    ): Int {
+        if (isCompleted) return 0
+        val dueDate = try {
+            LocalDate.parse(dueDateStr.take(10))
+        } catch (_: Exception) {
+            return 3
+        }
+
+        val daysUntilDue = ChronoUnit.DAYS.between(todayDate, dueDate).toInt()
+        if (daysUntilDue < 0) return 0
+
+        val deadlinePoints = when {
+            daysUntilDue == 0 -> 6
+            daysUntilDue == 1 -> 5
+            daysUntilDue == 2 -> 4
+            daysUntilDue <= 4 -> 3
+            daysUntilDue <= 7 -> 2
+            daysUntilDue <= 14 -> 1
+            else -> 0
+        }
+
+        val isExam = Regex("examen|exam", RegexOption.IGNORE_CASE).containsMatchIn(assignmentTypeName)
+        val isAssessment = Regex("interro|contr[ôo]le|ds|test|[ée]val", RegexOption.IGNORE_CASE)
+            .containsMatchIn(assignmentTypeName)
+        val assessmentPoints = when {
+            isExam -> 4
+            isAssessment -> 2
+            else -> 0
+        }
+
+        return minOf(10, deadlinePoints + assessmentPoints)
+    }
+
+    fun sortHomeworksByImportance(list: List<WearHomework>): List<WearHomework> {
+        return list.sortedWith(
+            compareBy<WearHomework> { it.isCompleted }
+                .thenByDescending { it.importanceScore }
+                .thenBy { it.dueDate }
         )
     }
 
@@ -339,25 +429,49 @@ object SmartschoolParsers {
             val factory = DocumentBuilderFactory.newInstance()
             val builder = factory.newDocumentBuilder()
             val doc = builder.parse(InputSource(StringReader(rawXml)))
-            val messageNodes = doc.getElementsByTagName("message")
 
-            for (i in 0 until messageNodes.length) {
-                val node = messageNodes.item(i) as? Element ?: continue
+            // Recherche des nœuds messages dans actions > action > data > rootContainer > children (comme smartschoolMessages.ts:474)
+            val candidateElements = mutableListOf<Element>()
+            val dataNodes = doc.getElementsByTagName("data")
+            for (dIdx in 0 until dataNodes.length) {
+                val dataEl = dataNodes.item(dIdx) as? Element ?: continue
+                val rootContainer = (0 until dataEl.childNodes.length)
+                    .mapNotNull { dataEl.childNodes.item(it) as? Element }
+                    .firstOrNull() ?: continue
+                for (cIdx in 0 until rootContainer.childNodes.length) {
+                    val itemEl = rootContainer.childNodes.item(cIdx) as? Element ?: continue
+                    candidateElements.add(itemEl)
+                }
+            }
+
+            if (candidateElements.isEmpty()) {
+                val fallbackNodes = doc.getElementsByTagName("message")
+                for (i in 0 until fallbackNodes.length) {
+                    (fallbackNodes.item(i) as? Element)?.let { candidateElements.add(it) }
+                }
+            }
+
+            for (node in candidateElements) {
                 val children = (0 until node.childNodes.length)
                     .mapNotNull { node.childNodes.item(it) as? Element }
 
-                if (children.size < 8) continue
+                if (children.size < 5) continue
 
-                val id = children.getOrNull(0)?.textContent?.trim() ?: continue
-                val from = children.getOrNull(1)?.textContent?.trim() ?: "Smartschool"
-                val subject = children.getOrNull(3)?.textContent?.trim() ?: "(Sans objet)"
-                val dateLabel = children.getOrNull(4)?.textContent?.trim() ?: ""
-                val status = children.getOrNull(5)?.textContent?.trim() ?: "1"
-                val attachmentCount = children.getOrNull(6)?.textContent?.trim()?.toIntOrNull() ?: 0
-                val unreadFlag = children.getOrNull(7)?.textContent?.trim() ?: "0"
-                val realBox = children.getOrNull(14)?.textContent?.trim() ?: "inbox"
+                fun getField(tagName: String, idx: Int): String {
+                    val byName = children.firstOrNull { it.tagName.equals(tagName, ignoreCase = true) }
+                    return (byName ?: children.getOrNull(idx))?.textContent?.trim().orEmpty()
+                }
 
-                val isUnread = realBox == "inbox" && unreadFlag == "1" && status != "1"
+                val id = getField("id", 0).takeIf { it.isNotEmpty() } ?: continue
+                val from = stripHtmlForWatch(getField("from", 1)).ifEmpty { "Smartschool" }
+                val subject = stripHtmlForWatch(getField("subject", 3)).ifEmpty { "(Sans objet)" }
+                val dateLabel = stripHtmlForWatch(getField("date", 4))
+                val status = getField("status", 5).ifEmpty { "1" }
+                val attachmentCount = getField("attachment", 6).toIntOrNull() ?: 0
+                val unreadFlag = getField("unread", 7).ifEmpty { "0" }
+                val realBox = getField("realBox", 14).ifEmpty { "inbox" }
+
+                val isUnread = realBox.equals("inbox", ignoreCase = true) && unreadFlag == "1" && status != "1"
 
                 messages.add(
                     WearMessage(
@@ -382,13 +496,34 @@ object SmartschoolParsers {
             val factory = DocumentBuilderFactory.newInstance()
             val builder = factory.newDocumentBuilder()
             val doc = builder.parse(InputSource(StringReader(rawXml)))
+
+            // 1. Essayer par balise <body> directe
             val bodyNodes = doc.getElementsByTagName("body")
             if (bodyNodes.length > 0) {
                 val rawHtml = bodyNodes.item(0).textContent ?: ""
-                stripHtmlForWatch(rawHtml)
-            } else {
-                null
+                val cleaned = stripHtmlForWatch(rawHtml)
+                if (cleaned.isNotBlank()) return cleaned
             }
+
+            // 2. Essayer via l'index 5 de MessageR dans actions > action > data (comme smartschoolMessages.ts:222)
+            val dataNodes = doc.getElementsByTagName("data")
+            for (dIdx in 0 until dataNodes.length) {
+                val dataEl = dataNodes.item(dIdx) as? Element ?: continue
+                val rootContainer = (0 until dataEl.childNodes.length)
+                    .mapNotNull { dataEl.childNodes.item(it) as? Element }
+                    .firstOrNull() ?: continue
+                val msgNode = (0 until rootContainer.childNodes.length)
+                    .mapNotNull { rootContainer.childNodes.item(it) as? Element }
+                    .firstOrNull() ?: rootContainer
+                val fields = (0 until msgNode.childNodes.length)
+                    .mapNotNull { msgNode.childNodes.item(it) as? Element }
+                if (fields.size >= 6) {
+                    val rawHtml = fields[5].textContent.orEmpty()
+                    val cleaned = stripHtmlForWatch(rawHtml)
+                    if (cleaned.isNotBlank()) return cleaned
+                }
+            }
+            null
         } catch (_: Exception) {
             null
         }
@@ -442,19 +577,35 @@ object SmartschoolParsers {
         }
     }
 
+    /**
+     * Nettoie intégralement le HTML des messages Smartschool (supprime les blocs CSS <style>,
+     * <script>, <head>, commentaires Word/Outlook et décode toutes les entités HTML).
+     */
     fun stripHtmlForWatch(html: String): String {
-        return html
-            .replace(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE), "\n")
-            .replace(Regex("</p>", RegexOption.IGNORE_CASE), "\n\n")
-            .replace(Regex("<[^>]+>"), "")
-            .replace("&nbsp;", " ")
-            .replace("&amp;", "&")
-            .replace("&quot;", "\"")
-            .replace("&#039;", "'")
-            .replace("&lt;", "<")
-            .replace("&gt;", ">")
+        if (html.isBlank()) return ""
+        val withoutStylesAndScripts = html
+            .replace(Regex("<style[^>]*>[\\s\\S]*?</style>", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("<script[^>]*>[\\s\\S]*?</script>", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("<head[^>]*>[\\s\\S]*?</head>", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("<!--[\\s\\S]*?-->"), "")
+
+        val decoded = try {
+            Html.fromHtml(withoutStylesAndScripts, Html.FROM_HTML_MODE_LEGACY).toString()
+        } catch (_: Exception) {
+            withoutStylesAndScripts.replace(Regex("<[^>]+>"), "")
+        }
+
+        return decoded
+            .replace('\u00A0', ' ')
             .lines()
-            .joinToString("\n") { it.trim() }
+            .map { it.trim() }
+            .filter { line ->
+                // Filtrer toute ligne résiduelle de métadonnées CSS ou techniques
+                !line.startsWith("@font-face") &&
+                    !line.startsWith("p.MsoNormal") &&
+                    !line.contains("{font-family:")
+            }
+            .joinToString("\n")
             .replace(Regex("\n{3,}"), "\n\n")
             .trim()
     }

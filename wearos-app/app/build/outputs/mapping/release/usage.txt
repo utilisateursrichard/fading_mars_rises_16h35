@@ -2412,12 +2412,13 @@ androidx.compose.foundation.ExperimentalFoundationApi
 androidx.compose.foundation.FixedMotionDurationScale
 androidx.compose.foundation.FocusGroupElement
 androidx.compose.foundation.FocusGroupNode
-androidx.compose.foundation.FocusableElement
-androidx.compose.foundation.FocusableKt
+androidx.compose.foundation.FocusableElement:
+    public void inspectableProperties(androidx.compose.ui.platform.InspectorInfo)
+androidx.compose.foundation.FocusableKt:
+    public static final androidx.compose.ui.Modifier focusGroup(androidx.compose.ui.Modifier)
 androidx.compose.foundation.FocusableNode:
     public static final int $stable
     private final boolean shouldAutoInvalidate
-    public synthetic void <init>(androidx.compose.foundation.interaction.MutableInteractionSource,int,kotlin.jvm.functions.Function1,int,kotlin.jvm.internal.DefaultConstructorMarker)
     public final androidx.compose.ui.focus.FocusState getFocusState()
 androidx.compose.foundation.FocusedBoundsKt
 androidx.compose.foundation.FocusedBoundsObserverElement
@@ -2516,20 +2517,49 @@ androidx.compose.foundation.R$string
 androidx.compose.foundation.R
 androidx.compose.foundation.RectListNode
 androidx.compose.foundation.ScrollIndicatorState
-androidx.compose.foundation.ScrollKt
-androidx.compose.foundation.ScrollNode
-androidx.compose.foundation.ScrollState$Companion
-androidx.compose.foundation.ScrollState$_scrollIndicatorState$1
-androidx.compose.foundation.ScrollState
+androidx.compose.foundation.ScrollKt:
+    public static final androidx.compose.ui.Modifier horizontalScroll(androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,androidx.compose.foundation.OverscrollEffect,boolean,androidx.compose.foundation.gestures.FlingBehavior,boolean)
+    public static final androidx.compose.ui.Modifier horizontalScroll(androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,boolean,androidx.compose.foundation.gestures.FlingBehavior,boolean)
+    public static synthetic androidx.compose.ui.Modifier horizontalScroll$default(androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,androidx.compose.foundation.OverscrollEffect,boolean,androidx.compose.foundation.gestures.FlingBehavior,boolean,int,java.lang.Object)
+    public static synthetic androidx.compose.ui.Modifier horizontalScroll$default(androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,boolean,androidx.compose.foundation.gestures.FlingBehavior,boolean,int,java.lang.Object)
+    public static final androidx.compose.ui.Modifier verticalScroll(androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,androidx.compose.foundation.OverscrollEffect,boolean,androidx.compose.foundation.gestures.FlingBehavior,boolean)
+    public static synthetic androidx.compose.ui.Modifier verticalScroll$default(androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,androidx.compose.foundation.OverscrollEffect,boolean,androidx.compose.foundation.gestures.FlingBehavior,boolean,int,java.lang.Object)
+androidx.compose.foundation.ScrollNode:
+    public static final int $stable
+    public final boolean getReverseScrolling()
+    public final androidx.compose.foundation.ScrollState getState()
+    public final boolean isVertical()
+    public int maxIntrinsicHeight(androidx.compose.ui.layout.IntrinsicMeasureScope,androidx.compose.ui.layout.IntrinsicMeasurable,int)
+    public int maxIntrinsicWidth(androidx.compose.ui.layout.IntrinsicMeasureScope,androidx.compose.ui.layout.IntrinsicMeasurable,int)
+    public int minIntrinsicHeight(androidx.compose.ui.layout.IntrinsicMeasureScope,androidx.compose.ui.layout.IntrinsicMeasurable,int)
+    public int minIntrinsicWidth(androidx.compose.ui.layout.IntrinsicMeasureScope,androidx.compose.ui.layout.IntrinsicMeasurable,int)
+androidx.compose.foundation.ScrollState$_scrollIndicatorState$1:
+    final synthetic androidx.compose.foundation.ScrollState this$0
+    public int getContentSize()
+    public int getScrollOffset()
+    public int getViewportSize()
+androidx.compose.foundation.ScrollState:
+    public static final int $stable
+    private final androidx.compose.foundation.ScrollState$_scrollIndicatorState$1 _scrollIndicatorState
+    public final java.lang.Object animateScrollTo(int,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation)
+    public static synthetic java.lang.Object animateScrollTo$default(androidx.compose.foundation.ScrollState,int,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation,int,java.lang.Object)
+    public final int getContentSize$foundation()
+    public final androidx.compose.foundation.interaction.InteractionSource getInteractionSource()
+    public boolean getLastScrolledBackward()
+    public boolean getLastScrolledForward()
+    public androidx.compose.foundation.ScrollIndicatorState getScrollIndicatorState()
+    public final int getViewportSize()
+    public final java.lang.Object scrollTo(int,kotlin.coroutines.Continuation)
 androidx.compose.foundation.ScrollableAreaElement:
     public void inspectableProperties(androidx.compose.ui.platform.InspectorInfo)
-androidx.compose.foundation.ScrollableAreaKt:
-    public static final androidx.compose.ui.Modifier scrollableArea(androidx.compose.ui.Modifier,androidx.compose.foundation.gestures.ScrollableState,androidx.compose.foundation.gestures.Orientation,boolean,boolean,androidx.compose.foundation.gestures.FlingBehavior,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.foundation.gestures.BringIntoViewSpec)
-    public static synthetic androidx.compose.ui.Modifier scrollableArea$default(androidx.compose.ui.Modifier,androidx.compose.foundation.gestures.ScrollableState,androidx.compose.foundation.gestures.Orientation,androidx.compose.foundation.OverscrollEffect,boolean,boolean,androidx.compose.foundation.gestures.FlingBehavior,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.foundation.gestures.BringIntoViewSpec,int,java.lang.Object)
-    public static synthetic androidx.compose.ui.Modifier scrollableArea$default(androidx.compose.ui.Modifier,androidx.compose.foundation.gestures.ScrollableState,androidx.compose.foundation.gestures.Orientation,boolean,boolean,androidx.compose.foundation.gestures.FlingBehavior,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.foundation.gestures.BringIntoViewSpec,int,java.lang.Object)
 androidx.compose.foundation.ScrollableAreaNode:
     private final boolean shouldAutoInvalidate
-androidx.compose.foundation.ScrollingLayoutElement
+androidx.compose.foundation.ScrollingLayoutElement:
+    public static final int $stable
+    public final boolean getReverseScrolling()
+    public final androidx.compose.foundation.ScrollState getScrollState()
+    public void inspectableProperties(androidx.compose.ui.platform.InspectorInfo)
+    public final boolean isVertical()
 androidx.compose.foundation.SurfaceCoroutineScope
 androidx.compose.foundation.SurfaceScope
 androidx.compose.foundation.SystemGestureExclusionKt
@@ -2891,8 +2921,8 @@ androidx.compose.foundation.gestures.ScrollExtensionsKt$animateScrollBy$1
 androidx.compose.foundation.gestures.ScrollExtensionsKt$animateScrollBy$2
 androidx.compose.foundation.gestures.ScrollExtensionsKt$animateScrollBy$3
 androidx.compose.foundation.gestures.ScrollExtensionsKt$animateScrollBy$4
-androidx.compose.foundation.gestures.ScrollExtensionsKt$scrollBy$1
-androidx.compose.foundation.gestures.ScrollExtensionsKt$scrollBy$2
+androidx.compose.foundation.gestures.ScrollExtensionsKt$scrollBy$2:
+    int label
 androidx.compose.foundation.gestures.ScrollExtensionsKt$scrollBy$3
 androidx.compose.foundation.gestures.ScrollExtensionsKt$scrollBy$4
 androidx.compose.foundation.gestures.ScrollExtensionsKt$stopScroll$2:
@@ -2903,7 +2933,6 @@ androidx.compose.foundation.gestures.ScrollExtensionsKt:
     public static synthetic java.lang.Object animateScrollBy$default(androidx.compose.foundation.gestures.ScrollableState,float,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation,int,java.lang.Object)
     public static final java.lang.Object animateScrollBy-ubNVwUQ(androidx.compose.foundation.gestures.Scrollable2DState,long,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation)
     public static synthetic java.lang.Object animateScrollBy-ubNVwUQ$default(androidx.compose.foundation.gestures.Scrollable2DState,long,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation,int,java.lang.Object)
-    public static final java.lang.Object scrollBy(androidx.compose.foundation.gestures.ScrollableState,float,kotlin.coroutines.Continuation)
     public static final java.lang.Object scrollBy-d-4ec7I(androidx.compose.foundation.gestures.Scrollable2DState,long,kotlin.coroutines.Continuation)
     public static final java.lang.Object stopScroll(androidx.compose.foundation.gestures.Scrollable2DState,androidx.compose.foundation.MutatePriority,kotlin.coroutines.Continuation)
     public static synthetic java.lang.Object stopScroll$default(androidx.compose.foundation.gestures.Scrollable2DState,androidx.compose.foundation.MutatePriority,kotlin.coroutines.Continuation,int,java.lang.Object)
@@ -3539,7 +3568,6 @@ androidx.compose.foundation.layout.SizeKt$requiredSizeIn-qDBjuR0$$inlined$debugI
 androidx.compose.foundation.layout.SizeKt$requiredWidth-3ABfNKs$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt$requiredWidthIn-VpY3zN4$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt$sizeIn-qDBjuR0$$inlined$debugInspectorInfo$1
-androidx.compose.foundation.layout.SizeKt$width-3ABfNKs$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt$widthIn-VpY3zN4$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt:
     private static final androidx.compose.foundation.layout.FillElement FillWholeMaxHeight
@@ -3569,7 +3597,6 @@ androidx.compose.foundation.layout.SizeKt:
     public static final androidx.compose.ui.Modifier size-6HolHcs(androidx.compose.ui.Modifier,long)
     public static final androidx.compose.ui.Modifier sizeIn-qDBjuR0(androidx.compose.ui.Modifier,float,float,float,float)
     public static synthetic androidx.compose.ui.Modifier sizeIn-qDBjuR0$default(androidx.compose.ui.Modifier,float,float,float,float,int,java.lang.Object)
-    public static final androidx.compose.ui.Modifier width-3ABfNKs(androidx.compose.ui.Modifier,float)
     public static final androidx.compose.ui.Modifier widthIn-VpY3zN4(androidx.compose.ui.Modifier,float,float)
     public static synthetic androidx.compose.ui.Modifier widthIn-VpY3zN4$default(androidx.compose.ui.Modifier,float,float,int,java.lang.Object)
     public static final androidx.compose.ui.Modifier wrapContentHeight(androidx.compose.ui.Modifier,androidx.compose.ui.Alignment$Vertical,boolean)
@@ -4380,11 +4407,11 @@ androidx.compose.foundation.text.BasicTextFieldKt$TextFieldSelectionHandles$2$1
 androidx.compose.foundation.text.BasicTextFieldKt$TextFieldSelectionHandles$3$1
 androidx.compose.foundation.text.BasicTextFieldKt$TextFieldSelectionHandles$4$1
 androidx.compose.foundation.text.BasicTextFieldKt
-androidx.compose.foundation.text.BasicTextKt$$InternalSyntheticLambda$6$a94358ff5f433b5d9cd59032e26f92caeb58812481d173d19849fcaa32031830$0:
+androidx.compose.foundation.text.BasicTextKt$$InternalSyntheticLambda$5$a94358ff5f433b5d9cd59032e26f92caeb58812481d173d19849fcaa32031830$0:
     public final synthetic androidx.compose.foundation.text.selection.SelectionRegistrar f$0
-androidx.compose.foundation.text.BasicTextKt$$InternalSyntheticLambda$6$a94358ff5f433b5d9cd59032e26f92caeb58812481d173d19849fcaa32031830$1:
+androidx.compose.foundation.text.BasicTextKt$$InternalSyntheticLambda$5$a94358ff5f433b5d9cd59032e26f92caeb58812481d173d19849fcaa32031830$1:
     public final synthetic androidx.compose.foundation.text.TextAutoSize f$9
-androidx.compose.foundation.text.BasicTextKt$$InternalSyntheticLambda$7$b92d9085933698aa3334af388484f043b9e7aa969a79bea650bd9eb00ebc12a6$0:
+androidx.compose.foundation.text.BasicTextKt$$InternalSyntheticLambda$6$b92d9085933698aa3334af388484f043b9e7aa969a79bea650bd9eb00ebc12a6$0:
     public final synthetic androidx.compose.foundation.text.selection.SelectionRegistrar f$0
 androidx.compose.foundation.text.BasicTextKt:
     public static final synthetic void BasicText-4YKlhWE(androidx.compose.ui.text.AnnotatedString,androidx.compose.ui.Modifier,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function1,int,boolean,int,java.util.Map,androidx.compose.runtime.Composer,int,int)
@@ -5164,15 +5191,15 @@ androidx.compose.foundation.text.selection.Selection:
     public final androidx.compose.foundation.text.selection.Selection merge(androidx.compose.foundation.text.selection.Selection)
     public java.lang.String toString()
     public final long toTextRange-d9O1mEE()
-androidx.compose.foundation.text.selection.SelectionAdjustment$Companion$$InternalSyntheticLambda$8$7d811ce66c4b34a034eff770e95afb84bda3c000fbf2484ccdefdfd7f2a7758f$0:
+androidx.compose.foundation.text.selection.SelectionAdjustment$Companion$$InternalSyntheticLambda$7$7d811ce66c4b34a034eff770e95afb84bda3c000fbf2484ccdefdfd7f2a7758f$0:
     public final androidx.compose.foundation.text.selection.Selection adjust(androidx.compose.foundation.text.selection.SelectionLayout)
-androidx.compose.foundation.text.selection.SelectionAdjustment$Companion$$InternalSyntheticLambda$8$7d811ce66c4b34a034eff770e95afb84bda3c000fbf2484ccdefdfd7f2a7758f$1:
+androidx.compose.foundation.text.selection.SelectionAdjustment$Companion$$InternalSyntheticLambda$7$7d811ce66c4b34a034eff770e95afb84bda3c000fbf2484ccdefdfd7f2a7758f$1:
     public final androidx.compose.foundation.text.selection.Selection adjust(androidx.compose.foundation.text.selection.SelectionLayout)
-androidx.compose.foundation.text.selection.SelectionAdjustment$Companion$$InternalSyntheticLambda$8$7d811ce66c4b34a034eff770e95afb84bda3c000fbf2484ccdefdfd7f2a7758f$2:
+androidx.compose.foundation.text.selection.SelectionAdjustment$Companion$$InternalSyntheticLambda$7$7d811ce66c4b34a034eff770e95afb84bda3c000fbf2484ccdefdfd7f2a7758f$2:
     public final androidx.compose.foundation.text.selection.Selection adjust(androidx.compose.foundation.text.selection.SelectionLayout)
-androidx.compose.foundation.text.selection.SelectionAdjustment$Companion$$InternalSyntheticLambda$8$7d811ce66c4b34a034eff770e95afb84bda3c000fbf2484ccdefdfd7f2a7758f$3:
+androidx.compose.foundation.text.selection.SelectionAdjustment$Companion$$InternalSyntheticLambda$7$7d811ce66c4b34a034eff770e95afb84bda3c000fbf2484ccdefdfd7f2a7758f$3:
     public final androidx.compose.foundation.text.selection.Selection adjust(androidx.compose.foundation.text.selection.SelectionLayout)
-androidx.compose.foundation.text.selection.SelectionAdjustment$Companion$$InternalSyntheticLambda$8$7d811ce66c4b34a034eff770e95afb84bda3c000fbf2484ccdefdfd7f2a7758f$4:
+androidx.compose.foundation.text.selection.SelectionAdjustment$Companion$$InternalSyntheticLambda$7$7d811ce66c4b34a034eff770e95afb84bda3c000fbf2484ccdefdfd7f2a7758f$4:
     public final androidx.compose.foundation.text.selection.Selection adjust(androidx.compose.foundation.text.selection.SelectionLayout)
 androidx.compose.foundation.text.selection.SelectionAdjustment$Companion$Paragraph$1$1
 androidx.compose.foundation.text.selection.SelectionAdjustment$Companion$Word$1$1
@@ -5693,8 +5720,6 @@ androidx.compose.material3.ColorSchemeKt:
     public static synthetic androidx.compose.material3.ColorScheme darkColorScheme-C-Xl9yA$default(long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,int,int,java.lang.Object)
     public static final synthetic androidx.compose.material3.ColorScheme darkColorScheme-G1PFc-w(long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long)
     public static synthetic androidx.compose.material3.ColorScheme darkColorScheme-G1PFc-w$default(long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,int,java.lang.Object)
-    public static final androidx.compose.material3.ColorScheme darkColorScheme-_VG5OTI(long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long)
-    public static synthetic androidx.compose.material3.ColorScheme darkColorScheme-_VG5OTI$default(long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,int,int,java.lang.Object)
     public static final androidx.compose.material3.ColorScheme expressiveLightColorScheme()
     public static final long fromToken(androidx.compose.material3.ColorScheme,androidx.compose.material3.tokens.ColorSchemeKeyTokens)
     public static final androidx.compose.runtime.ProvidableCompositionLocal getLocalTonalElevationEnabled()
@@ -6530,7 +6555,7 @@ androidx.compose.material3.TextFieldLabelPosition$Attached
 androidx.compose.material3.TextFieldLabelPosition
 androidx.compose.material3.TextFieldLabelScope
 androidx.compose.material3.TextFieldMeasurePolicy
-androidx.compose.material3.TextKt$$InternalSyntheticLambda$5$dd0618d6294270ddf63ca29a3364b90cbbee95e20d0058701bb3841114f5e22f$0:
+androidx.compose.material3.TextKt$$InternalSyntheticLambda$4$dd0618d6294270ddf63ca29a3364b90cbbee95e20d0058701bb3841114f5e22f$0:
     public final synthetic androidx.compose.foundation.text.TextAutoSize f$3
 androidx.compose.material3.TextKt:
     public static final synthetic void Text--4IGK_g(androidx.compose.ui.text.AnnotatedString,androidx.compose.ui.Modifier,long,long,androidx.compose.ui.text.font.FontStyle,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontFamily,long,androidx.compose.ui.text.style.TextDecoration,androidx.compose.ui.text.style.TextAlign,long,int,boolean,int,java.util.Map,kotlin.jvm.functions.Function1,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,int,int,int)
@@ -6966,7 +6991,10 @@ androidx.compose.material3.tokens.ButtonXLargeTokens
 androidx.compose.material3.tokens.ButtonXSmallTokens
 androidx.compose.material3.tokens.CheckboxTokens
 androidx.compose.material3.tokens.CircularProgressIndicatorTokens
-androidx.compose.material3.tokens.ColorDarkTokens
+androidx.compose.material3.tokens.ColorDarkTokens:
+    public static final int $stable
+    private static final long SurfaceTint
+    public final long getSurfaceTint-0d7_KjU()
 androidx.compose.material3.tokens.ColorLightTokens:
     public static final int $stable
     private static final long SurfaceTint
@@ -7032,23 +7060,14 @@ androidx.compose.material3.tokens.PaletteTokens:
     public static final int $stable
     private static final long Black
     private static final long Error0
-    private static final long Error20
-    private static final long Error30
     private static final long Error50
     private static final long Error60
     private static final long Error70
-    private static final long Error80
     private static final long Error95
     private static final long Error99
-    private static final long Neutral12
-    private static final long Neutral17
-    private static final long Neutral22
-    private static final long Neutral24
     private static final long Neutral30
-    private static final long Neutral4
     private static final long Neutral40
     private static final long Neutral50
-    private static final long Neutral6
     private static final long Neutral60
     private static final long Neutral70
     private static final long Neutral80
@@ -7058,26 +7077,22 @@ androidx.compose.material3.tokens.PaletteTokens:
     private static final long NeutralVariant100
     private static final long NeutralVariant20
     private static final long NeutralVariant40
-    private static final long NeutralVariant60
     private static final long NeutralVariant70
     private static final long NeutralVariant95
     private static final long NeutralVariant99
     private static final long Primary0
-    private static final long Primary20
     private static final long Primary50
     private static final long Primary60
     private static final long Primary70
     private static final long Primary95
     private static final long Primary99
     private static final long Secondary0
-    private static final long Secondary20
     private static final long Secondary50
     private static final long Secondary60
     private static final long Secondary70
     private static final long Secondary95
     private static final long Secondary99
     private static final long Tertiary0
-    private static final long Tertiary20
     private static final long Tertiary50
     private static final long Tertiary60
     private static final long Tertiary70
@@ -7086,23 +7101,14 @@ androidx.compose.material3.tokens.PaletteTokens:
     private static final long White
     public final long getBlack-0d7_KjU()
     public final long getError0-0d7_KjU()
-    public final long getError20-0d7_KjU()
-    public final long getError30-0d7_KjU()
     public final long getError50-0d7_KjU()
     public final long getError60-0d7_KjU()
     public final long getError70-0d7_KjU()
-    public final long getError80-0d7_KjU()
     public final long getError95-0d7_KjU()
     public final long getError99-0d7_KjU()
-    public final long getNeutral12-0d7_KjU()
-    public final long getNeutral17-0d7_KjU()
-    public final long getNeutral22-0d7_KjU()
-    public final long getNeutral24-0d7_KjU()
     public final long getNeutral30-0d7_KjU()
-    public final long getNeutral4-0d7_KjU()
     public final long getNeutral40-0d7_KjU()
     public final long getNeutral50-0d7_KjU()
-    public final long getNeutral6-0d7_KjU()
     public final long getNeutral60-0d7_KjU()
     public final long getNeutral70-0d7_KjU()
     public final long getNeutral80-0d7_KjU()
@@ -7112,26 +7118,22 @@ androidx.compose.material3.tokens.PaletteTokens:
     public final long getNeutralVariant100-0d7_KjU()
     public final long getNeutralVariant20-0d7_KjU()
     public final long getNeutralVariant40-0d7_KjU()
-    public final long getNeutralVariant60-0d7_KjU()
     public final long getNeutralVariant70-0d7_KjU()
     public final long getNeutralVariant95-0d7_KjU()
     public final long getNeutralVariant99-0d7_KjU()
     public final long getPrimary0-0d7_KjU()
-    public final long getPrimary20-0d7_KjU()
     public final long getPrimary50-0d7_KjU()
     public final long getPrimary60-0d7_KjU()
     public final long getPrimary70-0d7_KjU()
     public final long getPrimary95-0d7_KjU()
     public final long getPrimary99-0d7_KjU()
     public final long getSecondary0-0d7_KjU()
-    public final long getSecondary20-0d7_KjU()
     public final long getSecondary50-0d7_KjU()
     public final long getSecondary60-0d7_KjU()
     public final long getSecondary70-0d7_KjU()
     public final long getSecondary95-0d7_KjU()
     public final long getSecondary99-0d7_KjU()
     public final long getTertiary0-0d7_KjU()
-    public final long getTertiary20-0d7_KjU()
     public final long getTertiary50-0d7_KjU()
     public final long getTertiary60-0d7_KjU()
     public final long getTertiary70-0d7_KjU()
@@ -10152,7 +10154,12 @@ androidx.compose.ui.focus.FocusRequester:
     public final synthetic void requestFocus()
     public final boolean restoreFocusedChild()
     public final boolean saveFocusedChild()
-androidx.compose.ui.focus.FocusRequesterElement
+androidx.compose.ui.focus.FocusRequesterElement:
+    public final androidx.compose.ui.focus.FocusRequester component1()
+    public final androidx.compose.ui.focus.FocusRequesterElement copy(androidx.compose.ui.focus.FocusRequester)
+    public static synthetic androidx.compose.ui.focus.FocusRequesterElement copy$default(androidx.compose.ui.focus.FocusRequesterElement,androidx.compose.ui.focus.FocusRequester,int,java.lang.Object)
+    public final androidx.compose.ui.focus.FocusRequester getFocusRequester()
+    public void inspectableProperties(androidx.compose.ui.platform.InspectorInfo)
 androidx.compose.ui.focus.FocusRequesterKt
 androidx.compose.ui.focus.FocusRequesterModifier$DefaultImpls
 androidx.compose.ui.focus.FocusRequesterModifier:
@@ -10161,10 +10168,8 @@ androidx.compose.ui.focus.FocusRequesterModifier:
     public static synthetic java.lang.Object access$foldIn$jd(androidx.compose.ui.focus.FocusRequesterModifier,java.lang.Object,kotlin.jvm.functions.Function2)
     public static synthetic java.lang.Object access$foldOut$jd(androidx.compose.ui.focus.FocusRequesterModifier,java.lang.Object,kotlin.jvm.functions.Function2)
     public static synthetic androidx.compose.ui.Modifier access$then$jd(androidx.compose.ui.focus.FocusRequesterModifier,androidx.compose.ui.Modifier)
-androidx.compose.ui.focus.FocusRequesterModifierKt
 androidx.compose.ui.focus.FocusRequesterModifierNodeKt$requestFocus$1$1
 androidx.compose.ui.focus.FocusRequesterModifierNodeKt
-androidx.compose.ui.focus.FocusRequesterNode
 androidx.compose.ui.focus.FocusRestorerElement
 androidx.compose.ui.focus.FocusRestorerKt$saveFocusedChild$1$1
 androidx.compose.ui.focus.FocusRestorerKt
@@ -11719,15 +11724,23 @@ androidx.compose.ui.graphics.vector.VectorProperty
 androidx.compose.ui.graphics.vector.compat.AndroidVectorParser
 androidx.compose.ui.graphics.vector.compat.AndroidVectorResources
 androidx.compose.ui.graphics.vector.compat.XmlVectorParser_androidKt
-androidx.compose.ui.hapticfeedback.HapticFeedback:
-    public abstract void performHapticFeedback-CdsT49E(int)
-androidx.compose.ui.hapticfeedback.HapticFeedbackType$Companion
-androidx.compose.ui.hapticfeedback.HapticFeedbackType
+androidx.compose.ui.hapticfeedback.HapticFeedbackType$Companion:
+    public final java.util.List values()
+androidx.compose.ui.hapticfeedback.HapticFeedbackType:
+    private final int value
+    private synthetic void <init>(int)
+    public static final synthetic androidx.compose.ui.hapticfeedback.HapticFeedbackType box-impl(int)
+    public boolean equals(java.lang.Object)
+    public static boolean equals-impl(int,java.lang.Object)
+    public int hashCode()
+    public static int hashCode-impl(int)
+    public java.lang.String toString()
+    public static java.lang.String toString-impl(int)
+    public final synthetic int unbox-impl()
 androidx.compose.ui.hapticfeedback.PlatformHapticFeedback:
     public static final int $stable
-    private final android.view.View view
-    public void performHapticFeedback-CdsT49E(int)
-androidx.compose.ui.hapticfeedback.PlatformHapticFeedbackType
+androidx.compose.ui.hapticfeedback.PlatformHapticFeedbackType:
+    public static final int $stable
 androidx.compose.ui.input.InputModeManager:
     public abstract boolean requestInputMode-iuPiT84(int)
 androidx.compose.ui.input.InputModeManagerImpl:
@@ -13056,15 +13069,20 @@ androidx.compose.ui.input.pointer.util.VelocityTrackerKt:
     public static synthetic float[] polyFitLeastSquares$default(float[],float[],int,int,float[],int,java.lang.Object)
     private static final void set(float[][],int,int,float)
     public static final void setVelocityTrackerAddPointsFix(boolean)
-androidx.compose.ui.input.rotary.RotaryInputElement
-androidx.compose.ui.input.rotary.RotaryInputModifierKt
-androidx.compose.ui.input.rotary.RotaryInputNode
+androidx.compose.ui.input.rotary.RotaryInputElement:
+    public final kotlin.jvm.functions.Function1 getOnPreRotaryScrollEvent()
+    public final kotlin.jvm.functions.Function1 getOnRotaryScrollEvent()
+    public void inspectableProperties(androidx.compose.ui.platform.InspectorInfo)
+androidx.compose.ui.input.rotary.RotaryInputModifierKt:
+    public static final androidx.compose.ui.Modifier onPreRotaryScrollEvent(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1)
+androidx.compose.ui.input.rotary.RotaryInputNode:
+    public final kotlin.jvm.functions.Function1 getOnEvent()
+    public final kotlin.jvm.functions.Function1 getOnPreEvent()
 androidx.compose.ui.input.rotary.RotaryScrollEvent:
     public static final int $stable
     public final float getHorizontalScrollPixels()
     public final int getInputDeviceId()
     public final long getUptimeMillis()
-    public final float getVerticalScrollPixels()
 androidx.compose.ui.internal.InlineClassHelperKt:
     public static final void checkPrecondition(boolean)
     public static final void checkPrecondition(boolean,kotlin.jvm.functions.Function0)
@@ -14376,7 +14394,6 @@ androidx.compose.ui.platform.AndroidComposeView_androidKt:
 androidx.compose.ui.platform.AndroidCompositionLocals_androidKt:
     private static final androidx.compose.runtime.ProvidableCompositionLocal LocalResources
     public static final androidx.compose.runtime.ProvidableCompositionLocal getLocalImageVectorCache()
-    public static final androidx.compose.runtime.ProvidableCompositionLocal getLocalLifecycleOwner()
     public static synthetic void getLocalLifecycleOwner$annotations()
     public static final androidx.compose.runtime.ProvidableCompositionLocal getLocalResourceIdCache()
     public static final androidx.compose.runtime.ProvidableCompositionLocal getLocalResources()
@@ -14502,8 +14519,6 @@ androidx.compose.ui.platform.DebugUtilsKt
 androidx.compose.ui.platform.DecodeHelper
 androidx.compose.ui.platform.DefaultHapticFeedback:
     public static final int $stable
-    private final android.view.View view
-    public void performHapticFeedback-CdsT49E(int)
 androidx.compose.ui.platform.DelegatingSoftwareKeyboardController:
     public static final int $stable
     private final androidx.compose.ui.text.input.TextInputService textInputService
@@ -14616,7 +14631,6 @@ androidx.compose.ui.platform.NestedScrollInteropConnection
 androidx.compose.ui.platform.NestedScrollInteropConnectionKt
 androidx.compose.ui.platform.NoHapticFeedback:
     public static final int $stable
-    public void performHapticFeedback-CdsT49E(int)
 androidx.compose.ui.platform.OutlineResolver:
     public static final int $stable
     private boolean cacheIsDirty
@@ -16263,6 +16277,7 @@ androidx.compose.ui.text.font.FontWeight$Companion:
     public static synthetic void getLight$annotations()
     public static synthetic void getMedium$annotations()
     public static synthetic void getNormal$annotations()
+    public final androidx.compose.ui.text.font.FontWeight getSemiBold()
     public static synthetic void getSemiBold$annotations()
     public final androidx.compose.ui.text.font.FontWeight getThin()
     public static synthetic void getThin$annotations()
@@ -16286,10 +16301,12 @@ androidx.compose.ui.text.font.FontWeight:
     public static final int $stable
     private static final androidx.compose.ui.text.font.FontWeight ExtraLight
     private static final androidx.compose.ui.text.font.FontWeight Light
+    private static final androidx.compose.ui.text.font.FontWeight SemiBold
     private static final androidx.compose.ui.text.font.FontWeight Thin
     private static final java.util.List values
     public static final synthetic androidx.compose.ui.text.font.FontWeight access$getExtraLight$cp()
     public static final synthetic androidx.compose.ui.text.font.FontWeight access$getLight$cp()
+    public static final synthetic androidx.compose.ui.text.font.FontWeight access$getSemiBold$cp()
     public static final synthetic androidx.compose.ui.text.font.FontWeight access$getThin$cp()
     public static final synthetic java.util.List access$getValues$cp()
     public static final synthetic androidx.compose.ui.text.font.FontWeight access$getW100$cp()
@@ -16892,8 +16909,6 @@ androidx.compose.ui.unit.Constraints$Companion:
     public static synthetic long restrictConstraints-xF2OJ5Q$default(androidx.compose.ui.unit.Constraints$Companion,int,int,int,int,boolean,int,java.lang.Object)
 androidx.compose.ui.unit.Constraints:
     public static final int Infinity
-    public static final long copy-Zbe2FdA(long,int,int,int,int)
-    public static synthetic long copy-Zbe2FdA$default(long,int,int,int,int,int,java.lang.Object)
     public static final long copyMaxDimensions-msEJaDk(long)
     private static final int getFocusIndex-impl(long)
     public static synthetic void getHasFixedHeight$annotations()
@@ -18614,7 +18629,32 @@ androidx.core.view.GestureDetectorCompat
 androidx.core.view.GravityCompat
 androidx.core.view.HapticFeedbackConstantsCompat$HapticFeedbackFlags
 androidx.core.view.HapticFeedbackConstantsCompat$HapticFeedbackType
-androidx.core.view.HapticFeedbackConstantsCompat
+androidx.core.view.HapticFeedbackConstantsCompat:
+    public static final int CLOCK_TICK
+    public static final int CONFIRM
+    public static final int CONTEXT_CLICK
+    public static final int DRAG_START
+    static final int FIRST_CONSTANT_INT
+    public static final int FLAG_IGNORE_VIEW_SETTING
+    public static final int GESTURE_END
+    public static final int GESTURE_START
+    public static final int GESTURE_THRESHOLD_ACTIVATE
+    public static final int GESTURE_THRESHOLD_DEACTIVATE
+    public static final int KEYBOARD_PRESS
+    public static final int KEYBOARD_RELEASE
+    public static final int KEYBOARD_TAP
+    static final int LAST_CONSTANT_INT
+    public static final int LONG_PRESS
+    public static final int NO_HAPTICS
+    public static final int REJECT
+    public static final int SEGMENT_FREQUENT_TICK
+    public static final int SEGMENT_TICK
+    public static final int TEXT_HANDLE_MOVE
+    public static final int TOGGLE_OFF
+    public static final int TOGGLE_ON
+    public static final int VIRTUAL_KEY
+    public static final int VIRTUAL_KEY_RELEASE
+    private void <init>()
 androidx.core.view.InputDeviceCompat
 androidx.core.view.KeyEventDispatcher:
     private static boolean sActionBarFieldsFetched
@@ -18970,7 +19010,6 @@ androidx.core.view.ViewCompat:
     public static void onInitializeAccessibilityNodeInfo(android.view.View,androidx.core.view.accessibility.AccessibilityNodeInfoCompat)
     public static void onPopulateAccessibilityEvent(android.view.View,android.view.accessibility.AccessibilityEvent)
     public static boolean performAccessibilityAction(android.view.View,int,android.os.Bundle)
-    public static boolean performHapticFeedback(android.view.View,int)
     public static boolean performHapticFeedback(android.view.View,int,int)
     public static androidx.core.view.ContentInfoCompat performReceiveContent(android.view.View,androidx.core.view.ContentInfoCompat)
     public static void postInvalidateOnAnimation(android.view.View)
@@ -21542,7 +21581,9 @@ com.betterschool.wear.data.SmartschoolApiClient:
     public static final int $stable
     public static final com.betterschool.wear.data.SmartschoolApiClient$Companion Companion
     public static final java.lang.String PAIRING_RELAY_BASE_URL
+    private volatile java.lang.String lastSmartschoolTrace
     public static synthetic java.lang.Object fetchSqliteUserAverage$default(com.betterschool.wear.data.SmartschoolApiClient,java.lang.String,kotlin.coroutines.Continuation,int,java.lang.Object)
+    public final java.lang.String getLastSmartschoolTrace()
 com.betterschool.wear.data.SmartschoolParsers:
     public static final int $stable
 com.betterschool.wear.tiles.BetterSchoolTileProvider$TileSnapshot
@@ -21568,7 +21609,6 @@ com.betterschool.wear.ui.WearUiState:
     public final com.betterschool.wear.data.PairingTicket component11()
     public final boolean component12()
     public final com.betterschool.wear.domain.TileDisplayMode component13()
-    public final java.lang.String component14()
     public final boolean component2()
     public final boolean component3()
     public final java.lang.String component4()
@@ -21582,9 +21622,18 @@ com.betterschool.wear.ui.WearUiState:
     public final boolean isPollingPairing()
 com.betterschool.wear.ui.WearViewModel:
     public static final int $stable
+    public static synthetic void refreshFromSmartschool$default(com.betterschool.wear.ui.WearViewModel,boolean,int,java.lang.Object)
     public final void setTileDisplayMode(com.betterschool.wear.domain.TileDisplayMode)
+com.betterschool.wear.ui.pages.GradesPageKt$GradesPage$1$1:
+    int label
+com.betterschool.wear.ui.pages.HomeworkPageKt$HomeworkPage$1$1:
+    int label
+com.betterschool.wear.ui.pages.MessagesPageKt$MessagesPage$1$1:
+    int label
 com.betterschool.wear.ui.pages.QrMatrixGenerator:
     public static final int $stable
+com.betterschool.wear.ui.pages.SchedulePageKt$SchedulePage$1$1:
+    int label
 com.google.common.util.concurrent.ListenableFuture:
     public abstract void addListener(java.lang.Runnable,java.util.concurrent.Executor)
 kotlin.ArrayIntrinsicsKt
@@ -26105,7 +26154,6 @@ kotlin.text.Regex:
     private java.util.Set _options
     public void <init>(java.lang.String,java.util.Set)
     public static final synthetic java.util.regex.Pattern access$getNativePattern$p(kotlin.text.Regex)
-    public final boolean containsMatchIn(java.lang.CharSequence)
     public final java.util.Set getOptions()
     public final java.lang.String getPattern()
     public final kotlin.text.MatchResult matchAt(java.lang.CharSequence,int)
@@ -26899,8 +26947,6 @@ kotlinx.coroutines.AwaitKt$joinAll$1
 kotlinx.coroutines.AwaitKt$joinAll$3
 kotlinx.coroutines.AwaitKt
 kotlinx.coroutines.BuildersKt:
-    public static final kotlinx.coroutines.Deferred async(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function2)
-    public static synthetic kotlinx.coroutines.Deferred async$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function2,int,java.lang.Object)
     public static final java.lang.Object invoke(kotlinx.coroutines.CoroutineDispatcher,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation)
     public static synthetic java.lang.Object runBlocking$default(kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,int,java.lang.Object)
 kotlinx.coroutines.BuildersKt__BuildersKt:
@@ -26909,8 +26955,6 @@ kotlinx.coroutines.BuildersKt__Builders_commonKt:
     private static final int RESUMED
     private static final int SUSPENDED
     private static final int UNDECIDED
-    public static final kotlinx.coroutines.Deferred async(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function2)
-    public static synthetic kotlinx.coroutines.Deferred async$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function2,int,java.lang.Object)
     public static final java.lang.Object invoke(kotlinx.coroutines.CoroutineDispatcher,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation)
     private static final java.lang.Object invoke$$forInline(kotlinx.coroutines.CoroutineDispatcher,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation)
 kotlinx.coroutines.CancelFutureOnCancel
@@ -27040,7 +27084,9 @@ kotlinx.coroutines.Deferred:
     public abstract java.lang.Object getCompleted()
     public abstract java.lang.Throwable getCompletionExceptionOrNull()
     public abstract kotlinx.coroutines.selects.SelectClause1 getOnAwait()
-kotlinx.coroutines.DeferredCoroutine
+kotlinx.coroutines.DeferredCoroutine:
+    public java.lang.Object getCompleted()
+    public kotlinx.coroutines.selects.SelectClause1 getOnAwait()
 kotlinx.coroutines.Delay$DefaultImpls:
     public static java.lang.Object delay(kotlinx.coroutines.Delay,long,kotlin.coroutines.Continuation)
 kotlinx.coroutines.Delay:
@@ -27222,7 +27268,6 @@ kotlinx.coroutines.JobSupportKt:
     private static final int LIST_ON_COMPLETION_PERMISSION
     private static final int RETRY
     private static final int TRUE
-kotlinx.coroutines.LazyDeferredCoroutine
 kotlinx.coroutines.MainCoroutineDispatcher:
     public java.lang.String toString()
 kotlinx.coroutines.NodeList:
@@ -31218,9 +31263,7 @@ androidx.compose.foundation.BorderModifierNodeElement:
     public static void update$1()
 androidx.compose.foundation.CanvasKt$$InternalSyntheticLambda$5$f1641f0937b85f5fae23afa1fb2c1d9536c52548e54d74df0ae42240d132b002$0:
     public final synthetic int f$2
-androidx.compose.foundation.CheckScrollableContainerConstraintsKt
 androidx.compose.foundation.ClickableElement:
-    public final boolean enabled
     public final androidx.compose.foundation.IndicationNodeFactory indicationNodeFactory
     public final androidx.compose.foundation.interaction.MutableInteractionSourceImpl interactionSource
     public final java.lang.String onClickLabel
@@ -31267,6 +31310,10 @@ androidx.compose.foundation.EdgeEffectWrapper:
     public static boolean isTopNegationStretched()
     public static boolean isTopStretched()
     public static void updateSize-ozmzZPI()
+androidx.compose.foundation.FocusableElement:
+    public final androidx.compose.foundation.interaction.MutableInteractionSourceImpl interactionSource
+    public static androidx.compose.foundation.FocusableNode create()
+    public static void update$3()
 androidx.compose.foundation.FocusableNode$applySemantics$1:
     public final java.lang.Boolean invoke()
 androidx.compose.foundation.FocusableNode$emitWithFallback$1:
@@ -31308,18 +31355,34 @@ androidx.compose.foundation.OverscrollConfiguration:
 androidx.compose.foundation.OverscrollEffect
 androidx.compose.foundation.OverscrollFactory
 androidx.compose.foundation.R$id
-androidx.compose.foundation.ScrollableAreaElement:
-    public final androidx.compose.foundation.gestures.Orientation orientation
-    public final boolean reverseScrolling
-    public final boolean useLocalOverscrollFactory
-    public static androidx.compose.foundation.ScrollableAreaNode create()
-    public static void update$3()
-androidx.compose.foundation.ScrollableAreaNode:
-    public androidx.compose.foundation.AndroidEdgeEffectOverscrollEffect localOverscrollFactoryCreatedOverscrollEffect
+androidx.compose.foundation.ScrollKt$$InternalSyntheticLambda$6$e6053d3f50ff6334261b2a948fc32490a340cb2248c42a999858b1b300d7ca47$0:
+    public final synthetic int f$0
+androidx.compose.foundation.ScrollNode:
     public boolean reverseScrolling
-    public boolean useLocalOverscrollFactory
+    static void <clinit>()
+androidx.compose.foundation.ScrollState$Companion
+androidx.compose.foundation.ScrollState$_scrollIndicatorState$1
+androidx.compose.foundation.ScrollState:
+    public static final androidx.compose.foundation.ScrollState$Companion Companion
+    public static int getMaxValue()
+    public static int getValue()
+    public static void setContentSize$foundation()
+    public static void setMaxValue$foundation()
+    public final void setValue(int)
+    public static void setViewportSize$foundation()
+androidx.compose.foundation.ScrollableAreaElement:
+    public final boolean reverseScrolling
+    public static androidx.compose.foundation.ScrollableAreaNode create()
+    public static void update$4()
+androidx.compose.foundation.ScrollableAreaNode:
+    public boolean reverseScrolling
     public final androidx.compose.foundation.AndroidEdgeEffectOverscrollEffect getOverscrollEffect()
-androidx.compose.foundation.VerticalScrollableClipShape
+androidx.compose.foundation.ScrollingLayoutElement:
+    public final boolean isVertical
+    public final boolean reverseScrolling
+    static void <clinit>()
+    public static androidx.compose.foundation.ScrollNode create()
+    public static void update$5()
 androidx.compose.foundation.gestures.AndroidConfig:
     static void <clinit>()
     public static long calculateMouseWheelScroll-8xgXZGE()
@@ -31393,7 +31456,7 @@ androidx.compose.foundation.gestures.DragGestureDetectorKt:
     public static final float mouseSlop
     public static final java.lang.Object awaitDragOrCancellation-rnUCldI(androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNodeImpl$PointerEventHandlerCoroutine,long,kotlin.coroutines.jvm.internal.ContinuationImpl)
     public static final java.lang.Object awaitLongPressOrCancellation-rnUCldI(androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNodeImpl$PointerEventHandlerCoroutine,long,kotlin.coroutines.jvm.internal.ContinuationImpl)
-    public static final java.lang.Object awaitTouchSlopOrCancellation-jO51t88(androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNodeImpl$PointerEventHandlerCoroutine,long,androidx.compose.foundation.text.selection.SelectionGesturesKt$touchSelectionSubsequentPress$downResolution$1$$InternalSyntheticLambda$9$da996ebbd4944a4542cc5ea54b0ff652ae75b64d6b6b4e48f571e9a6fe13c23c$0,kotlin.coroutines.jvm.internal.BaseContinuationImpl)
+    public static final java.lang.Object awaitTouchSlopOrCancellation-jO51t88(androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNodeImpl$PointerEventHandlerCoroutine,long,androidx.compose.foundation.text.selection.SelectionGesturesKt$touchSelectionSubsequentPress$downResolution$1$$InternalSyntheticLambda$8$da996ebbd4944a4542cc5ea54b0ff652ae75b64d6b6b4e48f571e9a6fe13c23c$0,kotlin.coroutines.jvm.internal.BaseContinuationImpl)
     public static final java.lang.Object drag-jO51t88(androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNodeImpl$PointerEventHandlerCoroutine,long,kotlin.jvm.functions.Function1,kotlin.coroutines.jvm.internal.ContinuationImpl)
     public static final boolean isPointerUp-DmW0f2w(androidx.compose.ui.input.pointer.PointerEvent,long)
 androidx.compose.foundation.gestures.DragGestureNode$initializePointerInputNode$1$1
@@ -31508,9 +31571,10 @@ androidx.compose.foundation.gestures.PressGestureScopeImpl:
     public final long toSp-kPz2Gy4(float)
     public final java.lang.Object tryAwaitRelease(kotlin.coroutines.jvm.internal.ContinuationImpl)
 androidx.compose.foundation.gestures.ScrollConfig
+androidx.compose.foundation.gestures.ScrollExtensionsKt$scrollBy$2:
+    public final java.lang.Object invoke$6()
 androidx.compose.foundation.gestures.ScrollExtensionsKt$stopScroll$2:
     public final java.lang.Object invoke$6()
-androidx.compose.foundation.gestures.ScrollExtensionsKt
 androidx.compose.foundation.gestures.ScrollLogic
 androidx.compose.foundation.gestures.ScrollableContainerNode:
     public final androidx.compose.foundation.gestures.ScrollableContainerNode$TraverseKey traverseKey
@@ -31545,7 +31609,7 @@ androidx.compose.foundation.gestures.ScrollableNode:
     public final void onPreKeyEvent-ZmokQxo()
     public final void updateDefaultFlingBehavior()
 androidx.compose.foundation.gestures.ScrollableState:
-    public static java.lang.Object scroll$default(androidx.compose.foundation.pager.PagerState,kotlin.jvm.functions.Function2,kotlin.coroutines.jvm.internal.ContinuationImpl)
+    public static synthetic java.lang.Object scroll$default(androidx.compose.foundation.gestures.ScrollableState,kotlin.jvm.functions.Function2,kotlin.coroutines.jvm.internal.ContinuationImpl)
 androidx.compose.foundation.gestures.ScrollableStateKt
 androidx.compose.foundation.gestures.Scrollable_androidKt
 androidx.compose.foundation.gestures.ScrollingLogic$doFlingAnimation$2:
@@ -31658,6 +31722,7 @@ androidx.compose.foundation.layout.Arrangement$Bottom$1
 androidx.compose.foundation.layout.Arrangement$Center$1:
     public final float spacing
 androidx.compose.foundation.layout.Arrangement$End$1
+androidx.compose.foundation.layout.Arrangement$HorizontalOrVertical
 androidx.compose.foundation.layout.Arrangement$SpaceAround$1
 androidx.compose.foundation.layout.Arrangement$SpaceBetween$1:
     public final float spacing
@@ -31672,10 +31737,9 @@ androidx.compose.foundation.layout.Arrangement:
     public static void placeSpaceEvenly$foundation_layout(int,int[],int[],boolean)
     public static androidx.compose.foundation.layout.Arrangement$HorizontalOrVertical spacedBy-0680j_4()
 androidx.compose.foundation.layout.BoxChildDataElement:
-    public final androidx.compose.ui.BiasAlignment alignment
     public final boolean matchParentSize
     public static androidx.compose.foundation.layout.BoxChildDataNode create()
-    public static void update$4()
+    public static void update$6()
 androidx.compose.foundation.layout.BoxChildDataNode:
     public boolean matchParentSize
 androidx.compose.foundation.layout.BoxKt$$InternalSyntheticLambda$4$a6783fe875a834f1d6da47f6601bbb6189fd0df09099050a2273649f060687bd$0:
@@ -31701,19 +31765,19 @@ androidx.compose.foundation.layout.FillElement:
     public static final androidx.compose.foundation.layout.FillElement$Companion Companion
     static void <clinit>()
     public static androidx.compose.foundation.layout.FillNode create()
-    public static void update$5()
+    public static void update$7()
 androidx.compose.foundation.layout.FlowLayoutData
 androidx.compose.foundation.layout.LayoutWeightElement:
     static void <clinit>()
     public static androidx.compose.foundation.layout.LayoutWeightNode create()
-    public static void update$6()
+    public static void update$8()
 androidx.compose.foundation.layout.LayoutWeightNode:
     static void <clinit>()
     public static androidx.compose.foundation.layout.RowColumnParentData modifyParentData()
 androidx.compose.foundation.layout.PaddingElement:
     public boolean rtlAware
     public static androidx.compose.foundation.layout.PaddingNode create()
-    public static void update$7()
+    public static void update$9()
 androidx.compose.foundation.layout.PaddingKt:
     public static androidx.compose.foundation.layout.PaddingValuesImpl PaddingValues-YgX7TsA$default()
 androidx.compose.foundation.layout.PaddingValues
@@ -31738,14 +31802,15 @@ androidx.compose.foundation.layout.RowMeasurePolicy:
 androidx.compose.foundation.layout.RowScope
 androidx.compose.foundation.layout.RowScopeInstance
 androidx.compose.foundation.layout.SizeElement:
-    public final boolean enforceIncoming
     public static androidx.compose.foundation.layout.SizeNode create()
-    public static void update$8()
+    public static void update$10()
 androidx.compose.foundation.layout.SizeKt$height-3ABfNKs$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt$size-3ABfNKs$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt$size-VpY3zN4$$inlined$debugInspectorInfo$1
+androidx.compose.foundation.layout.SizeKt$width-3ABfNKs$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt:
     public static androidx.compose.ui.Modifier fillMaxSize$default()
+    public static synthetic androidx.compose.ui.Modifier fillMaxWidth$default(androidx.compose.ui.Modifier)
 androidx.compose.foundation.layout.WrapContentElement$Companion
 androidx.compose.foundation.layout.WrapContentElement
 androidx.compose.foundation.layout.WrapContentNode
@@ -31816,7 +31881,7 @@ androidx.compose.foundation.lazy.layout.LazyLayoutBeyondBoundsModifierElement:
     public final androidx.compose.foundation.gestures.Orientation orientation
     public final boolean reverseLayout
     public static androidx.compose.foundation.lazy.layout.LazyLayoutBeyondBoundsProviderModifierNode create()
-    public static void update$10()
+    public static void update$12()
 androidx.compose.foundation.lazy.layout.LazyLayoutBeyondBoundsModifierLocalKt:
     public static final void unsupportedDirection()
 androidx.compose.foundation.lazy.layout.LazyLayoutBeyondBoundsProviderModifierNode$Companion
@@ -31894,7 +31959,7 @@ androidx.compose.foundation.lazy.layout.LazyLayoutSemanticsModifier:
     public final androidx.compose.foundation.gestures.Orientation orientation
     public final boolean reverseScrolling
     public static androidx.compose.foundation.lazy.layout.LazyLayoutSemanticsModifierNode create()
-    public static void update$11()
+    public static void update$13()
 androidx.compose.foundation.lazy.layout.LazyLayoutSemanticsModifierNode$updateCachedSemanticsValues$3$2:
     public final java.lang.Object invoke$3()
 androidx.compose.foundation.lazy.layout.LazyLayoutSemanticsModifierNode:
@@ -31947,7 +32012,7 @@ androidx.compose.foundation.lazy.layout.PriorityTask:
 androidx.compose.foundation.lazy.layout.StableValue
 androidx.compose.foundation.lazy.layout.TraversablePrefetchStateModifierElement:
     public static androidx.compose.foundation.lazy.layout.TraversablePrefetchStateNode create()
-    public static void update$12()
+    public static void update$14()
 androidx.compose.foundation.lazy.layout.TraversablePrefetchStateNode:
     public final java.lang.String traverseKey
 androidx.compose.foundation.pager.DefaultPagerNestedScrollConnection:
@@ -31963,6 +32028,7 @@ androidx.compose.foundation.pager.LazyLayoutPagerKt$$InternalSyntheticLambda$5$c
     public final synthetic int f$19
     public final synthetic boolean f$3
     public final synthetic androidx.compose.foundation.gestures.Orientation f$4
+    public final synthetic int f$8
     public final synthetic float f$9
 androidx.compose.foundation.pager.LazyLayoutPagerKt$dragDirectionDetector$1$1$1:
     public final java.lang.Object invoke$4()
@@ -31989,6 +32055,7 @@ androidx.compose.foundation.pager.PageSize$Fill:
 androidx.compose.foundation.pager.PageSize
 androidx.compose.foundation.pager.PagerBeyondBoundsModifierKt
 androidx.compose.foundation.pager.PagerBeyondBoundsState:
+    public final int beyondViewportPageCount
     static void <clinit>()
     public static int getFirstPlacedIndex()
     public static boolean getHasVisibleItems()
@@ -32019,6 +32086,7 @@ androidx.compose.foundation.pager.PagerKt$$InternalSyntheticLambda$4$d5806e4d07d
     public final synthetic int f$15
     public final synthetic int f$16
     public final synthetic int f$17
+    public final synthetic int f$4
     public final synthetic float f$5
     public final synthetic boolean f$9
 androidx.compose.foundation.pager.PagerKt$pagerSemantics$performBackwardPaging$1:
@@ -32042,6 +32110,7 @@ androidx.compose.foundation.pager.PagerLazyLayoutItemProvider:
     public final int getIndex(java.lang.Object)
 androidx.compose.foundation.pager.PagerMeasurePolicyKt$rememberPagerMeasurePolicy$1$1:
     public final synthetic float $$v$c$androidx-compose-ui-unit-Dp$-pageSpacing$0
+    public final synthetic int $beyondViewportPageCount
     public final synthetic androidx.compose.ui.BiasAlignment$Horizontal $horizontalAlignment
     public final synthetic androidx.compose.foundation.gestures.Orientation $orientation
     public final synthetic boolean $reverseLayout
@@ -32154,7 +32223,7 @@ androidx.compose.foundation.shape.CornerSizeKt
 androidx.compose.foundation.shape.RoundedCornerShape:
     static void <clinit>()
     public final androidx.compose.ui.graphics.Outline createOutline-LjSzlW0()
-androidx.compose.foundation.text.BasicTextKt$$InternalSyntheticLambda$6$a94358ff5f433b5d9cd59032e26f92caeb58812481d173d19849fcaa32031830$1:
+androidx.compose.foundation.text.BasicTextKt$$InternalSyntheticLambda$5$a94358ff5f433b5d9cd59032e26f92caeb58812481d173d19849fcaa32031830$1:
     public final synthetic int f$11
     public final synthetic kotlin.jvm.functions.Function1 f$3
     public final synthetic androidx.compose.ui.graphics.ColorProducer f$8
@@ -32188,7 +32257,7 @@ androidx.compose.foundation.text.modifiers.SelectableTextAnnotatedStringNode
 androidx.compose.foundation.text.modifiers.SelectionController
 androidx.compose.foundation.text.modifiers.SelectionControllerKt$makeDefaultSelectionModifier$1
 androidx.compose.foundation.text.modifiers.SelectionControllerKt$makeDefaultSelectionModifier$longPressDragObserver$1:
-    public final synthetic androidx.compose.foundation.text.modifiers.SelectionController$$InternalSyntheticLambda$7$e3aafeacd795afea96b5a03c376f2940c9c8e63226b89bae3ddcb74da221e7e8$0 $layoutCoordinates
+    public final synthetic androidx.compose.foundation.text.modifiers.SelectionController$$InternalSyntheticLambda$6$e3aafeacd795afea96b5a03c376f2940c9c8e63226b89bae3ddcb74da221e7e8$0 $layoutCoordinates
     public final synthetic long $selectableId
     public long dragTotalDistance
     public long lastPosition
@@ -32211,7 +32280,7 @@ androidx.compose.foundation.text.modifiers.TextStringSimpleElement:
     public final androidx.compose.ui.graphics.ColorProducer color
     static void <clinit>()
     public static androidx.compose.foundation.text.modifiers.TextStringSimpleNode create()
-    public static void update$15()
+    public static void update$17()
 androidx.compose.foundation.text.modifiers.TextStringSimpleNode$TextSubstitutionValue:
     static void <clinit>()
 androidx.compose.foundation.text.modifiers.TextStringSimpleNode:
@@ -32331,13 +32400,16 @@ androidx.compose.material3.ShapeDefaults:
     public static final androidx.compose.material3.ShapeDefaults INSTANCE
 androidx.compose.material3.Shapes:
     static void <clinit>()
-androidx.compose.material3.TextKt$$InternalSyntheticLambda$5$7a912fb3816a2f18f55b391ffd1c467fe261679c8d5361683bfceb18fa66167c$0:
-    public final synthetic int f$2
-androidx.compose.material3.TextKt$$InternalSyntheticLambda$5$dd0618d6294270ddf63ca29a3364b90cbbee95e20d0058701bb3841114f5e22f$0:
+androidx.compose.material3.TextKt$$InternalSyntheticLambda$4$dd0618d6294270ddf63ca29a3364b90cbbee95e20d0058701bb3841114f5e22f$0:
     public final synthetic kotlin.jvm.functions.Function1 f$16
     public final synthetic androidx.compose.ui.text.font.FontStyle f$5
+androidx.compose.material3.TextKt$$InternalSyntheticLambda$5$7a912fb3816a2f18f55b391ffd1c467fe261679c8d5361683bfceb18fa66167c$0:
+    public final synthetic int f$2
 androidx.compose.material3.Typography:
     static void <clinit>()
+androidx.compose.material3.tokens.ColorDarkTokens:
+    public static final androidx.compose.material3.tokens.ColorDarkTokens INSTANCE
+    public static final long OnPrimaryFixed
 androidx.compose.material3.tokens.ColorLightTokens:
     public static final androidx.compose.material3.tokens.ColorLightTokens INSTANCE
     public static final long OnPrimaryFixed
@@ -32388,8 +32460,7 @@ androidx.compose.runtime.CancellationHandle:
     static void <clinit>()
 androidx.compose.runtime.Composable
 androidx.compose.runtime.ComposableSingletons$CompositionKt
-androidx.compose.runtime.ComposablesKt:
-    public static final void invalidApplier()
+androidx.compose.runtime.ComposablesKt
 androidx.compose.runtime.ComposePausableCompositionException$operationsSequence$1:
     public final java.lang.Object invoke$1()
 androidx.compose.runtime.ComposeRuntimeError:
@@ -32481,6 +32552,8 @@ androidx.compose.runtime.ComposerImpl:
     public final kotlin.coroutines.CoroutineContext getApplyCoroutineContext()
     public static boolean getAreChildrenComposing$runtime()
     public final long getCompositeKeyHashCode()
+    public final androidx.compose.runtime.internal.PersistentCompositionLocalHashMap getCurrentCompositionLocalMap()
+    public final boolean getInserting()
     public final androidx.compose.runtime.RecomposeScopeImpl getRecomposeScope()
     public static void insertMovableContentReferences()
     public static int insertedGroupVirtualIndex()
@@ -33704,11 +33777,12 @@ androidx.compose.ui.draw.CacheDrawScope:
     static void <clinit>()
     public final androidx.compose.ui.unit.LayoutDirection getLayoutDirection()
     public final long getSize-NH-jbRc()
+androidx.compose.ui.draw.ClipKt
 androidx.compose.ui.draw.DrawBackgroundModifier:
     static void <clinit>()
 androidx.compose.ui.draw.DrawBehindElement:
     public static androidx.compose.ui.draw.DrawBackgroundModifier create()
-    public static void update$16()
+    public static void update$18()
 androidx.compose.ui.draw.DrawCacheModifier
 androidx.compose.ui.draw.DrawModifier
 androidx.compose.ui.draw.DrawResult:
@@ -33852,8 +33926,10 @@ androidx.compose.ui.focus.FocusRequester:
     public static final androidx.compose.ui.focus.FocusRequester$Companion Companion
     public static boolean findFocusTargetNode$ui()
     public static boolean requestFocus-3ESFkO8()
+androidx.compose.ui.focus.FocusRequesterElement:
+    public static androidx.compose.ui.focus.FocusRequesterNode create()
+    public static void update$19()
 androidx.compose.ui.focus.FocusRequesterModifier
-androidx.compose.ui.focus.FocusRequesterModifierNode
 androidx.compose.ui.focus.FocusState
 androidx.compose.ui.focus.FocusStateImpl$WhenMappings
 androidx.compose.ui.focus.FocusStateImpl:
@@ -34088,7 +34164,7 @@ androidx.compose.ui.graphics.GraphicsLayerElement:
     public final float translationX
     public final float translationY
     public static androidx.compose.ui.graphics.SimpleGraphicsLayerModifier create()
-    public static void update$17()
+    public static void update$20()
 androidx.compose.ui.graphics.GraphicsLayerModifierKt:
     static void <clinit>()
 androidx.compose.ui.graphics.GraphicsLayerScope
@@ -34436,8 +34512,11 @@ androidx.compose.ui.graphics.layer.LayerSnapshotV28
 androidx.compose.ui.graphics.layer.OutlineVerificationHelper
 androidx.compose.ui.graphics.layer.RenderNodeVerificationHelper
 androidx.compose.ui.graphics.shadow.ShadowContext
+androidx.compose.ui.hapticfeedback.HapticFeedbackType$Companion
+androidx.compose.ui.hapticfeedback.HapticFeedbackType
 androidx.compose.ui.hapticfeedback.PlatformHapticFeedback:
     static void <clinit>()
+androidx.compose.ui.hapticfeedback.PlatformHapticFeedbackType
 androidx.compose.ui.input.InputMode$Companion
 androidx.compose.ui.input.InputMode:
     public static final androidx.compose.ui.input.InputMode$Companion Companion
@@ -34490,7 +34569,7 @@ androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher:
 androidx.compose.ui.input.nestedscroll.NestedScrollElement:
     public final androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher dispatcher
     public static androidx.compose.ui.input.nestedscroll.NestedScrollNode create()
-    public static void update$18()
+    public static void update$21()
 androidx.compose.ui.input.nestedscroll.NestedScrollNode$updateDispatcherFields$1:
     public final kotlinx.coroutines.CoroutineScope invoke()
 androidx.compose.ui.input.nestedscroll.NestedScrollNode:
@@ -34612,7 +34691,7 @@ androidx.compose.ui.input.pointer.SuspendPointerInputElement:
     public final java.lang.Object[] keys
     static void <clinit>()
     public static androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNodeImpl create()
-    public static void update$20()
+    public static void update$23()
 androidx.compose.ui.input.pointer.SuspendingPointerInputFilter_jvmKt
 androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNode
 androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNodeImpl$PointerEventHandlerCoroutine$withTimeout$1
@@ -34675,8 +34754,14 @@ androidx.compose.ui.input.pointer.util.VelocityTrackerKt:
     public static boolean VelocityTrackerAddPointsFix
     static void <clinit>()
     public static final void addPointerInputChange(androidx.compose.ui.input.pointer.util.VelocityTracker,androidx.compose.ui.input.pointer.PointerInputChange)
-androidx.compose.ui.input.rotary.RotaryInputModifierNode
-androidx.compose.ui.input.rotary.RotaryScrollEvent
+androidx.compose.ui.input.rotary.RotaryInputElement:
+    public final kotlin.jvm.functions.Function1 onPreRotaryScrollEvent
+    public static androidx.compose.ui.input.rotary.RotaryInputNode create()
+    public static void update$24()
+androidx.compose.ui.input.rotary.RotaryInputNode:
+    public kotlin.jvm.functions.Function1 onPreEvent
+androidx.compose.ui.input.rotary.RotaryScrollEvent:
+    static void <clinit>()
 androidx.compose.ui.internal.PlatformOptimizedCancellationException:
     static void <clinit>()
 androidx.compose.ui.layout.AlignmentLine$Companion
@@ -34783,7 +34868,7 @@ androidx.compose.ui.layout.Placeable$PlacementScope:
     public abstract void placeWithLayer()
     public abstract void placeWithLayer-aW-9-wM()
     public final void placeWithLayer-aW-9-wM(androidx.compose.ui.layout.Placeable,long,float,kotlin.jvm.functions.Function1)
-    public abstract void withMotionFrameOfReferencePlacement()
+    public final void withMotionFrameOfReferencePlacement(kotlin.jvm.functions.Function1)
 androidx.compose.ui.layout.Placeable:
     static void <clinit>()
     public abstract void placeAt-f8xVGno(long,float)
@@ -35059,7 +35144,6 @@ androidx.compose.ui.node.LayoutNode:
     public final void onReuse()
     public static void place$ui()
     public final boolean remeasure-_Sx5XlM$ui(androidx.compose.ui.unit.Constraints)
-    public static boolean remeasure-_Sx5XlM$ui$default(androidx.compose.ui.node.LayoutNode)
     public static synthetic void requestLookaheadRelayout$ui$default(androidx.compose.ui.node.LayoutNode)
     public static void requestLookaheadRemeasure$ui()
     public static synthetic void requestRelayout$ui$default(androidx.compose.ui.node.LayoutNode)
@@ -35490,8 +35574,6 @@ androidx.compose.ui.platform.AndroidComposeView$RootModifierNode:
     public static androidx.compose.runtime.SnapshotMutableIntStateImpl getGeneration()
     public static androidx.compose.ui.layout.InsetsListener getInsetsListener()
     public final void onPreKeyEvent-ZmokQxo()
-    public static boolean onPreRotaryScrollEvent()
-    public static boolean onRotaryScrollEvent()
 androidx.compose.ui.platform.AndroidComposeView$ViewTreeOwners:
     static void <clinit>()
 androidx.compose.ui.platform.AndroidComposeView$_inputModeManager$1
@@ -35961,7 +36043,7 @@ androidx.compose.ui.semantics.AppendedSemanticsElement:
     static void <clinit>()
     public static androidx.compose.ui.semantics.CoreSemanticsModifierNode create()
     public static androidx.compose.ui.semantics.SemanticsConfiguration getSemanticsConfiguration()
-    public static void update$21()
+    public static void update$25()
 androidx.compose.ui.semantics.CollectionInfo:
     static void <clinit>()
 androidx.compose.ui.semantics.CollectionItemInfo
@@ -36073,11 +36155,14 @@ androidx.compose.ui.semantics.SemanticsPropertiesKt$getScrollViewportLength$1:
 androidx.compose.ui.semantics.SemanticsPropertiesKt:
     public static void clearTextSubstitution$default(androidx.compose.ui.semantics.SemanticsPropertyReceiver,kotlin.jvm.functions.Function0)
     public static void getTextLayoutResult$default(androidx.compose.ui.semantics.SemanticsPropertyReceiver,kotlin.jvm.functions.Function1)
+    public static final void setHorizontalScrollAxisRange(androidx.compose.ui.semantics.SemanticsPropertyReceiver,androidx.compose.ui.semantics.ScrollAxisRange)
     public static final void setShape(androidx.compose.ui.semantics.SemanticsPropertyReceiver,androidx.compose.ui.graphics.Shape)
     public static final void setShowingTextSubstitution(androidx.compose.ui.semantics.SemanticsPropertyReceiver,boolean)
     public static final void setText(androidx.compose.ui.semantics.SemanticsPropertyReceiver,androidx.compose.ui.text.AnnotatedString)
     public static final void setTextSubstitution(androidx.compose.ui.semantics.SemanticsPropertyReceiver,androidx.compose.ui.text.AnnotatedString)
     public static void setTextSubstitution$default(androidx.compose.ui.semantics.SemanticsPropertyReceiver,kotlin.jvm.functions.Function1)
+    public static final void setTraversalGroup(androidx.compose.ui.semantics.SemanticsPropertyReceiver)
+    public static final void setVerticalScrollAxisRange(androidx.compose.ui.semantics.SemanticsPropertyReceiver,androidx.compose.ui.semantics.ScrollAxisRange)
     public static void showTextSubstitution$default(androidx.compose.ui.semantics.SemanticsPropertyReceiver,kotlin.jvm.functions.Function1)
 androidx.compose.ui.semantics.SemanticsPropertyKey:
     public java.lang.String accessibilityExtraKey
@@ -36710,7 +36795,7 @@ androidx.compose.ui.text.platform.AndroidParagraphHelper_androidKt:
 androidx.compose.ui.text.platform.AndroidParagraphIntrinsics:
     static void <clinit>()
 androidx.compose.ui.text.platform.AndroidParagraph_androidKt
-androidx.compose.ui.text.platform.AndroidTextPaint$$InternalSyntheticLambda$9$c31d481e3d3b89f69f5c2a00e5b23de69986e751c7d792abc8e5909357702d61$0:
+androidx.compose.ui.text.platform.AndroidTextPaint$$InternalSyntheticLambda$8$c31d481e3d3b89f69f5c2a00e5b23de69986e751c7d792abc8e5909357702d61$0:
     public final synthetic long f$1
 androidx.compose.ui.text.platform.AndroidTextPaint:
     static void <clinit>()
@@ -37036,6 +37121,7 @@ androidx.core.view.DisplayCutoutCompat:
     public static int getSafeInsetRight()
     public static int getSafeInsetTop()
     public static androidx.core.graphics.Insets getWaterfallInsets()
+androidx.core.view.HapticFeedbackConstantsCompat
 androidx.core.view.KeyEventDispatcher$Component
 androidx.core.view.KeyEventDispatcher
 androidx.core.view.MenuHostHelper:
@@ -37057,6 +37143,8 @@ androidx.core.view.ViewCompat$4
 androidx.core.view.ViewCompat$AccessibilityPaneVisibilityManager
 androidx.core.view.ViewCompat$AccessibilityViewProperty
 androidx.core.view.ViewCompat$Api29Impl
+androidx.core.view.ViewCompat:
+    public static void performHapticFeedback(android.view.View,int)
 androidx.core.view.ViewConfigurationCompat$Api26Impl
 androidx.core.view.ViewConfigurationCompat
 androidx.core.view.ViewKt
@@ -37667,6 +37755,7 @@ com.betterschool.wear.data.SessionManager:
     static void <clinit>()
     public static void clearSession()
     public static java.lang.String getBirthDate()
+    public static java.lang.String getCachedProjectEvaluationJson()
     public final java.lang.String getPassword()
     public final java.lang.String getPlatformId()
     public static java.lang.String getSchoolName()
@@ -37676,6 +37765,7 @@ com.betterschool.wear.data.SessionManager:
     public final java.lang.String getUsername()
     public final boolean isDemoMode()
     public final boolean isPaired()
+    public static void saveCachedProjectEvaluationJson()
     public static void savePairedSession()
     public static void setCachedAveragePct()
     public static void setCookies()
@@ -37688,12 +37778,12 @@ com.betterschool.wear.data.SessionManager:
 com.betterschool.wear.data.SmartschoolApiClient$Companion
 com.betterschool.wear.data.SmartschoolApiClient$createPairingTicket$2:
     public final java.lang.Object invoke$3()
-com.betterschool.wear.data.SmartschoolApiClient$fetchDirectGrades$2$$InternalSyntheticLambda$2$bf44673cabaf6a043a11f74c445a6564650554db5ac1ab9b8c2cc00449b2b7bc$0:
+com.betterschool.wear.data.SmartschoolApiClient$fetchDirectGrades$2$$InternalSyntheticLambda$1$bf44673cabaf6a043a11f74c445a6564650554db5ac1ab9b8c2cc00449b2b7bc$0:
     public final synthetic java.lang.String f$2
 com.betterschool.wear.data.SmartschoolApiClient$fetchDirectGrades$2:
-    public java.lang.Object L$1
+    public java.lang.Object L$2
     public final java.lang.Object invoke$3()
-com.betterschool.wear.data.SmartschoolApiClient$fetchDirectMessages$2$$InternalSyntheticLambda$2$be117e2028b2dccbf4583a42c2df096a149e7a7cf3ef1eb8576e8c21cc5435ba$0:
+com.betterschool.wear.data.SmartschoolApiClient$fetchDirectMessages$2$$InternalSyntheticLambda$1$be117e2028b2dccbf4583a42c2df096a149e7a7cf3ef1eb8576e8c21cc5435ba$0:
     public final synthetic java.lang.String f$0
 com.betterschool.wear.data.SmartschoolApiClient$fetchDirectMessages$2:
     public java.lang.Object L$0
@@ -37742,6 +37832,7 @@ com.betterschool.wear.data.SmartschoolParsers:
     public static java.util.List parseMessagesListXml()
     public static kotlin.Pair parsePlannerElements()
     public static com.betterschool.wear.domain.WearGrade parseSingleSkoreEvaluation()
+    public static java.util.List sortHomeworksByImportance(java.util.ArrayList)
 com.betterschool.wear.domain.WearCourseEvent:
     static void <clinit>()
 com.betterschool.wear.domain.WearGrade:
@@ -37758,30 +37849,54 @@ com.betterschool.wear.ui.M3ETheme$SubjectPalette:
     static void <clinit>()
 com.betterschool.wear.ui.M3ETheme:
     public static final com.betterschool.wear.ui.M3ETheme INSTANCE
-com.betterschool.wear.ui.WearMainScreenKt$$InternalSyntheticLambda$3$926c911fa699396e6872ffbd0078e153c4b2da8d13fda296c8b589baab6bc838$6:
+com.betterschool.wear.ui.WearMainScreenKt$$InternalSyntheticLambda$3$926c911fa699396e6872ffbd0078e153c4b2da8d13fda296c8b589baab6bc838$7:
     public final synthetic int f$1
+com.betterschool.wear.ui.WearMainScreenKt$WearMainScreen$2$1:
+    public final java.lang.Object invoke$3()
 com.betterschool.wear.ui.WearUiState:
     static void <clinit>()
     public static com.betterschool.wear.ui.WearUiState copy()
-com.betterschool.wear.ui.WearViewModel$refreshFromSmartschool$2:
+com.betterschool.wear.ui.WearViewModel$refreshFromSmartschool$1$gradesDeferred$1:
     public int I$0
-    public java.lang.Object L$6
+    public java.lang.Object L$1
+    public final java.lang.Object invoke$3()
+com.betterschool.wear.ui.WearViewModel$refreshFromSmartschool$1$messagesDeferred$1:
+    public int I$0
+    public java.lang.Object L$1
+    public final java.lang.Object invoke$3()
+com.betterschool.wear.ui.WearViewModel$refreshFromSmartschool$1:
+    public int I$0
+    public java.lang.Object L$2
+    public java.lang.Object L$8
     public final java.lang.Object invoke$3()
 com.betterschool.wear.ui.WearViewModel$startQrPairingOnWatch$1:
     public java.lang.Object L$1
+    public java.lang.Object L$2
     public final java.lang.Object invoke$3()
 com.betterschool.wear.ui.WearViewModel$toggleHomework$2:
     public final java.lang.Object invoke$3()
 com.betterschool.wear.ui.WearViewModel:
+    public long lastSyncTimestampMs
     static void <clinit>()
     public final void enterDemoMode()
+    public static void onScreenPaused()
+    public static void onScreenResumed()
     public static void toggleHomework()
-com.betterschool.wear.ui.pages.GradesPageKt$$InternalSyntheticLambda$5$1673f1db9c9406b5d9dad1ee00d57d228211cf48cc9b880c63057e99a797a868$2:
+com.betterschool.wear.ui.pages.GradesPageKt$$InternalSyntheticLambda$5$89e4c248fdcfe22933156f0f8ed1ea1e8dd58d159b3411bb38a3de0aa455f73f$3:
+    public final synthetic int f$3
+    public final synthetic int f$4
+com.betterschool.wear.ui.pages.GradesPageKt$GradesPage$1$1:
+    public final java.lang.Object invoke$3()
+com.betterschool.wear.ui.pages.HomeworkPageKt$$InternalSyntheticLambda$5$1e7a274060e747e2217f3a15b1be7c250a06db640b301b7bbcee5325ca27d07f$4:
+    public final synthetic int f$3
+    public final synthetic int f$4
+com.betterschool.wear.ui.pages.HomeworkPageKt$HomeworkPage$1$1:
+    public final java.lang.Object invoke$3()
+com.betterschool.wear.ui.pages.MessagesPageKt$$InternalSyntheticLambda$5$f6244aa752eacb4e7a6c579d45cc7f8dcb379aeb954b56e038b604a84f2c7bc9$3:
     public final synthetic int f$2
-com.betterschool.wear.ui.pages.HomeworkPageKt$$InternalSyntheticLambda$5$e10fbb9df9496b642bf3027b08af8259dc8f73f7876b8c528bdded7f428ac6e3$3:
-    public final synthetic int f$2
-com.betterschool.wear.ui.pages.MessagesPageKt$$InternalSyntheticLambda$5$701a266297f9fe9e96301ac157970027e4413f5d74efc6b97ce54e928550bac0$2:
-    public final synthetic int f$1
+    public final synthetic int f$3
+com.betterschool.wear.ui.pages.MessagesPageKt$MessagesPage$1$1:
+    public final java.lang.Object invoke$3()
 com.betterschool.wear.ui.pages.PairingAndProfilePageKt$$InternalSyntheticLambda$4$1c0baf32ddd3da760bd30ee6b7a0a5a62c51b3d95666e4120c019fd8a436a156$7:
     public final synthetic int f$5
 com.betterschool.wear.ui.pages.PairingAndProfilePageKt:
@@ -37791,8 +37906,13 @@ com.betterschool.wear.ui.pages.QrMatrixGenerator:
     static void <clinit>()
     public static void addBitsTo(java.util.ArrayList,int)
     public static final int reedSolomonEncode$gfMul(int[],int[],int,int)
-com.betterschool.wear.ui.pages.SchedulePageKt$$InternalSyntheticLambda$5$4484499ee1f7c29383cae9991b2ba225bbb42523e7fa11ea84b9aedb831463e0$2:
-    public final synthetic int f$2
+com.betterschool.wear.ui.pages.SchedulePageKt$$InternalSyntheticLambda$5$39edf1f3517c436172f84ff7641ba63c2035ee471c75aaed9272950f1083f09d$1:
+    public final synthetic int f$3
+    public final synthetic int f$4
+com.betterschool.wear.ui.pages.SchedulePageKt$SchedulePage$1$1:
+    public final java.lang.Object invoke$3()
+com.betterschool.wear.ui.pages.SchedulePageKt$SchedulePage$2$1$1:
+    public final java.lang.Object invoke$3()
 com.google.common.util.concurrent.ListenableFuture
 kotlin.DeprecationLevel
 kotlin.ExceptionsKt__ExceptionsKt
@@ -38118,7 +38238,7 @@ kotlin.text.MatcherMatchResult:
     public static java.util.regex.MatchResult getMatchResult()
     public final java.lang.String getValue()
     public final kotlin.text.MatchResult next()
-kotlin.text.Regex$$InternalSyntheticLambda$3$1a88607e43e2a605dd25ef4eff409978dd7b4128ad2709345fcb2de7faea0079$0:
+kotlin.text.Regex$$InternalSyntheticLambda$2$1a88607e43e2a605dd25ef4eff409978dd7b4128ad2709345fcb2de7faea0079$0:
     public final synthetic int f$2
 kotlin.text.Regex$Companion
 kotlin.text.Regex$findAll$2:
@@ -38126,6 +38246,7 @@ kotlin.text.Regex$findAll$2:
 kotlin.text.Regex:
     public static final kotlin.text.Regex$Companion Companion
     static void <clinit>()
+    public static boolean containsMatchIn()
     public final kotlin.text.MatcherMatchResult find(java.lang.CharSequence)
     public static kotlin.sequences.Sequence findAll()
     public final boolean matches(java.lang.CharSequence)
@@ -38149,9 +38270,9 @@ kotlin.text.StringsKt__StringNumberConversionsKt
 kotlin.text.StringsKt__StringsJVMKt:
     public static synthetic boolean startsWith$default(java.lang.String,java.lang.String)
     public static synthetic boolean startsWith$default(java.lang.String,java.lang.String,int)
-kotlin.text.StringsKt__StringsKt$$InternalSyntheticLambda$3$4732cf1072db78dbb5452db37a054ef6089859b432242fd75ccd4b77b2979264$0:
+kotlin.text.StringsKt__StringsKt$$InternalSyntheticLambda$2$4732cf1072db78dbb5452db37a054ef6089859b432242fd75ccd4b77b2979264$0:
     public final synthetic boolean f$1
-kotlin.text.StringsKt__StringsKt$$InternalSyntheticLambda$3$502501cddd73bb162d6ca9a92ded4c57d40d4ff33ca2ed3e06965905455a52cd$0:
+kotlin.text.StringsKt__StringsKt$$InternalSyntheticLambda$2$502501cddd73bb162d6ca9a92ded4c57d40d4ff33ca2ed3e06965905455a52cd$0:
     public final synthetic boolean f$1
 kotlin.text.StringsKt__StringsKt$lineSequence$$inlined$Sequence$1
 kotlin.text.StringsKt__StringsKt:
@@ -38222,7 +38343,6 @@ kotlinx.coroutines.CancelledContinuation:
 kotlinx.coroutines.ChildJob
 kotlinx.coroutines.CompletableDeferred
 kotlinx.coroutines.CompletableDeferredImpl:
-    public final java.lang.Object await()
     public static boolean complete()
 kotlinx.coroutines.CompletableDeferredKt
 kotlinx.coroutines.CompletableJob
@@ -38248,7 +38368,6 @@ kotlinx.coroutines.CoroutineContextKt$$InternalSyntheticLambda$1$a6cdc447e79f065
 kotlinx.coroutines.CoroutineContextKt:
     public static final boolean hasCopyableElements(kotlin.coroutines.CoroutineContext)
     public static final kotlin.coroutines.CoroutineContext newCoroutineContext(kotlin.coroutines.CoroutineContext,kotlin.coroutines.CoroutineContext)
-    public static final kotlin.coroutines.CoroutineContext newCoroutineContext(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext)
 kotlinx.coroutines.CoroutineDispatcher:
     public void dispatchYield(kotlin.coroutines.CoroutineContext,java.lang.Runnable)
     public abstract kotlin.coroutines.Continuation interceptContinuation()
@@ -38264,7 +38383,7 @@ kotlinx.coroutines.CoroutineName:
 kotlinx.coroutines.CoroutineStart$WhenMappings
 kotlinx.coroutines.CoroutineStart:
     public static void invoke()
-    public static boolean isLazy()
+    public final boolean isLazy()
 kotlinx.coroutines.DebugStringsKt:
     public static final java.lang.String getClassSimpleName(java.lang.Object)
 kotlinx.coroutines.DefaultExecutor:
@@ -38272,7 +38391,6 @@ kotlinx.coroutines.DefaultExecutor:
     public static void shutdownError()
 kotlinx.coroutines.DefaultExecutorKt:
     public static final boolean defaultMainDelayOptIn
-kotlinx.coroutines.Deferred
 kotlinx.coroutines.Delay$DefaultImpls
 kotlinx.coroutines.DelayWithTimeoutDiagnostics
 kotlinx.coroutines.DispatchedCoroutine:
@@ -38309,7 +38427,6 @@ kotlinx.coroutines.EventLoop_commonKt:
     public static final long delayToNanos(long)
 kotlinx.coroutines.ExceptionsKt
 kotlinx.coroutines.ExecutorCoroutineDispatcher$Key
-kotlinx.coroutines.GlobalScope
 kotlinx.coroutines.InvokeOnCancelling:
     public static final synthetic java.util.concurrent.atomic.AtomicIntegerFieldUpdater _invoked$volatile$FU
 kotlinx.coroutines.Job:
@@ -38322,6 +38439,7 @@ kotlinx.coroutines.JobKt
 kotlinx.coroutines.JobKt__JobKt$invokeOnCompletion$1:
     public final void invoke(java.lang.Throwable)
 kotlinx.coroutines.JobKt__JobKt:
+    public static kotlinx.coroutines.JobImpl Job$default()
     public static final void cancel(kotlin.coroutines.CoroutineContext,java.util.concurrent.CancellationException)
     public static void cancel$default(kotlinx.coroutines.Job,java.lang.String)
     public static final void ensureActive(kotlinx.coroutines.Job)
@@ -38340,7 +38458,6 @@ kotlinx.coroutines.JobSupport$children$1
 kotlinx.coroutines.JobSupport:
     public static final synthetic java.util.concurrent.atomic.AtomicReferenceFieldUpdater _parentHandle$volatile$FU
     public static final synthetic java.util.concurrent.atomic.AtomicReferenceFieldUpdater _state$volatile$FU
-    public static java.lang.Object awaitInternal()
     public static java.util.concurrent.CancellationException getChildJobCancellationCause()
     public final kotlin.sequences.Sequence getChildren()
     public static kotlinx.coroutines.Job getParent()
@@ -38356,6 +38473,7 @@ kotlinx.coroutines.JobSupport:
     public static java.lang.String toDebugString()
 kotlinx.coroutines.JobSupportKt:
     public static final java.lang.Object boxIncomplete(java.lang.Object)
+kotlinx.coroutines.LazyDeferredCoroutine
 kotlinx.coroutines.MainCoroutineDispatcher:
     public abstract kotlinx.coroutines.MainCoroutineDispatcher getImmediate()
     public abstract kotlinx.coroutines.CoroutineDispatcher limitedParallelism(int)
@@ -38926,7 +39044,6 @@ okhttp3.internal.concurrent.Task:
 okhttp3.internal.concurrent.TaskQueue:
     public static synthetic void schedule$default(okhttp3.internal.concurrent.TaskQueue,okhttp3.internal.concurrent.Task)
 okhttp3.internal.concurrent.TaskRunner$Backend
-okhttp3.internal.concurrent.TaskRunner$Companion
 okhttp3.internal.concurrent.TaskRunner$RealBackend:
     public static void coordinatorNotify()
     public static void coordinatorWait()

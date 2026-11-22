@@ -87,6 +87,20 @@ class SessionManager(context: Context) {
         }
         set(value) = prefs.edit().putString(KEY_TILE_MODE, value.name).apply()
 
+    /**
+     * Cache persistant des évaluations de type "project" (LPD) déjà résolues,
+     * pour ne jamais spammer Smartschool avec 15 requêtes GET /results/api/v1/evaluations/{id} à chaque sync.
+     */
+    fun getCachedProjectEvaluationJson(identifier: String): String? {
+        if (identifier.isBlank()) return null
+        return prefs.getString("proj_eval_$identifier", null)
+    }
+
+    fun saveCachedProjectEvaluationJson(identifier: String, rawJson: String) {
+        if (identifier.isBlank() || rawJson.isBlank()) return
+        prefs.edit().putString("proj_eval_$identifier", rawJson).apply()
+    }
+
     val hasCredentials: Boolean
         get() = username.isNotBlank() && password.isNotBlank() && schoolHost.startsWith("http")
 

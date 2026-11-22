@@ -16,6 +16,7 @@ import com.betterschool.wear.domain.WearMessage
 import com.betterschool.wear.domain.WearMockData
 import com.betterschool.wear.domain.WearStudentProfile
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,8 +39,7 @@ data class WearUiState(
     val homeworks: List<WearHomework> = emptyList(),
     val pairingTicket: PairingTicket? = null,
     val isPollingPairing: Boolean = false,
-    val tileDisplayMode: TileDisplayMode = TileDisplayMode.NEXT_COURSE,
-    val statusBanner: String? = null
+    val tileDisplayMode: TileDisplayMode = TileDisplayMode.NEXT_COURSE
 )
 
 class WearViewModel(application: Application) : AndroidViewModel(application) {
@@ -51,6 +51,8 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<WearUiState> = _uiState.asStateFlow()
 
     private var pairingPollJob: Job? = null
+    private var syncJob: Job? = null
+    private var lastSyncTimestampMs: Long = 0L
 
     init {
         initializeSessionState()
@@ -78,7 +80,7 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                         )
                     )
                 }
-                refreshFromSmartschool()
+                refreshFromSmartschool(force = true)
             }
             demo -> {
                 applyDemoData()
@@ -99,6 +101,26 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Appelé automatiquement quand l'écran de la montre s'éteint (ON_PAUSE / ON_STOP).
+     * Coupe instantanément 100% des requêtes et du polling pour ne jamais consommer de réseau écran éteint.
+     */
+    fun onScreenPaused() {
+        pairingPollJob?.cancel()
+        pairingPollJob = null
+    }
+
+    /**
+     * Appelé quand l'écran de la montre se rallume (ON_RESUME).
+     * Relance le polling uniquement si la montre est sur l'écran d'appairage non connecté.
+     */
+    fun onScreenResumed() {
+        val state = _uiState.value
+        if (!state.isPaired && !state.isDemoMode && pairingPollJob == null) {
+            startQrPairingOnWatch()
+        }
+    }
+
     private fun applyDemoData() {
         pairingPollJob?.cancel()
         val avg = SmartschoolParsers.computeWeightedGeneralAverage(WearMockData.grades)
@@ -113,8 +135,7 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                 messages = WearMockData.messages,
                 grades = WearMockData.grades,
                 weightedAverage = avg,
-                homeworks = WearMockData.homeworks,
-                statusBanner = "Mode Démo"
+                homeworks = WearMockData.homeworks
             )
         }
     }
@@ -125,7 +146,9 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun disconnectAndReturnToPairing() {
+        syncJob?.cancel()
         sessionManager.clearSession()
+        lastSyncTimestampMs = 0L
         _uiState.update {
             WearUiState(
                 isPaired = false,
@@ -136,36 +159,33 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Interroge directement <ecole>.smartschool.be depuis la montre via OkHttp.
-     * Aucune donnée ne provient d'un snapshot d'appairage.
+     * Synchronisation directe avec anti-spam (cooldown de 15s et verrou si déjà en cours).
+     * Ne relance loginToSmartschool() que si PHPSESSID est absent ou expiré (via executeWithAutoReauth).
      */
-    fun refreshFromSmartschool() {
+    fun refreshFromSmartschool(force: Boolean = false) {
         if (sessionManager.isDemoMode && !sessionManager.isPaired) {
             applyDemoData()
             return
         }
-        if (!sessionManager.hasValidLiveSession) {
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    statusBanner = "Session manquante (ré-associez la montre)"
-                )
-            }
-            return
-        }
+        if (!sessionManager.hasValidLiveSession) return
 
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, statusBanner = "Connexion directe à Smartschool...") }
+        // Anti-spam : ne pas relancer si une sync est déjà en cours ou si la dernière date de moins de 15s
+        val now = System.currentTimeMillis()
+        if (_uiState.value.isLoading) return
+        if (!force && (now - lastSyncTimestampMs) < 15_000L) return
+
+        syncJob?.cancel()
+        syncJob = viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
 
             try {
-                // 0. Connexion directe à Smartschool (/login + /account-verification avec date de naissance)
-                if (sessionManager.hasCredentials) {
-                    _uiState.update { it.copy(statusBanner = "1/4 Login Smartschool...") }
+                // 0. Se connecter uniquement si on n'a pas encore de cookie PHPSESSID en cache
+                // (si PHPSESSID a expiré, executeWithAutoReauth s'en chargera automatiquement)
+                if (!sessionManager.cookies.contains("PHPSESSID") && sessionManager.hasCredentials) {
                     apiClient.loginToSmartschool()
                 }
 
-                // 1. Découverte et certification du profil réel sur Smartschool (/Studentcard/Student/getStudents)
-                _uiState.update { it.copy(statusBanner = "2/4 Profil Studentcard...") }
+                // 1. Profil Studentcard (et découverte du userId si absent)
                 val certifiedProfile = apiClient.fetchDirectStudentProfile()
                 if (certifiedProfile != null) {
                     sessionManager.userId = certifiedProfile.userId
@@ -174,27 +194,30 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                     sessionManager.studentClass = certifiedProfile.studentClass
                 }
 
-                // 2. Notes Skore (déduit aussi le userId 4907_XXXX_0 depuis identifier si Studentcard n'a pas suffi)
-                _uiState.update { it.copy(statusBanner = "3/4 Notes & Messages...") }
-                val grades = runCatching { apiClient.fetchDirectGrades() }.getOrDefault(emptyList())
-                val messages = runCatching { apiClient.fetchDirectMessages() }.getOrDefault(emptyList())
+                // 2. Exécution parallèle des requêtes Notes, Messages et Moyenne SQLite
+                val gradesDeferred = async { runCatching { apiClient.fetchDirectGrades() }.getOrDefault(emptyList()) }
+                val messagesDeferred = async { runCatching { apiClient.fetchDirectMessages() }.getOrDefault(emptyList()) }
+                val grades = gradesDeferred.await()
+                val messages = messagesDeferred.await()
 
-                // 3. Horaire & Devoirs (/planner/api/v1/planned-elements/user/{userId})
-                _uiState.update { it.copy(statusBanner = "4/4 Horaire & Devoirs...") }
+                // 3. Horaire & Devoirs (utilise le userId résolu par Studentcard ou Skore)
                 val (courses, homeworks) = runCatching {
                     apiClient.fetchDirectScheduleAndHomeworks()
                 }.getOrDefault(Pair(emptyList(), emptyList()))
 
-                // 3. Moyenne générale (SQLite ou calcul direct sur les évaluations Skore récupérées par la montre)
                 val sqliteAvg = runCatching {
                     apiClient.fetchSqliteUserAverage(sessionManager.userId)
                 }.getOrNull()
+
                 val effectiveAvg = sqliteAvg
                     ?: SmartschoolParsers.computeWeightedGeneralAverage(grades)
                     ?: sessionManager.cachedAveragePct
+
                 if (effectiveAvg != null) {
                     sessionManager.cachedAveragePct = effectiveAvg
                 }
+
+                lastSyncTimestampMs = System.currentTimeMillis()
 
                 _uiState.update { state ->
                     state.copy(
@@ -202,20 +225,16 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                         isDemoMode = false,
                         isPaired = true,
                         profile = certifiedProfile ?: state.profile,
-                        todayCourses = courses,
-                        homeworks = homeworks,
-                        grades = grades,
-                        weightedAverage = effectiveAvg,
-                        messages = messages,
-                        statusBanner = apiClient.lastSmartschoolTrace
+                        todayCourses = courses.ifEmpty { state.todayCourses },
+                        homeworks = homeworks.ifEmpty { state.homeworks },
+                        grades = grades.ifEmpty { state.grades },
+                        weightedAverage = effectiveAvg ?: state.weightedAverage,
+                        messages = messages.ifEmpty { state.messages }
                     )
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _uiState.update { state ->
-                    state.copy(
-                        isLoading = false,
-                        statusBanner = "${apiClient.lastSmartschoolTrace} (${e.message ?: "Erreur"})"
-                    )
+                    state.copy(isLoading = false)
                 }
             }
         }
@@ -225,11 +244,19 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         val targetCompleted = !homework.isCompleted
 
         _uiState.update { state ->
-            state.copy(
-                homeworks = state.homeworks.map {
-                    if (it.id == homework.id) it.copy(isCompleted = targetCompleted) else it
+            val updatedList = state.homeworks.map {
+                if (it.id == homework.id) {
+                    val newImportance = SmartschoolParsers.calculateHomeworkImportance(
+                        dueDateStr = it.dueDate,
+                        assignmentTypeName = "${it.typeLabel} ${it.title}",
+                        isCompleted = targetCompleted
+                    )
+                    it.copy(isCompleted = targetCompleted, importanceScore = newImportance)
+                } else {
+                    it
                 }
-            )
+            }
+            state.copy(homeworks = SmartschoolParsers.sortHomeworksByImportance(updatedList))
         }
 
         if (!uiState.value.isDemoMode && sessionManager.hasValidLiveSession) {
@@ -243,36 +270,29 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Lors de l'appairage, la montre reçoit UNIQUEMENT ses paramètres d'authentification
-     * (aucun snapshot de cours/messages/notes) et lance immédiatement refreshFromSmartschool() !
-     */
     fun startQrPairingOnWatch() {
         pairingPollJob?.cancel()
         pairingPollJob = viewModelScope.launch {
-            val localCode = (100000..999999).random().toString()
+            val existingCode = _uiState.value.pairingTicket?.code
+            val localCode = existingCode ?: (100000..999999).random().toString()
             _uiState.update {
                 it.copy(
                     isPollingPairing = true,
                     pairingTicket = PairingTicket(
                         code = localCode,
                         qrUrl = "https://betterschool.dino.icu/?wearPair=$localCode"
-                    ),
-                    statusBanner = "En attente de connexion..."
+                    )
                 )
             }
 
             val ticket = apiClient.createPairingTicket()
             _uiState.update {
-                it.copy(
-                    pairingTicket = ticket,
-                    statusBanner = "Entrez ce code sur BetterSchool Web"
-                )
+                it.copy(pairingTicket = ticket)
             }
 
             val startTime = System.currentTimeMillis()
             while (isActive && System.currentTimeMillis() - startTime < 5 * 60 * 1000L) {
-                delay(2000L)
+                delay(2500L)
                 val pairedPayload = apiClient.pollPairingSession(ticket.code)
                 if (pairedPayload != null) {
                     sessionManager.savePairedSession(pairedPayload)
@@ -287,20 +307,14 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                             profile = WearStudentProfile(
                                 userId = pairedPayload.userId,
                                 platformId = pairedPayload.platformId,
-                                fullName = pairedPayload.studentName.ifEmpty { "Connexion Smartschool..." },
+                                fullName = pairedPayload.studentName.ifEmpty { "Élève connecté" },
                                 studentClass = pairedPayload.studentClass,
                                 schoolName = pairedPayload.schoolName.ifEmpty { "Smartschool" }
                             ),
-                            todayCourses = emptyList(),
-                            homeworks = emptyList(),
-                            messages = emptyList(),
-                            grades = emptyList(),
-                            weightedAverage = pairedPayload.overallAveragePct,
-                            statusBanner = "Authentification directe Smartschool..."
+                            weightedAverage = pairedPayload.overallAveragePct
                         )
                     }
-                    // La montre interroge immédiatement Smartschool par elle-même !
-                    refreshFromSmartschool()
+                    refreshFromSmartschool(force = true)
                     break
                 }
             }

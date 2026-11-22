@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:2:1-42:12
-INJECTED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:2:1-42:12
-INJECTED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:2:1-42:12
-INJECTED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:2:1-42:12
+ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:2:1-41:12
+INJECTED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:2:1-41:12
+INJECTED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:2:1-41:12
+INJECTED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:2:1-41:12
 MERGED from [androidx.compose.material3:material3-android:1.4.0] /home/richard/.gradle/caches/9.5.0/transforms/7be3373fea98223ab459e499a60964bc/transformed/material3/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.activity:activity:1.8.2] /home/richard/.gradle/caches/9.5.0/transforms/fb77f895fcf11013d3f6a73826798a4e/transformed/activity-1.8.2/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.activity:activity-ktx:1.8.2] /home/richard/.gradle/caches/9.5.0/transforms/af521e20da7f8fed45df4bd63a0d6955/transformed/activity-ktx-1.8.2/AndroidManifest.xml:2:1-7:12
@@ -85,13 +85,9 @@ uses-permission#android.permission.VIBRATE
 ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:9:5-66
 	android:name
 		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:9:22-63
-uses-permission#android.permission.WAKE_LOCK
-ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:10:5-68
-	android:name
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:10:22-65
 application
-ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:12:5-40:19
-INJECTED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:12:5-40:19
+ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:11:5-39:19
+INJECTED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:11:5-39:19
 MERGED from [androidx.emoji2:emoji2:1.4.0] /home/richard/.gradle/caches/9.5.0/transforms/50f0780708c6be5deedcc45f87e35a1c/transformed/emoji2-1.4.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.emoji2:emoji2:1.4.0] /home/richard/.gradle/caches/9.5.0/transforms/50f0780708c6be5deedcc45f87e35a1c/transformed/emoji2-1.4.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.lifecycle:lifecycle-process:2.9.4] /home/richard/.gradle/caches/9.5.0/transforms/4846f79e626bf814ac78a1baac877cde/transformed/lifecycle-process-2.9.4/AndroidManifest.xml:23:5-33:19
@@ -111,49 +107,49 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/richa
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.16.0] /home/richard/.gradle/caches/9.5.0/transforms/6142367e41f087407b19f8afed3ff405/transformed/core-1.16.0/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:17:9-35
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:16:9-35
 	android:label
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:16:9-41
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:15:9-41
 	android:roundIcon
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:15:9-54
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:14:9-54
 	android:icon
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:14:9-43
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:13:9-43
 	android:allowBackup
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:13:9-35
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:12:9-35
 	android:theme
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:18:9-59
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:17:9-59
 uses-library#com.google.android.wearable
-ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:20:9-22:40
+ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:19:9-21:40
 	android:required
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:22:13-37
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:21:13-37
 	android:name
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:21:13-55
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:20:13-55
 meta-data#com.google.android.wearable.standalone
-ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:25:9-27:36
+ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:24:9-26:36
 	android:value
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:27:13-33
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:26:13-33
 	android:name
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:26:13-66
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:25:13-66
 activity#com.betterschool.wear.MainActivity
-ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:29:9-38:20
+ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:28:9-37:20
 	android:exported
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:31:13-36
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:30:13-36
 	android:theme
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:33:13-63
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:32:13-63
 	android:taskAffinity
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:32:13-36
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:31:13-36
 	android:name
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:30:13-41
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:29:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:34:13-37:29
+ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:33:13-36:29
 action#android.intent.action.MAIN
-ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:35:17-69
+ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:34:17-69
 	android:name
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:35:25-66
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:34:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:36:17-77
+ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:35:17-77
 	android:name
-		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:36:27-74
+		ADDED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml:35:27-74
 uses-sdk
 INJECTED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/AndroidManifest.xml

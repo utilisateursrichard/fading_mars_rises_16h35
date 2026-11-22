@@ -69,7 +69,8 @@ data class WearHomework(
     val dueTime: String?,
     val isCompleted: Boolean,
     val typeLabel: String = "Devoir",
-    val colorHex: Long = 0xFF4F46E5
+    val colorHex: Long = 0xFF4F46E5,
+    val importanceScore: Int = 5
 )
 
 @Immutable

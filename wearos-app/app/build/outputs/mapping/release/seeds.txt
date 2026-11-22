@@ -1,852 +1,861 @@
-androidx.graphics.path.PathIteratorPreApi34Impl
-androidx.compose.foundation.lazy.layout.TraversablePrefetchStateModifierElement
-androidx.compose.foundation.BackgroundElement
-com.betterschool.wear.domain.WearStudentProfile
-androidx.core.app.RemoteActionCompat
-androidx.lifecycle.LifecycleDispatcher$DispatcherActivityCallback
-androidx.profileinstaller.ProfileInstallerInitializer
-androidx.compose.ui.input.pointer.SuspendPointerInputElement
-androidx.compose.foundation.ScrollableAreaElement
-androidx.compose.foundation.layout.LayoutWeightElement
-androidx.compose.foundation.layout.FillElement
-androidx.lifecycle.ProcessLifecycleInitializer
-androidx.emoji2.text.EmojiCompatInitializer
-androidx.window.reflection.Predicate2
-androidx.compose.foundation.lazy.layout.LazyLayoutSemanticsModifier
-androidx.compose.ui.semantics.AppendedSemanticsElement
-androidx.compose.foundation.layout.PaddingElement
-com.betterschool.wear.domain.TileDisplayMode
-androidx.compose.ui.focus.FocusOwnerImpl$modifier$1
-androidx.compose.ui.input.pointer.PointerInputEventHandler
-androidx.compose.foundation.layout.BoxChildDataElement
-androidx.compose.ui.draw.DrawBehindElement
-android.support.v4.graphics.drawable.IconCompatParcelizer
-androidx.compose.ui.platform.AndroidComposeView$root$1$1
-androidx.core.graphics.drawable.IconCompatParcelizer
-com.betterschool.wear.domain.WearHomework
-androidx.compose.foundation.BorderModifierNodeElement
-androidx.compose.foundation.layout.SizeElement
-androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1
-androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements
-androidx.lifecycle.LegacySavedStateHandleController$OnRecreation
-androidx.compose.ui.input.pointer.PointerHoverIconModifierElement
-androidx.profileinstaller.ProfileInstallReceiver
-com.betterschool.wear.MainActivity
-androidx.lifecycle.ReportFragment
 com.betterschool.wear.domain.WearPairingSessionPayload
-com.betterschool.wear.domain.WearMessage
-kotlinx.coroutines.internal.StackTraceRecoveryKt
+androidx.core.graphics.drawable.IconCompat
+androidx.lifecycle.ReportFragment
+androidx.window.reflection.Consumer2
 androidx.lifecycle.SavedStateHandlesVM
-kotlin.coroutines.jvm.internal.BaseContinuationImpl
-androidx.compose.ui.draganddrop.AndroidDragAndDropManager$modifier$1
-androidx.graphics.path.ConicConverter
-androidx.lifecycle.ReportFragment$LifecycleCallbacks
-androidx.compose.foundation.text.modifiers.SelectableTextAnnotatedStringElement
+android.support.v4.graphics.drawable.IconCompatParcelizer
+com.betterschool.wear.domain.WearHomework
+androidx.compose.ui.platform.LifecycleRetainedValuesStoreOwner
+okhttp3.internal.publicsuffix.PublicSuffixDatabase
+androidx.compose.foundation.text.modifiers.TextStringSimpleElement
+androidx.compose.ui.focus.FocusRequesterElement
+androidx.core.graphics.drawable.IconCompatParcelizer
+kotlinx.coroutines.internal.StackTraceRecoveryKt
+androidx.compose.ui.draw.DrawBehindElement
 androidx.core.app.CoreComponentFactory
 androidx.startup.InitializationProvider
-androidx.versionedparcelable.CustomVersionedParcelable
-androidx.window.area.reflectionguard.ExtensionWindowAreaStatusRequirements
-androidx.window.reflection.JFunction2
-androidx.compose.ui.platform.LifecycleRetainedValuesStoreOwner
-androidx.window.area.reflectionguard.ExtensionWindowAreaPresentationRequirements
-androidx.compose.foundation.lazy.layout.AwaitFirstLayoutModifier
-androidx.compose.foundation.text.modifiers.TextAnnotatedStringElement
-androidx.compose.foundation.text.modifiers.TextStringSimpleElement
-okhttp3.internal.publicsuffix.PublicSuffixDatabase
-androidx.core.graphics.drawable.IconCompat
-com.betterschool.wear.domain.WearGrade
-androidx.compose.foundation.ClickableElement
-com.betterschool.wear.domain.WearCourseEvent
-androidx.compose.ui.input.nestedscroll.NestedScrollElement
-androidx.compose.ui.graphics.GraphicsLayerElement
-android.support.v4.app.RemoteActionCompatParcelizer
-androidx.compose.foundation.layout.WrapContentElement
-androidx.window.reflection.Consumer2
-androidx.core.app.RemoteActionCompatParcelizer
-com.betterschool.wear.ui.WearViewModel
+androidx.lifecycle.LifecycleDispatcher$DispatcherActivityCallback
+com.betterschool.wear.domain.WearMessage
+androidx.compose.foundation.layout.PaddingElement
+androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements
 androidx.versionedparcelable.ParcelImpl
-com.betterschool.wear.domain.WearMockData
+androidx.graphics.path.PathIteratorPreApi34Impl
+androidx.window.area.reflectionguard.ExtensionWindowAreaStatusRequirements
+androidx.core.app.RemoteActionCompat
+androidx.compose.ui.input.pointer.PointerHoverIconModifierElement
+androidx.compose.foundation.layout.LayoutWeightElement
+androidx.compose.foundation.layout.BoxChildDataElement
+com.betterschool.wear.domain.WearStudentProfile
+androidx.compose.foundation.ScrollingLayoutElement
+androidx.compose.ui.semantics.AppendedSemanticsElement
+com.betterschool.wear.domain.WearCourseEvent
+com.betterschool.wear.domain.TileDisplayMode
+androidx.compose.foundation.ClickableElement
+androidx.compose.foundation.text.modifiers.TextAnnotatedStringElement
+androidx.compose.foundation.text.modifiers.SelectableTextAnnotatedStringElement
+androidx.graphics.path.ConicConverter
+androidx.compose.foundation.lazy.layout.LazyLayoutSemanticsModifier
+androidx.versionedparcelable.CustomVersionedParcelable
+androidx.window.area.reflectionguard.ExtensionWindowAreaPresentationRequirements
+androidx.compose.ui.input.pointer.SuspendPointerInputElement
+androidx.compose.ui.graphics.GraphicsLayerElement
+kotlin.coroutines.jvm.internal.BaseContinuationImpl
+androidx.compose.ui.input.rotary.RotaryInputElement
+com.betterschool.wear.domain.WearGrade
+androidx.compose.ui.platform.AndroidComposeView$root$1$1
+androidx.compose.foundation.layout.SizeElement
+androidx.compose.foundation.FocusableElement
+androidx.compose.ui.focus.FocusOwnerImpl$modifier$1
+androidx.profileinstaller.ProfileInstallReceiver
+androidx.window.reflection.Predicate2
 androidx.lifecycle.ProcessLifecycleOwner$attach$1
-androidx.annotation.Keep
+androidx.compose.foundation.layout.FillElement
+androidx.compose.ui.input.pointer.PointerInputEventHandler
+androidx.lifecycle.LegacySavedStateHandleController$OnRecreation
+com.betterschool.wear.ui.WearViewModel
+androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1
+androidx.emoji2.text.EmojiCompatInitializer
+com.betterschool.wear.MainActivity
+androidx.compose.ui.draganddrop.AndroidDragAndDropManager$modifier$1
+androidx.compose.ui.platform.AndroidCompositionLocals_androidKt
+androidx.core.app.RemoteActionCompatParcelizer
+androidx.compose.ui.input.nestedscroll.NestedScrollElement
+com.betterschool.wear.domain.WearMockData
+androidx.window.reflection.JFunction2
 androidx.compose.foundation.lazy.layout.LazyLayoutBeyondBoundsModifierElement
-com.betterschool.wear.domain.WearMessage: java.lang.String previewSnippet
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: androidx.lifecycle.ReportFragment$LifecycleCallbacks$Companion Companion
-kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: java.lang.Object nextParkedWorker
-kotlinx.coroutines.EventLoopImplBase: java.lang.Object _queue$volatile
-kotlinx.coroutines.CancellableContinuationImpl: int _decisionAndIndex$volatile
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String startTime
-kotlinx.coroutines.internal.LockFreeTaskQueue: java.lang.Object _cur$volatile
-com.betterschool.wear.domain.WearMessage: java.lang.String subject
-com.betterschool.wear.domain.WearMockData: com.betterschool.wear.domain.WearStudentProfile profile
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String room
-kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _next$volatile
-kotlinx.coroutines.InvokeOnCancelling: int _invoked$volatile
-com.betterschool.wear.domain.WearMessage: boolean isUnread
-kotlinx.coroutines.channels.BufferedChannel: java.lang.Object _closeCause$volatile
-com.betterschool.wear.domain.WearHomework: java.lang.String dueDate
-kotlinx.coroutines.internal.ConcurrentLinkedListNode: java.lang.Object _next$volatile
-com.betterschool.wear.domain.WearGrade: java.lang.String date
-androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1: androidx.lifecycle.ProcessLifecycleOwner this$0
-com.betterschool.wear.domain.WearCourseEvent: float progressFraction
-kotlinx.coroutines.sync.SemaphoreAndMutexImpl: long deqIdx$volatile
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event[] $VALUES
-com.betterschool.wear.domain.WearMockData: com.betterschool.wear.domain.WearMockData INSTANCE
-kotlinx.coroutines.internal.ResizableAtomicArray: java.util.concurrent.atomic.AtomicReferenceArray array
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_CREATE
-com.betterschool.wear.domain.WearCourseEvent: boolean isCurrent
-kotlinx.coroutines.JobSupport$Finishing: java.lang.Object _exceptionsHolder$volatile
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String id
-kotlinx.coroutines.channels.BufferedChannel: long bufferEnd$volatile
-androidx.concurrent.futures.AbstractResolvableFuture: java.lang.Object value
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String studentClass
-androidx.compose.runtime.ParcelableSnapshotMutableIntState: android.os.Parcelable$Creator CREATOR
-androidx.compose.runtime.ParcelableSnapshotMutableFloatState: android.os.Parcelable$Creator CREATOR
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_ANY
-kotlin.SafePublicationLazyImpl: java.lang.Object _value
-com.betterschool.wear.domain.WearMessage: java.lang.String dateLabel
-kotlinx.coroutines.sync.SemaphoreAndMutexImpl: long enqIdx$volatile
-kotlinx.coroutines.android.HandlerDispatcherKt: android.view.Choreographer choreographer
-kotlinx.coroutines.scheduling.WorkQueue: int blockingTasksInBuffer$volatile
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_RESUME
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_START
-kotlinx.coroutines.sync.SemaphoreAndMutexImpl: java.lang.Object tail$volatile
-kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _removedRef$volatile
-kotlinx.coroutines.scheduling.CoroutineScheduler: long parkedWorkersStack$volatile
-com.betterschool.wear.domain.WearMockData: int $stable
-kotlinx.coroutines.internal.ConcurrentLinkedListNode: java.lang.Object _prev$volatile
-kotlinx.coroutines.channels.BufferedChannel: java.lang.Object bufferEndSegment$volatile
-androidx.compose.runtime.snapshots.SnapshotStateList: android.os.Parcelable$Creator CREATOR
-com.betterschool.wear.domain.WearGrade: boolean isSommatif
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event$Companion Companion
-com.betterschool.wear.domain.WearHomework: java.lang.String id
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String studentClass
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String fullName
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String date
-com.betterschool.wear.domain.WearMessage: java.lang.String senderName
-androidx.concurrent.futures.AbstractResolvableFuture$Waiter: androidx.concurrent.futures.AbstractResolvableFuture$Waiter next
-com.betterschool.wear.domain.WearHomework: java.lang.String assignmentId
-com.betterschool.wear.domain.WearMessage: java.lang.String id
+androidx.compose.foundation.BorderModifierNodeElement
+android.support.v4.app.RemoteActionCompatParcelizer
+androidx.annotation.Keep
+androidx.lifecycle.ReportFragment$LifecycleCallbacks
+androidx.lifecycle.ProcessLifecycleInitializer
+androidx.compose.foundation.BackgroundElement
+androidx.profileinstaller.ProfileInstallerInitializer
+androidx.compose.foundation.layout.WrapContentElement
+androidx.compose.foundation.lazy.layout.AwaitFirstLayoutModifier
+androidx.compose.foundation.ScrollableAreaElement
+androidx.compose.foundation.lazy.layout.TraversablePrefetchStateModifierElement
 kotlinx.coroutines.EventLoopImplBase: java.lang.Object _delayed$volatile
-kotlin.coroutines.SafeContinuation: java.lang.Object result
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String platformId
-com.betterschool.wear.domain.WearMessage: int $stable
-kotlinx.coroutines.internal.LimitedDispatcher: int runningWorkers$volatile
-kotlinx.coroutines.internal.ThreadSafeHeap: int _size$volatile
-com.betterschool.wear.domain.WearPairingSessionPayload: boolean isDemoMode
-kotlinx.coroutines.CancelledContinuation: int _resumed$volatile
-androidx.compose.foundation.lazy.layout.DefaultLazyKey: android.os.Parcelable$Creator CREATOR
+com.betterschool.wear.domain.WearHomework: java.lang.String typeLabel
+kotlinx.coroutines.channels.BufferedChannel: long bufferEnd$volatile
+com.betterschool.wear.domain.WearGrade: java.lang.String id
 kotlinx.coroutines.channels.BufferedChannel: long receivers$volatile
-com.betterschool.wear.domain.WearCourseEvent: boolean isUpcoming
-com.betterschool.wear.domain.WearHomework: java.lang.String title
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String schoolName
-com.betterschool.wear.domain.TileDisplayMode: kotlin.enums.EnumEntries $ENTRIES
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String avatarUrl
-kotlinx.coroutines.JobSupport: java.lang.Object _state$volatile
-com.betterschool.wear.domain.WearPairingSessionPayload: int $stable
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event$Companion Companion
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String endTime
 androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_STOP
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String username
+com.betterschool.wear.domain.WearGrade: java.lang.String title
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String studentName
+com.betterschool.wear.domain.WearHomework: java.lang.String title
+com.betterschool.wear.domain.WearMessage: java.lang.String previewSnippet
+com.betterschool.wear.domain.WearGrade: int hoursPerWeek
+kotlinx.coroutines.JobSupport$Finishing: java.lang.Object _exceptionsHolder$volatile
+kotlinx.coroutines.channels.BufferedChannel: long completedExpandBuffersAndPauseFlag$volatile
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_PAUSE
+kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _prev$volatile
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String cookies
+com.betterschool.wear.domain.WearHomework: java.lang.String dueTime
+kotlinx.coroutines.JobSupport: java.lang.Object _state$volatile
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String birthDate
+com.betterschool.wear.domain.WearGrade: java.lang.String subject
+kotlinx.coroutines.scheduling.CoroutineScheduler: int _isTerminated$volatile
 com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode LATEST_GRADE
+com.betterschool.wear.domain.WearHomework: boolean isCompleted
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: int _availablePermits$volatile
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String platformId
+com.betterschool.wear.domain.WearHomework: java.lang.String id
+kotlinx.coroutines.scheduling.CoroutineScheduler: long controlState$volatile
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String room
+kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: java.lang.Object nextParkedWorker
+kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _removedRef$volatile
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object bufferEndSegment$volatile
+com.betterschool.wear.domain.WearMockData: java.util.List messages
+kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: int workerCtl$volatile
+kotlinx.coroutines.CancellableContinuationImpl: java.lang.Object _parentHandle$volatile
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String subject
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String pairedAt
+com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode LATEST_MESSAGE
+com.betterschool.wear.domain.WearHomework: java.lang.String assignmentId
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String schoolName
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String avatarUrl
+kotlinx.coroutines.EventLoopImplBase: java.lang.Object _queue$volatile
+com.betterschool.wear.domain.WearMessage: java.lang.String subject
+com.betterschool.wear.domain.WearStudentProfile: int $stable
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_START
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String subjectCode
+com.betterschool.wear.domain.WearMessage: java.lang.String dateLabel
+com.betterschool.wear.domain.WearPairingSessionPayload: int $stable
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String studentClass
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String schoolName
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object sendSegment$volatile
+kotlinx.coroutines.internal.Segment: int cleanedAndPointers$volatile
+androidx.compose.runtime.ParcelableSnapshotMutableLongState: android.os.Parcelable$Creator CREATOR
+com.betterschool.wear.domain.WearGrade: java.lang.String date
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: long deqIdx$volatile
+androidx.lifecycle.ProcessLifecycleOwner$attach$1: androidx.lifecycle.ProcessLifecycleOwner this$0
+com.betterschool.wear.domain.TileDisplayMode: kotlin.enums.EnumEntries $ENTRIES
+androidx.compose.runtime.ParcelableSnapshotMutableIntState: android.os.Parcelable$Creator CREATOR
+androidx.concurrent.futures.AbstractResolvableFuture: java.lang.Object value
+kotlinx.coroutines.UndispatchedCoroutine: boolean threadLocalIsSet
+kotlinx.coroutines.channels.BufferedChannel: long sendersAndCloseStatus$volatile
+kotlinx.coroutines.scheduling.WorkQueue: java.lang.Object lastScheduledTask$volatile
+com.betterschool.wear.domain.WearGrade: boolean isSommatif
+com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode[] $VALUES
+com.betterschool.wear.domain.WearGrade: int $stable
+kotlinx.coroutines.internal.LockFreeTaskQueue: java.lang.Object _cur$volatile
+kotlinx.coroutines.EventLoopImplBase: int _isCompleted$volatile
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String username
+kotlinx.coroutines.internal.ConcurrentLinkedListNode: java.lang.Object _prev$volatile
+kotlinx.coroutines.scheduling.WorkQueue: int consumerIndex$volatile
+kotlinx.coroutines.internal.DispatchedContinuation: java.lang.Object _reusableCancellableContinuation$volatile
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object closeHandler$volatile
+com.betterschool.wear.domain.WearCourseEvent: boolean isCurrent
+com.betterschool.wear.domain.WearMockData: java.util.List grades
+androidx.compose.foundation.lazy.layout.DefaultLazyKey: android.os.Parcelable$Creator CREATOR
+androidx.versionedparcelable.ParcelImpl: android.os.Parcelable$Creator CREATOR
+androidx.compose.runtime.ParcelableSnapshotMutableState: android.os.Parcelable$Creator CREATOR
+com.betterschool.wear.domain.WearMessage: boolean hasAttachment
+com.betterschool.wear.domain.WearHomework: long colorHex
+kotlinx.coroutines.JobSupport$Finishing: java.lang.Object _rootCause$volatile
+androidx.activity.result.ActivityResult: android.os.Parcelable$Creator CREATOR
+androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1: androidx.lifecycle.ProcessLifecycleOwner this$0
+com.betterschool.wear.domain.WearPairingSessionPayload: int version
+kotlinx.coroutines.internal.LockFreeTaskQueueCore: java.lang.Object _next$volatile
+kotlinx.coroutines.DefaultExecutor: java.lang.Thread _thread
+kotlinx.coroutines.internal.LimitedDispatcher: int runningWorkers$volatile
+kotlinx.coroutines.JobSupport$Finishing: int _isCompleting$volatile
+com.betterschool.wear.domain.WearCourseEvent: float progressFraction
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String startTime
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String password
+kotlinx.coroutines.CompletedExceptionally: int _handled$volatile
+androidx.compose.runtime.ParcelableSnapshotMutableFloatState: android.os.Parcelable$Creator CREATOR
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String userId
+com.betterschool.wear.domain.WearMessage: boolean isUnread
+kotlinx.coroutines.CancellableContinuationImpl: java.lang.Object _state$volatile
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_CREATE
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event[] $VALUES
+com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode NEXT_COURSE
+com.betterschool.wear.domain.WearMessage: java.lang.String fullBodyText
+com.betterschool.wear.domain.WearCourseEvent: long colorHex
+com.betterschool.wear.domain.WearGrade: double percentage
+kotlinx.coroutines.DefaultExecutor: int debugStatus
+com.betterschool.wear.domain.WearPairingSessionPayload: boolean isDemoMode
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String studentClass
 com.betterschool.wear.domain.WearHomework: java.lang.String subject
 kotlinx.coroutines.JobSupport: java.lang.Object _parentHandle$volatile
-com.betterschool.wear.domain.WearMockData: java.util.List messages
-kotlinx.coroutines.channels.BufferedChannel: java.lang.Object closeHandler$volatile
-kotlinx.coroutines.sync.SemaphoreAndMutexImpl: java.lang.Object head$volatile
-kotlinx.coroutines.internal.Segment: int cleanedAndPointers$volatile
-com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode LATEST_MESSAGE
-com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode NEXT_COURSE
-androidx.compose.runtime.ParcelableSnapshotMutableState: android.os.Parcelable$Creator CREATOR
-kotlinx.coroutines.CompletedExceptionally: int _handled$volatile
-kotlinx.coroutines.channels.BufferedChannel: java.lang.Object receiveSegment$volatile
-kotlinx.coroutines.UndispatchedCoroutine: boolean threadLocalIsSet
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String userId
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String subjectCode
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_DESTROY
-kotlinx.coroutines.JobSupport$Finishing: java.lang.Object _rootCause$volatile
-androidx.lifecycle.ProcessLifecycleOwner$attach$1: androidx.lifecycle.ProcessLifecycleOwner this$0
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String teacher
-kotlinx.coroutines.JobSupport$Finishing: int _isCompleting$volatile
-com.betterschool.wear.domain.WearHomework: long colorHex
-com.betterschool.wear.domain.WearGrade: java.lang.String periodName
-kotlinx.coroutines.sync.MutexImpl: java.lang.Object owner$volatile
-com.betterschool.wear.domain.WearMockData: java.util.List grades
-kotlinx.coroutines.scheduling.WorkQueue: java.lang.Object lastScheduledTask$volatile
-com.betterschool.wear.domain.WearMessage: java.lang.String fullBodyText
-com.betterschool.wear.domain.WearHomework: int $stable
-com.betterschool.wear.domain.WearGrade: java.lang.String scoreText
-kotlinx.coroutines.scheduling.WorkQueue: int producerIndex$volatile
-com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode[] $VALUES
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String cookies
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String schoolName
-com.betterschool.wear.domain.WearCourseEvent: java.lang.Integer remainingMinutes
-kotlinx.coroutines.CancellableContinuationImpl: java.lang.Object _state$volatile
-kotlinx.coroutines.channels.BufferedChannel: long sendersAndCloseStatus$volatile
-kotlinx.coroutines.scheduling.CoroutineScheduler: int _isTerminated$volatile
-androidx.concurrent.futures.AbstractResolvableFuture: androidx.concurrent.futures.AbstractResolvableFuture$Listener listeners
-kotlinx.coroutines.sync.SemaphoreAndMutexImpl: int _availablePermits$volatile
-kotlinx.coroutines.android.AndroidExceptionPreHandler: java.lang.Object _preHandler
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String host
-com.betterschool.wear.domain.WearHomework: java.lang.String platformId
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String userId
-com.betterschool.wear.domain.WearGrade: java.lang.String title
-kotlinx.coroutines.scheduling.CoroutineScheduler: long controlState$volatile
-kotlinx.coroutines.internal.DispatchedContinuation: java.lang.Object _reusableCancellableContinuation$volatile
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String platformId
-androidx.compose.runtime.ParcelableSnapshotMutableLongState: android.os.Parcelable$Creator CREATOR
-com.betterschool.wear.domain.WearGrade: java.lang.String id
-com.betterschool.wear.domain.WearStudentProfile: int $stable
-com.betterschool.wear.domain.WearMessage: boolean hasAttachment
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String studentName
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String birthDate
-androidx.concurrent.futures.AbstractResolvableFuture: androidx.concurrent.futures.AbstractResolvableFuture$Waiter waiters
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String password
-com.betterschool.wear.domain.TileDisplayMode: java.lang.String label
-kotlinx.coroutines.EventLoopImplBase: int _isCompleted$volatile
-androidx.activity.result.ActivityResult: android.os.Parcelable$Creator CREATOR
-kotlinx.coroutines.internal.LockFreeTaskQueueCore: long _state$volatile
-kotlinx.coroutines.CancellableContinuationImpl: java.lang.Object _parentHandle$volatile
-com.betterschool.wear.domain.WearHomework: java.lang.String dueTime
-androidx.versionedparcelable.ParcelImpl: android.os.Parcelable$Creator CREATOR
-com.betterschool.wear.domain.WearCourseEvent: int $stable
+com.betterschool.wear.domain.WearMockData: com.betterschool.wear.domain.WearMockData INSTANCE
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_ANY
 kotlinx.coroutines.DispatchedCoroutine: int _decision$volatile
-kotlinx.coroutines.DefaultExecutor: int debugStatus
-kotlinx.coroutines.channels.BufferedChannel: long completedExpandBuffersAndPauseFlag$volatile
-kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _prev$volatile
-androidx.lifecycle.Lifecycle$Event: kotlin.enums.EnumEntries $ENTRIES
-kotlinx.coroutines.flow.StateFlowImpl: java.lang.Object _state$volatile
-kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: int workerCtl$volatile
-kotlinx.coroutines.EventLoopImplBase$DelayedTask: java.lang.Object _heap
-com.betterschool.wear.domain.WearGrade: double percentage
-com.betterschool.wear.domain.WearPairingSessionPayload: int version
-com.betterschool.wear.domain.WearMockData: java.util.List homeworks
-com.betterschool.wear.domain.WearCourseEvent: long colorHex
-com.betterschool.wear.domain.WearGrade: int hoursPerWeek
-com.betterschool.wear.domain.WearHomework: boolean isCompleted
-kotlinx.coroutines.DefaultExecutor: java.lang.Thread _thread
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String pairedAt
-kotlinx.coroutines.channels.BufferedChannel: java.lang.Object sendSegment$volatile
-com.betterschool.wear.domain.WearGrade: java.lang.String subject
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.Double overallAveragePct
-kotlinx.coroutines.internal.LockFreeTaskQueueCore: java.lang.Object _next$volatile
-com.betterschool.wear.domain.WearHomework: java.lang.String typeLabel
-com.betterschool.wear.domain.WearMockData: java.util.List todayCourses
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String subject
-com.betterschool.wear.domain.WearGrade: java.lang.String teacherName
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String endTime
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String platformId
+androidx.concurrent.futures.AbstractResolvableFuture: androidx.concurrent.futures.AbstractResolvableFuture$Waiter waiters
+com.betterschool.wear.domain.WearHomework: java.lang.String platformId
+com.betterschool.wear.domain.WearHomework: java.lang.String dueDate
 com.betterschool.wear.domain.WearGrade: java.lang.String colorName
-androidx.concurrent.futures.AbstractResolvableFuture$Waiter: java.lang.Thread thread
-com.betterschool.wear.domain.WearGrade: int $stable
-kotlinx.coroutines.scheduling.WorkQueue: int consumerIndex$volatile
+androidx.lifecycle.Lifecycle$Event: kotlin.enums.EnumEntries $ENTRIES
+com.betterschool.wear.domain.TileDisplayMode: java.lang.String label
+com.betterschool.wear.domain.WearCourseEvent: boolean isUpcoming
+androidx.concurrent.futures.AbstractResolvableFuture: androidx.concurrent.futures.AbstractResolvableFuture$Listener listeners
+com.betterschool.wear.domain.WearGrade: java.lang.String periodName
+com.betterschool.wear.domain.WearGrade: java.lang.String teacherName
+kotlinx.coroutines.android.HandlerDispatcherKt: android.view.Choreographer choreographer
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_RESUME
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String date
+com.betterschool.wear.domain.WearMockData: com.betterschool.wear.domain.WearStudentProfile profile
+kotlin.SafePublicationLazyImpl: java.lang.Object _value
+kotlinx.coroutines.internal.LockFreeTaskQueueCore: long _state$volatile
+com.betterschool.wear.domain.WearMessage: int $stable
+com.betterschool.wear.domain.WearHomework: int importanceScore
+kotlinx.coroutines.scheduling.WorkQueue: int producerIndex$volatile
+com.betterschool.wear.domain.WearHomework: int $stable
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: java.lang.Object tail$volatile
+kotlinx.coroutines.CancellableContinuationImpl: int _decisionAndIndex$volatile
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String fullName
+com.betterschool.wear.domain.WearMessage: java.lang.String senderName
+androidx.compose.runtime.snapshots.SnapshotStateList: android.os.Parcelable$Creator CREATOR
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String id
+kotlinx.coroutines.internal.ResizableAtomicArray: java.util.concurrent.atomic.AtomicReferenceArray array
+kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _next$volatile
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.Double overallAveragePct
+kotlinx.coroutines.CancelledContinuation: int _resumed$volatile
+kotlinx.coroutines.scheduling.CoroutineScheduler: long parkedWorkersStack$volatile
+com.betterschool.wear.domain.WearCourseEvent: java.lang.Integer remainingMinutes
+kotlinx.coroutines.android.AndroidExceptionPreHandler: java.lang.Object _preHandler
+com.betterschool.wear.domain.WearMockData: java.util.List todayCourses
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object receiveSegment$volatile
+kotlinx.coroutines.internal.ConcurrentLinkedListNode: java.lang.Object _next$volatile
+androidx.concurrent.futures.AbstractResolvableFuture$Waiter: androidx.concurrent.futures.AbstractResolvableFuture$Waiter next
+kotlinx.coroutines.internal.ThreadSafeHeap: int _size$volatile
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String userId
+com.betterschool.wear.domain.WearGrade: java.lang.String scoreText
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: java.lang.Object head$volatile
+kotlinx.coroutines.InvokeOnCancelling: int _invoked$volatile
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object _closeCause$volatile
+com.betterschool.wear.domain.WearMockData: int $stable
+com.betterschool.wear.domain.WearCourseEvent: int $stable
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String teacher
+kotlinx.coroutines.flow.StateFlowImpl: java.lang.Object _state$volatile
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: androidx.lifecycle.ReportFragment$LifecycleCallbacks$Companion Companion
 kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: int indexInArray
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_PAUSE
-androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.WindowInsetsCompat consumeSystemWindowInsets()
-androidx.compose.ui.node.LayoutNode$LayoutState: androidx.compose.ui.node.LayoutNode$LayoutState valueOf(java.lang.String)
-com.betterschool.wear.domain.WearGrade: java.lang.String getDate()
-androidx.core.view.WindowInsetsCompat$Impl: void setRootViewData(androidx.core.graphics.Insets)
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String getDate()
-com.betterschool.wear.domain.WearGrade: java.lang.String component3()
-androidx.lifecycle.ProcessLifecycleOwner$attach$1: void onActivityCreated(android.app.Activity,android.os.Bundle)
-kotlinx.coroutines.channels.BufferOverflow: kotlinx.coroutines.channels.BufferOverflow valueOf(java.lang.String)
-com.betterschool.wear.domain.WearMessage: java.lang.String component5()
-androidx.compose.ui.platform.AndroidViewsHandler: java.util.HashMap getLayoutNodeToHolder()
-androidx.core.view.WindowInsetsCompat$Impl34: androidx.core.graphics.Insets getInsetsIgnoringVisibility(int)
-androidx.compose.ui.graphics.Path$Direction: androidx.compose.ui.graphics.Path$Direction valueOf(java.lang.String)
-androidx.graphics.path.PathIteratorPreApi34Impl: int internalPathIteratorRawSize(long)
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String getUserId()
-androidx.compose.animation.core.MutatePriority: androidx.compose.animation.core.MutatePriority valueOf(java.lang.String)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.autofill.AndroidAutofillManager get_autofillManager$ui()
-android.support.v4.graphics.drawable.IconCompatParcelizer: IconCompatParcelizer()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidClipboardManager getClipboardManager()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.input.InputModeManager getInputModeManager()
-com.betterschool.wear.domain.WearGrade: java.lang.String component6()
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivitySaveInstanceState(android.app.Activity,android.os.Bundle)
-com.betterschool.wear.domain.WearHomework: java.lang.String getTitle()
-com.betterschool.wear.domain.WearMessage: java.lang.String getDateLabel()
-androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityStarted(android.app.Activity)
-com.betterschool.wear.domain.WearGrade: java.lang.String component8()
-androidx.compose.ui.focus.FocusStateImpl: androidx.compose.ui.focus.FocusStateImpl[] values()
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPostStarted(android.app.Activity)
-androidx.core.view.WindowInsetsCompat$BuilderImpl: androidx.core.view.WindowInsetsCompat build()
-androidx.graphics.path.PathIteratorPreApi34Impl: int internalPathIteratorNext(long,float[],int)
-androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityDestroyed(android.app.Activity)
-androidx.core.view.WindowInsetsCompat$Impl34: boolean isVisible(int)
-androidx.compose.ui.platform.AndroidComposeView: void getTextInputService$annotations()
-com.betterschool.wear.domain.WearStudentProfile: boolean equals(java.lang.Object)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component7()
-androidx.compose.ui.autofill.AutofillType: androidx.compose.ui.autofill.AutofillType[] values()
-androidx.compose.ui.platform.AbstractComposeView: void getShowLayoutBounds$annotations()
-androidx.activity.OnBackPressedDispatcher$Api34Impl: android.window.OnBackInvokedCallback createOnBackAnimationCallback(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0)
-com.betterschool.wear.domain.WearMessage: com.betterschool.wear.domain.WearMessage copy$default(com.betterschool.wear.domain.WearMessage,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,int,java.lang.Object)
-androidx.tracing.TraceApi29Impl: boolean isEnabled()
-com.betterschool.wear.domain.WearHomework: java.lang.String component9()
-androidx.compose.ui.focus.FocusStateImpl: androidx.compose.ui.focus.FocusStateImpl valueOf(java.lang.String)
-com.betterschool.wear.domain.WearMessage: java.lang.String component2()
-androidx.window.reflection.Consumer2: void accept(java.lang.Object)
-androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setTappableElementInsets(androidx.core.graphics.Insets)
-com.betterschool.wear.domain.WearHomework: java.lang.String component6()
-com.betterschool.wear.domain.WearPairingSessionPayload: int component1()
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String component5()
-com.betterschool.wear.domain.WearCourseEvent: long component9()
-okhttp3.TlsVersion: okhttp3.TlsVersion[] values()
-com.betterschool.wear.domain.WearHomework: java.lang.String component3()
-androidx.activity.Api34Impl: float touchY(android.window.BackEvent)
-androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1: void onActivityPostStarted(android.app.Activity)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidAccessibilityManager getAccessibilityManager()
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void registerIn(android.app.Activity)
-androidx.activity.OnBackPressedDispatcher$Api33Impl: void unregisterOnBackInvokedCallback(java.lang.Object,java.lang.Object)
-com.betterschool.wear.domain.WearCourseEvent: int hashCode()
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getPairedAt()
-androidx.compose.runtime.ComposerKt: void composeImmediateRuntimeError(java.lang.String)
-androidx.core.view.ViewCompat$Api28Impl: boolean isScreenReaderFocusable(android.view.View)
-androidx.core.view.WindowInsetsCompat$BuilderImpl: void applyInsetTypes()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.layout.InsetsListener getInsetsListener()
-androidx.core.view.WindowInsetsCompat$BuilderImpl: void setMandatorySystemGestureInsets(androidx.core.graphics.Insets)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.SoftwareKeyboardController getSoftwareKeyboardController()
-androidx.lifecycle.ProcessLifecycleOwner$attach$1: ProcessLifecycleOwner$attach$1(androidx.lifecycle.ProcessLifecycleOwner)
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String component1()
-com.betterschool.wear.domain.WearHomework: com.betterschool.wear.domain.WearHomework copy$default(com.betterschool.wear.domain.WearHomework,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,long,int,java.lang.Object)
-com.betterschool.wear.domain.WearGrade: java.lang.String getColorName()
-com.betterschool.wear.domain.WearPairingSessionPayload: com.betterschool.wear.domain.WearPairingSessionPayload copy$default(com.betterschool.wear.domain.WearPairingSessionPayload,int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,java.lang.Double,int,java.lang.Object)
-com.betterschool.wear.domain.WearPairingSessionPayload: boolean component12()
-androidx.compose.ui.platform.AndroidComposeView: android.view.View findViewByAccessibilityIdTraversal(int)
-androidx.graphics.path.PathIteratorPreApi34Impl: boolean internalPathIteratorHasNext(long)
-androidx.compose.ui.platform.AndroidComposeView: android.content.res.Configuration getConfiguration()
-androidx.compose.runtime.Recomposer$State: androidx.compose.runtime.Recomposer$State valueOf(java.lang.String)
-kotlinx.coroutines.selects.TrySelectDetailedResult: kotlinx.coroutines.selects.TrySelectDetailedResult[] values()
-androidx.core.view.WindowInsetsCompat$Impl: void setRootWindowInsets(androidx.core.view.WindowInsetsCompat)
-androidx.compose.foundation.layout.Direction: androidx.compose.foundation.layout.Direction[] values()
-com.betterschool.wear.domain.WearMessage: java.lang.String component1()
-androidx.core.graphics.drawable.IconCompatParcelizer: androidx.core.graphics.drawable.IconCompat read(androidx.versionedparcelable.VersionedParcel)
-com.betterschool.wear.domain.TileDisplayMode: java.lang.String getLabel()
-com.betterschool.wear.domain.WearPairingSessionPayload: boolean equals(java.lang.Object)
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityStarted(android.app.Activity)
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String getStudentClass()
-com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode[] $values()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.focus.FocusOwner getFocusOwner()
-com.betterschool.wear.domain.WearStudentProfile: WearStudentProfile(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)
-androidx.compose.ui.platform.ComposeView: java.lang.CharSequence getAccessibilityClassName()
-androidx.profileinstaller.FileSectionType: androidx.profileinstaller.FileSectionType[] values()
-androidx.compose.foundation.internal.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
-androidx.compose.foundation.internal.InlineClassHelperKt: java.lang.Void throwIllegalArgumentExceptionForNullCheck(java.lang.String)
-androidx.compose.animation.core.AnimationEndReason: androidx.compose.animation.core.AnimationEndReason[] values()
-androidx.compose.foundation.text.selection.DownResolution: androidx.compose.foundation.text.selection.DownResolution[] values()
-androidx.compose.ui.state.ToggleableState: androidx.compose.ui.state.ToggleableState valueOf(java.lang.String)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component2()
-androidx.compose.ui.input.pointer.PointerEventPass: androidx.compose.ui.input.pointer.PointerEventPass valueOf(java.lang.String)
-androidx.compose.runtime.collection.MutableVectorKt: void throwListIndexOutOfBoundsException(int,int)
-androidx.compose.ui.platform.AndroidComposeView: void setLayoutDirection(androidx.compose.ui.unit.LayoutDirection)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.WindowInfo getWindowInfo()
-androidx.compose.runtime.PreconditionsKt: void throwIllegalStateException(java.lang.String)
-androidx.core.view.WindowInsetsCompat$Impl: boolean isConsumed()
-androidx.compose.ui.util.ListUtilsKt: void throwUnsupportedOperationException(java.lang.String)
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String component4()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.RootForTest getRootForTest()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AccessibilityManager getAccessibilityManager()
-androidx.window.reflection.Predicate2: boolean test(java.lang.Object)
-androidx.core.view.WindowInsetsCompat$BuilderImpl34: WindowInsetsCompat$BuilderImpl34()
-androidx.core.view.WindowInsetsCompat$BuilderImpl: WindowInsetsCompat$BuilderImpl(androidx.core.view.WindowInsetsCompat)
-com.betterschool.wear.domain.WearPairingSessionPayload: int getVersion()
-androidx.compose.ui.platform.AndroidComposeView: void setContentCaptureManager$ui(androidx.compose.ui.contentcapture.AndroidContentCaptureManager)
-androidx.compose.material.ripple.RippleHostView: void setRippleState$lambda$1(androidx.compose.material.ripple.RippleHostView)
-androidx.compose.foundation.gestures.IndirectPointerInputDragCycleDetector$DragDetectionState$AwaitDown$AwaitTouchSlop: androidx.compose.foundation.gestures.IndirectPointerInputDragCycleDetector$DragDetectionState$AwaitDown$AwaitTouchSlop[] values()
-com.betterschool.wear.domain.WearCourseEvent: boolean equals(java.lang.Object)
-com.betterschool.wear.domain.WearHomework: java.lang.String component7()
-com.betterschool.wear.domain.WearHomework: com.betterschool.wear.domain.WearHomework copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,long)
-com.betterschool.wear.domain.WearHomework: int hashCode()
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getBirthDate()
-androidx.compose.ui.internal.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
-androidx.core.view.WindowInsetsCompat$Impl30: void copyRootViewBounds(android.view.View)
-com.betterschool.wear.domain.WearMessage: java.lang.String component6()
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String component2()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.modifier.ModifierLocalManager getModifierLocalManager()
-androidx.compose.animation.core.AnimationEndReason: androidx.compose.animation.core.AnimationEndReason valueOf(java.lang.String)
-androidx.graphics.path.PathIteratorPreApi34Impl: void destroyInternalPathIterator(long)
-androidx.compose.ui.unit.LayoutDirection: androidx.compose.ui.unit.LayoutDirection[] values()
-com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode valueOf(java.lang.String)
-com.betterschool.wear.domain.WearCourseEvent: float getProgressFraction()
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getCookies()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.text.input.TextInputService getTextInputService()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidComposeView getOutOfFrameExecutor()
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String getPlatformId()
-androidx.core.view.WindowInsetsCompat$Impl: void copyWindowDataInto(androidx.core.view.WindowInsetsCompat)
-androidx.window.reflection.JFunction2: java.lang.Object apply(java.lang.Object)
-androidx.compose.ui.state.ToggleableState: androidx.compose.ui.state.ToggleableState[] values()
-androidx.compose.foundation.gestures.DragDetectionState$AwaitDown$AwaitTouchSlop: androidx.compose.foundation.gestures.DragDetectionState$AwaitDown$AwaitTouchSlop valueOf(java.lang.String)
-androidx.graphics.path.PathIteratorPreApi34Impl: long createInternalPathIterator(android.graphics.Path,int,float)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component8()
-androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void endRearDisplaySession()
-androidx.compose.ui.text.AnnotationType: androidx.compose.ui.text.AnnotationType valueOf(java.lang.String)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.Clipboard getClipboard()
-kotlin.LazyThreadSafetyMode: kotlin.LazyThreadSafetyMode[] values()
-androidx.compose.ui.node.LayoutNode$UsageByParent: androidx.compose.ui.node.LayoutNode$UsageByParent valueOf(java.lang.String)
-androidx.core.view.WindowInsetsCompat$Impl30: WindowInsetsCompat$Impl30(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl30)
-androidx.emoji2.text.ConcurrencyHelpers$Handler28Impl: android.os.Handler createAsync(android.os.Looper)
-com.betterschool.wear.domain.WearMessage: java.lang.String component3()
-com.betterschool.wear.domain.WearHomework: WearHomework(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,long,int,kotlin.jvm.internal.DefaultConstructorMarker)
-androidx.lifecycle.ReportFragment: ReportFragment()
-androidx.compose.ui.contentcapture.ContentCaptureEventType: androidx.compose.ui.contentcapture.ContentCaptureEventType[] values()
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityStopped(android.app.Activity)
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String component8()
-androidx.core.view.WindowInsetsCompat$BuilderImpl30: WindowInsetsCompat$BuilderImpl30()
-androidx.compose.ui.graphics.AndroidPath_androidKt: void throwIllegalStateException(java.lang.String)
-com.betterschool.wear.domain.WearGrade: java.lang.String component7()
-com.betterschool.wear.domain.WearHomework: java.lang.String getAssignmentId()
-androidx.compose.foundation.gestures.Orientation: androidx.compose.foundation.gestures.Orientation[] values()
-androidx.lifecycle.Lifecycle$State: androidx.lifecycle.Lifecycle$State valueOf(java.lang.String)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.autofill.Autofill getAutofill()
-androidx.core.view.WindowInsetsCompat$Impl29: androidx.core.graphics.Insets getSystemGestureInsets()
-androidx.compose.ui.platform.ComposeView: boolean getShouldCreateCompositionOnAttachedToWindow()
-androidx.compose.foundation.layout.internal.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
-com.betterschool.wear.domain.WearStudentProfile: WearStudentProfile(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,kotlin.jvm.internal.DefaultConstructorMarker)
-com.betterschool.wear.domain.WearPairingSessionPayload: boolean isDemoMode()
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityResumed(android.app.Activity)
-androidx.core.view.WindowInsetsCompat$Impl21: androidx.core.view.WindowInsetsCompat consumeStableInsets()
-androidx.compose.foundation.gestures.DragDetectionState$AwaitDown$AwaitTouchSlop: androidx.compose.foundation.gestures.DragDetectionState$AwaitDown$AwaitTouchSlop[] values()
-androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction: androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction[] values()
-androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: androidx.window.extensions.area.ExtensionWindowAreaPresentation getRearDisplayPresentation()
-com.betterschool.wear.domain.WearGrade: int hashCode()
-androidx.compose.ui.platform.AndroidComposeView: void set_viewTreeOwners(androidx.compose.ui.platform.AndroidComposeView$ViewTreeOwners)
-kotlin.DeprecationLevel: kotlin.DeprecationLevel[] values()
-androidx.compose.ui.platform.AbstractComposeView: void setPreviousAttachedWindowToken(android.os.IBinder)
-com.betterschool.wear.domain.WearHomework: java.lang.String getId()
-androidx.core.view.WindowInsetsCompat$Impl28: WindowInsetsCompat$Impl28(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.draganddrop.AndroidDragAndDropManager getDragAndDropManager()
-androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getInsetsForType(int,boolean)
-androidx.compose.ui.platform.AbstractComposeView: void setAutoClearFocusBehavior-17tfJxM(int)
-androidx.graphics.path.PathIteratorPreApi34Impl: int internalPathIteratorPeek(long)
-androidx.compose.foundation.layout.Direction: androidx.compose.foundation.layout.Direction valueOf(java.lang.String)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String toString()
-androidx.compose.ui.platform.AndroidComposeView: long getMeasureIteration()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.hapticfeedback.HapticFeedback getHapticFeedBack()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.RootForTest$UncaughtExceptionHandler getUncaughtExceptionHandler$ui()
-androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getInsets(int)
-androidx.core.view.ViewCompat$Api21Impl$1: android.view.WindowInsets onApplyWindowInsets(android.view.View,android.view.WindowInsets)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.ViewConfiguration getViewConfiguration()
-android.support.v4.graphics.drawable.IconCompatParcelizer: androidx.core.graphics.drawable.IconCompat read(androidx.versionedparcelable.VersionedParcel)
-androidx.core.view.WindowInsetsCompat$BuilderImpl29: androidx.core.view.WindowInsetsCompat build()
-androidx.compose.runtime.InvalidationResult: androidx.compose.runtime.InvalidationResult[] values()
-androidx.compose.ui.internal.InlineClassHelperKt: java.lang.Void throwIllegalStateExceptionForNullCheck(java.lang.String)
-androidx.core.view.WindowInsetsCompat$Impl28: androidx.core.view.WindowInsetsCompat consumeDisplayCutout()
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String component4()
-androidx.compose.runtime.retain.impl.PreconditionsKt: void throwIllegalStateException(java.lang.String)
-com.betterschool.wear.domain.WearCourseEvent: boolean isUpcoming()
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPrePaused(android.app.Activity)
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String getTeacher()
-androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getSystemGestureInsets()
-androidx.core.view.WindowInsetsCompat$Impl29: WindowInsetsCompat$Impl29(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl29)
-androidx.compose.ui.platform.AndroidComposeView: android.view.View getView()
-androidx.core.view.WindowInsetsCompat$Impl20: void setRootViewData(androidx.core.graphics.Insets)
-com.betterschool.wear.domain.WearHomework: java.lang.String component4()
-androidx.compose.ui.unit.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
-androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getInsets(int)
-androidx.compose.ui.focus.CustomDestinationResult: androidx.compose.ui.focus.CustomDestinationResult valueOf(java.lang.String)
-androidx.lifecycle.Lifecycle$State: androidx.lifecycle.Lifecycle$State[] values()
-androidx.compose.runtime.collection.MutableVectorKt: void throwReversedIndicesException(int,int)
-com.betterschool.wear.domain.WearGrade: java.lang.String getId()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.graphics.GraphicsContext getGraphicsContext()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.runtime.retain.RetainedValuesStore getRetainedValuesStore()
-androidx.compose.ui.platform.CalculateMatrixToWindowApi29: void calculateMatrixToWindow-EL8BTi8(android.view.View,float[])
-androidx.compose.ui.platform.AbstractComposeView: void setShowLayoutBounds(boolean)
-okhttp3.internal.http2.ErrorCode: okhttp3.internal.http2.ErrorCode[] values()
-com.betterschool.wear.domain.WearGrade: java.lang.String getSubject()
-androidx.core.view.WindowInsetsCompat$Impl: void setSystemUiVisibility(int)
-androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getStableInsets()
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPaused(android.app.Activity)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.Double component14()
-com.betterschool.wear.domain.WearMockData: java.util.List getMessages()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.contentcapture.AndroidContentCaptureManager getContentCaptureManager$ui()
-androidx.compose.ui.platform.AndroidComposeView: kotlin.coroutines.CoroutineContext getCoroutineContext()
-androidx.core.view.WindowInsetsCompat$Impl28: int hashCode()
-androidx.core.view.WindowInsetsCompat$Impl21: boolean isConsumed()
-androidx.compose.ui.text.internal.InlineClassHelperKt: java.lang.Void throwIllegalArgumentExceptionForNullCheck(java.lang.String)
-com.betterschool.wear.domain.WearStudentProfile: com.betterschool.wear.domain.WearStudentProfile copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String getStartTime()
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component5()
-androidx.core.view.WindowInsetsCompat$Impl20: boolean isTypeVisible(int)
-androidx.compose.ui.platform.AndroidComposeView: boolean getHasPendingMeasureOrLayout()
-androidx.compose.ui.platform.AndroidComposeView: void setUncaughtExceptionHandler$ui(androidx.compose.ui.node.RootForTest$UncaughtExceptionHandler)
-androidx.core.view.WindowInsetsCompat$Impl21: androidx.core.graphics.Insets getStableInsets()
-androidx.compose.ui.text.internal.InlineClassHelperKt: java.lang.Void throwIllegalStateExceptionForNullCheck(java.lang.String)
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String component7()
-com.betterschool.wear.domain.WearPairingSessionPayload: WearPairingSessionPayload(int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,java.lang.Double)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getHost()
-androidx.core.view.WindowInsetsCompat$TypeImpl30: int toPlatformType(int)
-androidx.compose.runtime.PausedCompositionState: androidx.compose.runtime.PausedCompositionState valueOf(java.lang.String)
-androidx.compose.ui.platform.AndroidComposeView: void setFontFamilyResolver(androidx.compose.ui.text.font.FontFamily$Resolver)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.LayoutNodeDrawScope getSharedDrawScope()
-com.betterschool.wear.domain.WearGrade: WearGrade(java.lang.String,java.lang.String,java.lang.String,java.lang.String,double,java.lang.String,java.lang.String,java.lang.String,boolean,int,java.lang.String,int,kotlin.jvm.internal.DefaultConstructorMarker)
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPreStopped(android.app.Activity)
-androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getInsetsIgnoringVisibility(int)
-androidx.core.view.WindowInsetsCompat$BuilderImpl: void setSystemGestureInsets(androidx.core.graphics.Insets)
-com.betterschool.wear.domain.WearMockData: java.util.List getGrades()
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String component3()
-androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setSystemWindowInsets(androidx.core.graphics.Insets)
-androidx.compose.ui.platform.ComposeView: void setContent(kotlin.jvm.functions.Function2)
-androidx.compose.ui.node.LayoutNode$UsageByParent: androidx.compose.ui.node.LayoutNode$UsageByParent[] values()
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String getSchoolName()
-kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState: kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState valueOf(java.lang.String)
-androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityCreated(android.app.Activity,android.os.Bundle)
-com.betterschool.wear.domain.WearCourseEvent: java.lang.Integer component12()
-androidx.window.area.reflectionguard.ExtensionWindowAreaStatusRequirements: android.util.DisplayMetrics getWindowAreaDisplayMetrics()
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component13()
-androidx.core.app.RemoteActionCompatParcelizer: void write(androidx.core.app.RemoteActionCompat,androidx.versionedparcelable.VersionedParcel)
-androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getVisibleInsets(android.view.View)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component6()
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getStudentName()
-com.betterschool.wear.domain.WearGrade: int getHoursPerWeek()
-androidx.compose.ui.platform.AndroidComposeView: void getRoot$annotations()
-com.betterschool.wear.domain.WearHomework: java.lang.String getDueTime()
-androidx.compose.ui.platform.AndroidComposeView: boolean getShowLayoutBounds()
-androidx.core.view.WindowInsetsCompat$Impl29: WindowInsetsCompat$Impl29(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
-androidx.core.view.WindowInsetsCompat$BuilderImpl29: WindowInsetsCompat$BuilderImpl29()
-androidx.core.view.WindowInsetsCompat$Impl20: void copyWindowDataInto(androidx.core.view.WindowInsetsCompat)
-androidx.compose.ui.platform.AndroidComposeView: void setDensity(androidx.compose.ui.unit.Density)
-androidx.compose.ui.platform.MotionEventVerifierApi29: boolean isValidMotionEvent(android.view.MotionEvent,int)
-androidx.lifecycle.LifecycleDispatcher$DispatcherActivityCallback: void onActivityCreated(android.app.Activity,android.os.Bundle)
-androidx.compose.ui.text.style.ResolvedTextDirection: androidx.compose.ui.text.style.ResolvedTextDirection valueOf(java.lang.String)
-androidx.compose.ui.platform.AbstractComposeView: void setParentCompositionContext(androidx.compose.runtime.CompositionContext)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.autofill.AutofillManager getAutofillManager()
-androidx.compose.ui.platform.AndroidComposeView: int getImportantForAutofill()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String host
+kotlinx.coroutines.EventLoopImplBase$DelayedTask: java.lang.Object _heap
+androidx.concurrent.futures.AbstractResolvableFuture$Waiter: java.lang.Thread thread
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: long enqIdx$volatile
+com.betterschool.wear.domain.WearMessage: java.lang.String id
+kotlinx.coroutines.sync.MutexImpl: java.lang.Object owner$volatile
+com.betterschool.wear.domain.WearMockData: java.util.List homeworks
+kotlinx.coroutines.scheduling.WorkQueue: int blockingTasksInBuffer$volatile
+kotlin.coroutines.SafeContinuation: java.lang.Object result
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_DESTROY
 androidx.compose.foundation.internal.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
-androidx.core.view.WindowInsetsCompat$Impl28: androidx.core.view.DisplayCutoutCompat getDisplayCutout()
-com.betterschool.wear.domain.TileDisplayMode: TileDisplayMode(java.lang.String,int,java.lang.String)
-androidx.emoji2.text.EmojiCompatInitializer: EmojiCompatInitializer()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidComposeView$ViewTreeOwners getViewTreeOwners()
-androidx.core.view.WindowInsetsCompat$Impl30: androidx.core.graphics.Insets getInsets(int)
-androidx.compose.ui.text.internal.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
-com.betterschool.wear.domain.WearGrade: double getPercentage()
-androidx.compose.ui.unit.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
-com.betterschool.wear.domain.WearGrade: java.lang.String toString()
-com.betterschool.wear.domain.WearMessage: boolean isUnread()
-androidx.core.view.ViewCompat$Api28Impl: boolean isAccessibilityHeading(android.view.View)
-com.betterschool.wear.domain.WearMessage: java.lang.String toString()
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String getAvatarUrl()
-androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void addRearDisplayStatusListener(androidx.window.extensions.core.util.function.Consumer)
-androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void startRearDisplayPresentationSession(android.app.Activity,androidx.window.extensions.core.util.function.Consumer)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.Double getOverallAveragePct()
-kotlin.LazyThreadSafetyMode: kotlin.LazyThreadSafetyMode valueOf(java.lang.String)
-androidx.compose.animation.core.MutatePriority: androidx.compose.animation.core.MutatePriority[] values()
-com.betterschool.wear.domain.WearGrade: com.betterschool.wear.domain.WearGrade copy$default(com.betterschool.wear.domain.WearGrade,java.lang.String,java.lang.String,java.lang.String,java.lang.String,double,java.lang.String,java.lang.String,java.lang.String,boolean,int,java.lang.String,int,java.lang.Object)
-androidx.core.view.WindowInsetsCompat$Impl: boolean equals(java.lang.Object)
-androidx.core.view.WindowInsetsCompat$Impl30: WindowInsetsCompat$Impl30(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
-com.betterschool.wear.domain.WearCourseEvent: WearCourseEvent(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,long,boolean,boolean,java.lang.Integer,float)
-com.betterschool.wear.domain.WearCourseEvent: WearCourseEvent(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,long,boolean,boolean,java.lang.Integer,float,int,kotlin.jvm.internal.DefaultConstructorMarker)
-androidx.activity.ComponentActivity: void setContentView(android.view.View)
-androidx.compose.animation.core.PreconditionsKt: void throwIllegalStateException(java.lang.String)
-androidx.core.view.WindowInsetsCompat$Impl20: void setSystemUiVisibility(int)
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityDestroyed(android.app.Activity)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidClipboard getClipboard()
-androidx.compose.ui.platform.AndroidComposeViewVerificationHelperMethodsN: void setPointerIcon(android.view.View,androidx.compose.ui.input.pointer.PointerIcon)
-androidx.core.view.WindowInsetsCompat$Impl: void setOverriddenInsets(androidx.core.graphics.Insets[])
-androidx.compose.runtime.PausedCompositionState: androidx.compose.runtime.PausedCompositionState[] values()
-com.betterschool.wear.domain.WearGrade: boolean isSommatif()
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component11()
-androidx.compose.ui.platform.AbstractComposeView: void setTransitionGroup(boolean)
-androidx.compose.ui.platform.AndroidComposeView: boolean getScrollCaptureInProgress$ui()
-androidx.compose.ui.platform.AndroidComposeView: void setUncaughtExceptionHandler(androidx.compose.ui.node.RootForTest$UncaughtExceptionHandler)
-androidx.compose.foundation.gestures.IndirectPointerInputDragCycleDetector$DragDetectionState$AwaitDown$AwaitTouchSlop: androidx.compose.foundation.gestures.IndirectPointerInputDragCycleDetector$DragDetectionState$AwaitDown$AwaitTouchSlop valueOf(java.lang.String)
-androidx.activity.ComponentActivity$Api33Impl: android.window.OnBackInvokedDispatcher getOnBackInvokedDispatcher(android.app.Activity)
-androidx.compose.ui.internal.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String getSubject()
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String toString()
-androidx.graphics.path.PathIteratorPreApi34Impl: int internalPathIteratorSize(long)
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String component6()
-androidx.compose.foundation.layout.internal.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
-com.betterschool.wear.domain.WearCourseEvent: long getColorHex()
-androidx.compose.ui.autofill.AutofillType: androidx.compose.ui.autofill.AutofillType valueOf(java.lang.String)
-androidx.compose.ui.platform.Api35Impl: void setRequestedFrameRate(android.view.View,float)
-com.betterschool.wear.domain.WearGrade: double component5()
-androidx.core.view.WindowInsetsCompat$Impl29: androidx.core.graphics.Insets getMandatorySystemGestureInsets()
-okhttp3.Protocol: okhttp3.Protocol valueOf(java.lang.String)
-androidx.compose.ui.graphics.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
-androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityStopped(android.app.Activity)
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String component5()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.geometry.Rect getEmbeddedViewFocusRect()
-androidx.core.view.WindowInsetsCompat$Impl21: WindowInsetsCompat$Impl21(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl21)
-androidx.core.view.WindowInsetsCompat$Impl29: androidx.core.graphics.Insets getTappableElementInsets()
-kotlin.text.RegexOption: kotlin.text.RegexOption[] values()
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String getSubjectCode()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.input.indirect.IndirectPointerEventPrimaryDirectionalMotionAxis getPrimaryDirectionalMotionAxisOverride-dqNNBbU$ui()
-kotlin.DeprecationLevel: kotlin.DeprecationLevel valueOf(java.lang.String)
-androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void endRearDisplayPresentationSession()
-kotlinx.coroutines.flow.SharingCommand: kotlinx.coroutines.flow.SharingCommand[] values()
-kotlinx.coroutines.CoroutineStart: kotlinx.coroutines.CoroutineStart valueOf(java.lang.String)
-androidx.compose.ui.platform.AndroidComposeView: void setFrameEndScheduler$ui(androidx.compose.ui.platform.LifecycleRetainedValuesStoreOwner$FrameEndScheduler)
-androidx.lifecycle.ProcessLifecycleInitializer: ProcessLifecycleInitializer()
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String toString()
-androidx.lifecycle.SavedStateHandlesVM: SavedStateHandlesVM()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.draganddrop.DragAndDropManager getDragAndDropManager()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.spatial.RectManager getRectManager()
-com.betterschool.wear.domain.WearHomework: java.lang.String toString()
-androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1: ProcessLifecycleOwner$attach$1$onActivityPreCreated$1(androidx.lifecycle.ProcessLifecycleOwner)
-androidx.core.view.WindowInsetsCompat$BuilderImpl: void setSystemWindowInsets(androidx.core.graphics.Insets)
-com.betterschool.wear.domain.WearMessage: WearMessage(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,int,kotlin.jvm.internal.DefaultConstructorMarker)
-androidx.compose.ui.platform.ComposeView: void getShouldCreateCompositionOnAttachedToWindow$annotations()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.WindowInfo getWindowInfo()
+com.betterschool.wear.domain.WearStudentProfile: com.betterschool.wear.domain.WearStudentProfile copy$default(com.betterschool.wear.domain.WearStudentProfile,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,java.lang.Object)
+androidx.core.view.WindowInsetsCompat$Impl34: androidx.core.graphics.Insets getInsets(int)
 androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.semantics.SemanticsOwner getSemanticsOwner()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.layout.Placeable$PlacementScope getPlacementScope()
-androidx.compose.ui.platform.LifecycleRetainedValuesStoreOwner: LifecycleRetainedValuesStoreOwner()
-androidx.compose.ui.platform.AndroidComposeView: void setLastMatrixRecalculationAnimationTime$ui(long)
-androidx.compose.ui.platform.AndroidComposeViewTranslationCallbackS: void setViewTranslationCallback(android.view.View)
-androidx.compose.ui.platform.AndroidComposeView: void setAccessibilityEventBatchIntervalMillis(long)
-androidx.compose.ui.platform.Api30Impl: boolean isShowingLayoutBounds(android.view.View)
-androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.DisplayCutoutCompat getDisplayCutout()
-androidx.compose.foundation.internal.InlineClassHelperKt: void throwIndexOutOfBoundsException(java.lang.String)
-androidx.window.area.reflectionguard.ExtensionWindowAreaPresentationRequirements: void setPresentationView(android.view.View)
-androidx.core.view.WindowInsetsCompat$Impl20: boolean isVisible(int)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getPlatformId()
-com.betterschool.wear.domain.WearMockData: WearMockData()
-androidx.core.view.ViewCompat$Api21Impl: void setOnApplyWindowInsetsListener(android.view.View,androidx.core.view.OnApplyWindowInsetsListener)
-android.support.v4.app.RemoteActionCompatParcelizer: void write(androidx.core.app.RemoteActionCompat,androidx.versionedparcelable.VersionedParcel)
-androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getMandatorySystemGestureInsets()
-com.betterschool.wear.domain.WearCourseEvent: boolean component11()
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String component1()
+androidx.compose.ui.platform.AndroidComposeViewVerificationHelperMethodsO: void focusable(android.view.View,int,boolean)
+androidx.compose.ui.platform.AbstractComposeView: void setShowLayoutBounds(boolean)
+androidx.compose.ui.platform.AndroidComposeView: void setUncaughtExceptionHandler(androidx.compose.ui.node.RootForTest$UncaughtExceptionHandler)
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String component4()
+kotlin.DeprecationLevel: kotlin.DeprecationLevel valueOf(java.lang.String)
+kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState: kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState[] values()
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setMandatorySystemGestureInsets(androidx.core.graphics.Insets)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.unit.LayoutDirection getLayoutDirection()
+androidx.core.view.WindowInsetsCompat$BuilderImpl: androidx.core.view.WindowInsetsCompat build()
 com.betterschool.wear.domain.WearCourseEvent: com.betterschool.wear.domain.WearCourseEvent copy$default(com.betterschool.wear.domain.WearCourseEvent,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,long,boolean,boolean,java.lang.Integer,float,int,java.lang.Object)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component9()
-androidx.compose.ui.text.font.FontWeightAdjustmentHelperApi31: int fontWeightAdjustment(android.content.Context)
-com.betterschool.wear.domain.WearMessage: boolean equals(java.lang.Object)
-androidx.core.view.ViewCompat$Api23Impl: androidx.core.view.WindowInsetsCompat getRootWindowInsets(android.view.View)
-androidx.core.view.WindowInsetsCompat$BuilderImpl: void setTappableElementInsets(androidx.core.graphics.Insets)
-androidx.startup.InitializationProvider: InitializationProvider()
-com.betterschool.wear.domain.WearMockData: java.util.List getHomeworks()
-androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getInsets(int,boolean)
-androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.WindowInsetsCompat consumeStableInsets()
-androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getTappableElementInsets()
-androidx.core.app.RemoteActionCompatParcelizer: androidx.core.app.RemoteActionCompat read(androidx.versionedparcelable.VersionedParcel)
-androidx.compose.foundation.gestures.Orientation: androidx.compose.foundation.gestures.Orientation valueOf(java.lang.String)
-androidx.compose.ui.unit.LayoutDirection: androidx.compose.ui.unit.LayoutDirection valueOf(java.lang.String)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component10()
-com.betterschool.wear.domain.WearMessage: java.lang.String getSubject()
-com.betterschool.wear.domain.WearGrade: java.lang.String component1()
-androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.WindowInsetsCompat consumeDisplayCutout()
-androidx.core.view.ViewCompat$Api30Impl: java.lang.CharSequence getStateDescription(android.view.View)
-androidx.compose.material.ripple.RippleHostView: void setRippleState(boolean)
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPreDestroyed(android.app.Activity)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getPassword()
-androidx.compose.ui.contentcapture.AndroidContentCaptureManager$TranslateStatus: androidx.compose.ui.contentcapture.AndroidContentCaptureManager$TranslateStatus[] values()
-kotlin.time.DurationUnit: kotlin.time.DurationUnit[] values()
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String getId()
-com.betterschool.wear.domain.WearGrade: java.lang.String component11()
-kotlinx.coroutines.android.AndroidExceptionPreHandler: AndroidExceptionPreHandler()
-androidx.compose.ui.node.LayoutNode$LayoutState: androidx.compose.ui.node.LayoutNode$LayoutState[] values()
-com.betterschool.wear.domain.TileDisplayMode: kotlin.enums.EnumEntries getEntries()
-androidx.compose.ui.platform.AndroidComposeView: void setOnViewTreeOwnersAvailable(kotlin.jvm.functions.Function1)
-com.betterschool.wear.domain.WearMessage: java.lang.String getFullBodyText()
-androidx.core.view.WindowInsetsCompat$Impl20: WindowInsetsCompat$Impl20(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: ReportFragment$LifecycleCallbacks()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidViewsHandler getAndroidViewsHandler$ui()
-okhttp3.internal.http2.ErrorCode: okhttp3.internal.http2.ErrorCode valueOf(java.lang.String)
+androidx.compose.foundation.gestures.IndirectPointerInputDragCycleDetector$DragDetectionState$AwaitDown$AwaitTouchSlop: androidx.compose.foundation.gestures.IndirectPointerInputDragCycleDetector$DragDetectionState$AwaitDown$AwaitTouchSlop[] values()
+androidx.compose.animation.core.AnimationEndReason: androidx.compose.animation.core.AnimationEndReason valueOf(java.lang.String)
 com.betterschool.wear.domain.WearHomework: java.lang.String component5()
-androidx.compose.ui.platform.AndroidComposeView: void setPrimaryDirectionalMotionAxisOverride-r2epLt8$ui(androidx.compose.ui.input.indirect.IndirectPointerEventPrimaryDirectionalMotionAxis)
+androidx.graphics.path.PathIteratorPreApi34Impl: long createInternalPathIterator(android.graphics.Path,int,float)
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setTappableElementInsets(androidx.core.graphics.Insets)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.modifier.ModifierLocalManager getModifierLocalManager()
+androidx.compose.ui.platform.AndroidComposeView: void setOnViewTreeOwnersAvailable(kotlin.jvm.functions.Function1)
+com.betterschool.wear.domain.WearGrade: int component10()
+androidx.compose.ui.platform.AndroidComposeViewStartDragAndDropN: boolean startDragAndDrop(android.view.View,androidx.compose.ui.draganddrop.DragAndDropTransferData,androidx.compose.ui.draganddrop.ComposeDragShadowBuilder)
+androidx.core.view.WindowInsetsCompat$BuilderImpl: void setSystemWindowInsets(androidx.core.graphics.Insets)
+com.betterschool.wear.domain.TileDisplayMode: kotlin.enums.EnumEntries getEntries()
+androidx.core.view.WindowInsetsCompat$TypeImpl34: int toPlatformType(int)
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String getStudentClass()
+com.betterschool.wear.domain.WearGrade: java.lang.String component6()
+androidx.activity.OnBackPressedDispatcher$Api33Impl: void registerOnBackInvokedCallback(java.lang.Object,int,java.lang.Object)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getInsets(int)
+androidx.core.view.WindowInsetsCompat$Impl30: boolean isVisible(int)
+com.betterschool.wear.domain.WearCourseEvent: java.lang.Integer component12()
+androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: android.util.DisplayMetrics getRearDisplayMetrics()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String component7()
+com.betterschool.wear.domain.WearGrade: int hashCode()
+com.betterschool.wear.domain.WearHomework: java.lang.String getTitle()
+com.betterschool.wear.domain.WearHomework: java.lang.String component3()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.draganddrop.DragAndDropManager getDragAndDropManager()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component3()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void registerIn(android.app.Activity)
+androidx.compose.ui.input.pointer.PointerEventPass: androidx.compose.ui.input.pointer.PointerEventPass valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getStableInsets()
+androidx.compose.ui.node.LookaheadPassDelegate$PlacedState: androidx.compose.ui.node.LookaheadPassDelegate$PlacedState[] values()
+androidx.graphics.path.PathIteratorPreApi34Impl: boolean internalPathIteratorHasNext(long)
+com.betterschool.wear.domain.WearCourseEvent: java.lang.Integer getRemainingMinutes()
+com.betterschool.wear.domain.WearCourseEvent: long getColorHex()
+com.betterschool.wear.domain.WearGrade: java.lang.String component7()
+androidx.compose.runtime.PreconditionsKt: void throwIllegalArgumentException(java.lang.String)
+com.betterschool.wear.domain.WearCourseEvent: float component13()
+androidx.emoji2.text.EmojiCompatInitializer: EmojiCompatInitializer()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPreStopped(android.app.Activity)
+androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1: void onActivityPostResumed(android.app.Activity)
+androidx.compose.ui.platform.AbstractComposeView: void setParentCompositionContext(androidx.compose.runtime.CompositionContext)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidComposeView getOutOfFrameExecutor()
+com.betterschool.wear.domain.WearMockData: java.util.List getMessages()
+androidx.core.view.WindowInsetsCompat$TypeImpl30: int toPlatformType(int)
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getPairedAt()
+androidx.window.area.reflectionguard.ExtensionWindowAreaStatusRequirements: android.util.DisplayMetrics getWindowAreaDisplayMetrics()
+androidx.compose.ui.graphics.AndroidPath_androidKt: void throwIllegalStateException(java.lang.String)
+androidx.compose.foundation.layout.internal.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: void getLastMatrixRecalculationAnimationTime$ui$annotations()
+androidx.compose.animation.core.PreconditionsKt: void throwIllegalArgumentException(java.lang.String)
+androidx.compose.ui.text.internal.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
+androidx.emoji2.text.EmojiExclusions$EmojiExclusions_Api34: java.util.Set getExclusions()
+androidx.compose.ui.input.pointer.PointerEventPass: androidx.compose.ui.input.pointer.PointerEventPass[] values()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String getStartTime()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.text.input.TextInputService getTextInputService()
+com.betterschool.wear.domain.WearHomework: java.lang.String getAssignmentId()
+androidx.compose.animation.core.MutatePriority: androidx.compose.animation.core.MutatePriority valueOf(java.lang.String)
+kotlin.text.RegexOption: kotlin.text.RegexOption valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.OwnerSnapshotObserver getSnapshotObserver()
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String getAvatarUrl()
+androidx.compose.ui.state.ToggleableState: androidx.compose.ui.state.ToggleableState valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.autofill.AndroidAutofillManager get_autofillManager$ui()
+androidx.compose.ui.autofill.AutofillType: androidx.compose.ui.autofill.AutofillType valueOf(java.lang.String)
+com.betterschool.wear.domain.WearGrade: com.betterschool.wear.domain.WearGrade copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,double,java.lang.String,java.lang.String,java.lang.String,boolean,int,java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.WindowInsetsCompat consumeDisplayCutout()
+androidx.compose.ui.contentcapture.ContentCaptureEventType: androidx.compose.ui.contentcapture.ContentCaptureEventType valueOf(java.lang.String)
+androidx.compose.runtime.retain.impl.PreconditionsKt: void throwIllegalStateException(java.lang.String)
+androidx.compose.ui.autofill.AutofillType: androidx.compose.ui.autofill.AutofillType[] values()
+androidx.window.reflection.Consumer2: void accept(java.lang.Object)
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String component3()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.contentcapture.AndroidContentCaptureManager getContentCaptureManager$ui()
+androidx.core.view.WindowInsetsCompat$Impl20: boolean isVisible(int)
+androidx.compose.ui.text.style.ResolvedTextDirection: androidx.compose.ui.text.style.ResolvedTextDirection[] values()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.runtime.retain.RetainedValuesStore getRetainedValuesStore()
+com.betterschool.wear.domain.WearGrade: java.lang.String getId()
+androidx.compose.ui.text.input.TextInputServiceAndroid$TextInputCommand: androidx.compose.ui.text.input.TextInputServiceAndroid$TextInputCommand[] values()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.RootForTest getRootForTest()
 androidx.core.view.WindowInsetsCompat$Impl21: androidx.core.view.WindowInsetsCompat consumeSystemWindowInsets()
+com.betterschool.wear.domain.WearGrade: boolean equals(java.lang.Object)
+com.betterschool.wear.domain.WearGrade: java.lang.String component3()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidViewsHandler getAndroidViewsHandler$ui()
+androidx.compose.foundation.gestures.IndirectPointerInputDragCycleDetector$DragDetectionState$AwaitDown$AwaitTouchSlop: androidx.compose.foundation.gestures.IndirectPointerInputDragCycleDetector$DragDetectionState$AwaitDown$AwaitTouchSlop valueOf(java.lang.String)
+androidx.profileinstaller.FileSectionType: androidx.profileinstaller.FileSectionType[] values()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getStudentName()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.TextToolbar getTextToolbar()
 androidx.compose.ui.platform.AndroidComposeViewForceDarkModeQ: void disallowForceDark(android.view.View)
-androidx.activity.Api34Impl: int swipeEdge(android.window.BackEvent)
-androidx.compose.ui.platform.AbstractComposeView: boolean getShowLayoutBounds()
-androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivitySaveInstanceState(android.app.Activity,android.os.Bundle)
+androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1: ProcessLifecycleOwner$attach$1$onActivityPreCreated$1(androidx.lifecycle.ProcessLifecycleOwner)
+androidx.compose.ui.platform.AbstractComposeView: boolean getHasComposition()
+com.betterschool.wear.domain.TileDisplayMode: TileDisplayMode(java.lang.String,int,java.lang.String)
+android.support.v4.app.RemoteActionCompatParcelizer: void write(androidx.core.app.RemoteActionCompat,androidx.versionedparcelable.VersionedParcel)
+androidx.core.graphics.drawable.IconCompatParcelizer: androidx.core.graphics.drawable.IconCompat read(androidx.versionedparcelable.VersionedParcel)
+com.betterschool.wear.domain.WearHomework: WearHomework(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,long,int)
+androidx.core.view.WindowInsetsCompat$Impl21: WindowInsetsCompat$Impl21(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
+com.betterschool.wear.domain.WearMessage: com.betterschool.wear.domain.WearMessage copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean)
 androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityResumed(android.app.Activity)
+androidx.core.view.WindowInsetsCompat$Impl20: boolean isTypeVisible(int)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: ReportFragment$LifecycleCallbacks()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityCreated(android.app.Activity,android.os.Bundle)
+androidx.compose.ui.platform.AbstractComposeView: void setViewCompositionStrategy(androidx.compose.ui.platform.ViewCompositionStrategy)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getSystemGestureInsets()
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getRootStableInsets()
+com.betterschool.wear.domain.WearGrade: java.lang.String getPeriodName()
+androidx.compose.runtime.Recomposer$State: androidx.compose.runtime.Recomposer$State[] values()
+androidx.compose.runtime.InvalidationResult: androidx.compose.runtime.InvalidationResult[] values()
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getInsets(int)
+androidx.core.view.WindowInsetsCompat$Impl30: void copyRootViewBounds(android.view.View)
+androidx.compose.runtime.PreconditionsKt: void throwIllegalStateException(java.lang.String)
+androidx.graphics.path.ConicConverter: int internalConicToQuadratics(float[],int,float[],float,float)
+androidx.compose.ui.platform.AndroidComposeView: void getShowLayoutBounds$annotations()
+androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void addRearDisplayStatusListener(androidx.window.extensions.core.util.function.Consumer)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.ClipboardManager getClipboardManager()
+com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode[] $values()
+androidx.compose.ui.platform.AndroidComposeView: void setFontFamilyResolver(androidx.compose.ui.text.font.FontFamily$Resolver)
+androidx.compose.ui.graphics.Path$Direction: androidx.compose.ui.graphics.Path$Direction valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl30: WindowInsetsCompat$Impl30(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
+com.betterschool.wear.domain.WearGrade: java.lang.String getTeacherName()
+com.betterschool.wear.domain.WearMessage: java.lang.String getSenderName()
+androidx.compose.ui.platform.AndroidCompositionLocals_androidKt: androidx.compose.runtime.ProvidableCompositionLocal getLocalLifecycleOwner()
+com.betterschool.wear.domain.WearHomework: java.lang.String component4()
+com.betterschool.wear.domain.WearPairingSessionPayload: boolean equals(java.lang.Object)
+androidx.compose.foundation.layout.Direction: androidx.compose.foundation.layout.Direction[] values()
+com.betterschool.wear.domain.WearHomework: java.lang.String getPlatformId()
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getSystemWindowInsets()
+androidx.compose.material.ripple.RippleHostView: void setRippleState(boolean)
+com.betterschool.wear.domain.WearGrade: java.lang.String getColorName()
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.DisplayCutoutCompat getDisplayCutout()
+androidx.core.graphics.drawable.IconCompatParcelizer: void write(androidx.core.graphics.drawable.IconCompat,androidx.versionedparcelable.VersionedParcel)
+androidx.compose.ui.focus.FocusStateImpl: androidx.compose.ui.focus.FocusStateImpl[] values()
+androidx.compose.runtime.SlotTableKt: void throwConcurrentModificationException()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String toString()
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityStopped(android.app.Activity)
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.Double component14()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.autofill.Autofill getAutofill()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AccessibilityManager getAccessibilityManager()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityDestroyed(android.app.Activity)
+androidx.lifecycle.ProcessLifecycleInitializer: ProcessLifecycleInitializer()
+androidx.compose.runtime.ComposerKt: java.lang.Void composeRuntimeError(java.lang.String)
+androidx.compose.ui.input.pointer.PointerInputEventHandler: java.lang.Object invoke(androidx.compose.ui.input.pointer.PointerInputScope,kotlin.coroutines.Continuation)
+androidx.compose.ui.platform.AndroidViewsHandler: java.util.HashMap getLayoutNodeToHolder()
+com.betterschool.wear.domain.WearCourseEvent: WearCourseEvent(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,long,boolean,boolean,java.lang.Integer,float)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPrePaused(android.app.Activity)
+androidx.compose.ui.internal.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component10()
+androidx.core.view.WindowInsetsCompat$Impl21: androidx.core.view.WindowInsetsCompat consumeStableInsets()
+androidx.window.area.reflectionguard.ExtensionWindowAreaPresentationRequirements: void setPresentationView(android.view.View)
+com.betterschool.wear.domain.WearGrade: java.lang.String component2()
+com.betterschool.wear.domain.WearHomework: java.lang.String component9()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityStopped(android.app.Activity)
+androidx.lifecycle.ReportFragment: ReportFragment()
+com.betterschool.wear.domain.WearStudentProfile: com.betterschool.wear.domain.WearStudentProfile copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)
+androidx.activity.OnBackPressedDispatcher$Api34Impl: android.window.OnBackInvokedCallback createOnBackAnimationCallback(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0)
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component5()
+com.betterschool.wear.domain.WearHomework: java.lang.String component7()
+androidx.core.view.WindowInsetsCompat$Impl: void setRootViewData(androidx.core.graphics.Insets)
+androidx.compose.ui.internal.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
+androidx.compose.ui.platform.AbstractComposeView: void setParentContext(androidx.compose.runtime.CompositionContext)
+androidx.core.view.ViewCompat$Api28Impl: java.lang.CharSequence getAccessibilityPaneTitle(android.view.View)
+androidx.compose.ui.input.pointer.util.VelocityTracker1D$Strategy: androidx.compose.ui.input.pointer.util.VelocityTracker1D$Strategy valueOf(java.lang.String)
+com.betterschool.wear.domain.WearGrade: java.lang.String toString()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.text.font.Font$ResourceLoader getFontLoader()
+com.betterschool.wear.domain.WearGrade: java.lang.String component4()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String getSubjectCode()
+androidx.compose.ui.contentcapture.AndroidContentCaptureManager$TranslateStatus: androidx.compose.ui.contentcapture.AndroidContentCaptureManager$TranslateStatus valueOf(java.lang.String)
+com.betterschool.wear.domain.WearGrade: java.lang.String getSubject()
+androidx.activity.Api34Impl: float progress(android.window.BackEvent)
+androidx.compose.ui.platform.AndroidComposeView: androidx.collection.MutableIntObjectMap getLayoutNodes()
+androidx.window.reflection.JFunction2: java.lang.Object apply(java.lang.Object)
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component7()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String getEndTime()
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String component5()
+androidx.compose.ui.platform.AndroidComposeView: android.view.View getView()
+androidx.lifecycle.Lifecycle$State: androidx.lifecycle.Lifecycle$State[] values()
+com.betterschool.wear.domain.WearMockData: java.util.List getHomeworks()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.autofill.AutofillTree getAutofillTree()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String component4()
+com.betterschool.wear.domain.WearStudentProfile: int hashCode()
+androidx.activity.ComponentActivity$Api33Impl: android.window.OnBackInvokedDispatcher getOnBackInvokedDispatcher(android.app.Activity)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getMandatorySystemGestureInsets()
+androidx.core.view.WindowInsetsCompat$BuilderImpl: WindowInsetsCompat$BuilderImpl(androidx.core.view.WindowInsetsCompat)
+androidx.compose.foundation.gestures.DragDetectionState$AwaitDown$AwaitTouchSlop: androidx.compose.foundation.gestures.DragDetectionState$AwaitDown$AwaitTouchSlop[] values()
+com.betterschool.wear.domain.WearCourseEvent: float getProgressFraction()
+androidx.compose.ui.unit.LayoutDirection: androidx.compose.ui.unit.LayoutDirection valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: boolean getScrollCaptureInProgress$ui()
+androidx.compose.ui.unit.LayoutDirection: androidx.compose.ui.unit.LayoutDirection[] values()
+androidx.compose.ui.util.ListUtilsKt: void throwUnsupportedOperationException(java.lang.String)
+androidx.compose.ui.platform.AndroidViewsHandler: java.util.HashMap getHolderToLayoutNode()
+androidx.compose.ui.state.ToggleableState: androidx.compose.ui.state.ToggleableState[] values()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPostCreated(android.app.Activity,android.os.Bundle)
+androidx.compose.ui.platform.AndroidComposeView: void setPrimaryDirectionalMotionAxisOverride-r2epLt8$ui(androidx.compose.ui.input.indirect.IndirectPointerEventPrimaryDirectionalMotionAxis)
+androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: androidx.window.extensions.area.ExtensionWindowAreaPresentation getRearDisplayPresentation()
+com.betterschool.wear.domain.WearCourseEvent: boolean equals(java.lang.Object)
+com.betterschool.wear.domain.WearPairingSessionPayload: int hashCode()
+androidx.core.view.WindowInsetsCompat$Impl29: androidx.core.graphics.Insets getTappableElementInsets()
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityCreated(android.app.Activity,android.os.Bundle)
+androidx.core.view.WindowInsetsCompat$Impl: void setRootWindowInsets(androidx.core.view.WindowInsetsCompat)
+androidx.core.view.WindowInsetsCompat$Impl30: androidx.core.graphics.Insets getInsets(int)
+com.betterschool.wear.domain.WearGrade: java.lang.String getTitle()
+androidx.core.view.WindowInsetsCompat$Impl34: boolean isVisible(int)
+androidx.compose.ui.internal.InlineClassHelperKt: java.lang.Void throwIllegalStateExceptionForNullCheck(java.lang.String)
+okhttp3.internal.http2.ErrorCode: okhttp3.internal.http2.ErrorCode valueOf(java.lang.String)
+androidx.compose.ui.text.font.FontWeightAdjustmentHelperApi31: int fontWeightAdjustment(android.content.Context)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityResumed(android.app.Activity)
+com.betterschool.wear.domain.WearStudentProfile: WearStudentProfile(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,kotlin.jvm.internal.DefaultConstructorMarker)
 androidx.compose.ui.unit.ConstraintsKt: java.lang.Void throwInvalidConstraintsSizeException(int)
-com.betterschool.wear.domain.WearHomework: java.lang.String getDueDate()
-androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityPaused(android.app.Activity)
-androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction: androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction valueOf(java.lang.String)
+kotlinx.coroutines.flow.SharingCommand: kotlinx.coroutines.flow.SharingCommand valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl20: boolean isRound()
+androidx.compose.runtime.PausedCompositionState: androidx.compose.runtime.PausedCompositionState valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl: void copyRootViewBounds(android.view.View)
+androidx.compose.ui.platform.AbstractComposeView: void setPreviousAttachedWindowToken(android.os.IBinder)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidClipboard getClipboard()
+androidx.compose.ui.text.AnnotationType: androidx.compose.ui.text.AnnotationType[] values()
+androidx.activity.OnBackPressedDispatcher$Api33Impl: void unregisterOnBackInvokedCallback(java.lang.Object,java.lang.Object)
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String component6()
+com.betterschool.wear.domain.WearMessage: java.lang.String getSubject()
+androidx.core.view.WindowInsetsCompat$Impl20: void setRootViewData(androidx.core.graphics.Insets)
+androidx.compose.foundation.MutatePriority: androidx.compose.foundation.MutatePriority[] values()
+androidx.core.view.WindowInsetsCompat$Impl20: WindowInsetsCompat$Impl20(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
+androidx.core.app.RemoteActionCompatParcelizer: RemoteActionCompatParcelizer()
+com.betterschool.wear.domain.WearCourseEvent: com.betterschool.wear.domain.WearCourseEvent copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,long,boolean,boolean,java.lang.Integer,float)
+android.support.v4.graphics.drawable.IconCompatParcelizer: void write(androidx.core.graphics.drawable.IconCompat,androidx.versionedparcelable.VersionedParcel)
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getInsetsIgnoringVisibility(int)
+androidx.compose.ui.text.internal.InlineClassHelperKt: java.lang.Void throwIllegalStateExceptionForNullCheck(java.lang.String)
+com.betterschool.wear.domain.WearHomework: boolean equals(java.lang.Object)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.input.indirect.IndirectPointerEventPrimaryDirectionalMotionAxis getPrimaryDirectionalMotionAxisOverride-dqNNBbU$ui()
+androidx.compose.ui.platform.AndroidComposeView: void setUncaughtExceptionHandler$ui(androidx.compose.ui.node.RootForTest$UncaughtExceptionHandler)
+androidx.startup.InitializationProvider: InitializationProvider()
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event valueOf(java.lang.String)
+androidx.compose.foundation.internal.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl20: WindowInsetsCompat$Impl20(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl20)
+androidx.window.area.reflectionguard.ExtensionWindowAreaPresentationRequirements: android.content.Context getPresentationContext()
+com.betterschool.wear.domain.WearMessage: int hashCode()
+androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void endRearDisplayPresentationSession()
+androidx.core.view.ViewCompat$Api29Impl: android.view.View$AccessibilityDelegate getAccessibilityDelegate(android.view.View)
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getUserId()
+androidx.compose.ui.platform.ComposeView: java.lang.CharSequence getAccessibilityClassName()
+okhttp3.TlsVersion: okhttp3.TlsVersion valueOf(java.lang.String)
+androidx.compose.ui.unit.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
+androidx.compose.foundation.layout.internal.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
+kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState: kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState valueOf(java.lang.String)
+android.support.v4.graphics.drawable.IconCompatParcelizer: IconCompatParcelizer()
+androidx.compose.ui.platform.ComposeView: boolean getShouldCreateCompositionOnAttachedToWindow()
+androidx.lifecycle.Lifecycle$State: androidx.lifecycle.Lifecycle$State valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: boolean getShowLayoutBounds()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidAccessibilityManager getAccessibilityManager()
+androidx.core.view.WindowInsetsCompat$Impl28: androidx.core.view.DisplayCutoutCompat getDisplayCutout()
+com.betterschool.wear.domain.WearMockData: java.util.List getGrades()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getUsername()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.graphics.GraphicsContext getGraphicsContext()
+com.betterschool.wear.domain.WearMockData: WearMockData()
 androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.LifecycleRetainedValuesStoreOwner$FrameEndScheduler getFrameEndScheduler$ui()
+androidx.compose.ui.platform.AbstractComposeView: void getDisposeViewCompositionStrategy$annotations()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String getId()
+com.betterschool.wear.domain.WearMessage: java.lang.String component4()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getPassword()
+androidx.core.app.RemoteActionCompatParcelizer: void write(androidx.core.app.RemoteActionCompat,androidx.versionedparcelable.VersionedParcel)
+androidx.graphics.path.PathIteratorPreApi34Impl: int internalPathIteratorRawSize(long)
+androidx.compose.ui.platform.LifecycleRetainedValuesStoreOwner: LifecycleRetainedValuesStoreOwner()
+kotlinx.coroutines.CoroutineStart: kotlinx.coroutines.CoroutineStart[] values()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivitySaveInstanceState(android.app.Activity,android.os.Bundle)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.layout.InsetsListener getInsetsListener()
+com.betterschool.wear.domain.WearPairingSessionPayload: com.betterschool.wear.domain.WearPairingSessionPayload copy(int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,java.lang.Double)
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String component3()
+androidx.core.view.ViewCompat$Api23Impl: androidx.core.view.WindowInsetsCompat getRootWindowInsets(android.view.View)
+androidx.compose.ui.platform.Api35Impl: void setRequestedFrameRate(android.view.View,float)
+androidx.compose.foundation.internal.InlineClassHelperKt: java.lang.Void throwIllegalArgumentExceptionForNullCheck(java.lang.String)
+androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void endRearDisplaySession()
+androidx.compose.ui.platform.AndroidComposeViewVerificationHelperMethodsN: void setPointerIcon(android.view.View,androidx.compose.ui.input.pointer.PointerIcon)
+androidx.core.view.WindowInsetsCompat$Impl21: WindowInsetsCompat$Impl21(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl21)
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: WindowInsetsCompat$BuilderImpl29()
+androidx.activity.Api34Impl: int swipeEdge(android.window.BackEvent)
+androidx.core.view.WindowInsetsCompat$Impl29: WindowInsetsCompat$Impl29(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl29)
+androidx.compose.runtime.collection.MutableVectorKt: void throwListIndexOutOfBoundsException(int,int)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.WindowInsetsCompat consumeSystemWindowInsets()
+androidx.compose.ui.platform.AndroidComposeView: long getMeasureIteration()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component11()
+androidx.compose.ui.platform.AndroidComposeView: void setAccessibilityEventBatchIntervalMillis(long)
+androidx.window.reflection.Predicate2: boolean test(java.lang.Object)
+com.betterschool.wear.domain.WearGrade: java.lang.String component8()
+androidx.compose.ui.platform.MotionEventVerifierApi29: boolean isValidMotionEvent(android.view.MotionEvent,int)
+com.betterschool.wear.domain.WearMessage: java.lang.String getPreviewSnippet()
+androidx.compose.ui.platform.AndroidComposeView: void getPrimaryDirectionalMotionAxisOverride-dqNNBbU$ui$annotations()
+kotlinx.coroutines.selects.TrySelectDetailedResult: kotlinx.coroutines.selects.TrySelectDetailedResult[] values()
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityPaused(android.app.Activity)
+com.betterschool.wear.domain.WearPairingSessionPayload: WearPairingSessionPayload(int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,java.lang.Double)
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getVisibleInsets(android.view.View)
+okhttp3.internal.http2.ErrorCode: okhttp3.internal.http2.ErrorCode[] values()
+androidx.compose.ui.platform.AndroidComposeView: void setCoroutineContext(kotlin.coroutines.CoroutineContext)
+kotlin.LazyThreadSafetyMode: kotlin.LazyThreadSafetyMode[] values()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.spatial.RectManager getRectManager()
+androidx.compose.material.ripple.RippleHostView: void setRippleState$lambda$1(androidx.compose.material.ripple.RippleHostView)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.ViewConfiguration getViewConfiguration()
+androidx.core.view.WindowInsetsCompat$BuilderImpl: void setSystemGestureInsets(androidx.core.graphics.Insets)
+com.betterschool.wear.domain.WearPairingSessionPayload: boolean isDemoMode()
+androidx.compose.ui.node.LayoutNode: java.lang.String exceptionMessageForParentingOrOwnership(androidx.compose.ui.node.LayoutNode)
+androidx.compose.ui.platform.AbstractComposeView: boolean getShowLayoutBounds()
+androidx.activity.Api34Impl: float touchY(android.window.BackEvent)
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component4()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String getDate()
+androidx.core.view.WindowInsetsCompat$Impl: boolean isRound()
+androidx.compose.foundation.gestures.Orientation: androidx.compose.foundation.gestures.Orientation[] values()
+com.betterschool.wear.domain.WearHomework: java.lang.String getDueDate()
+com.betterschool.wear.domain.WearHomework: com.betterschool.wear.domain.WearHomework copy$default(com.betterschool.wear.domain.WearHomework,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,long,int,int,java.lang.Object)
+androidx.compose.ui.platform.ComposeView: void getShouldCreateCompositionOnAttachedToWindow$annotations()
+androidx.lifecycle.ProcessLifecycleOwner$attach$1: void onActivityCreated(android.app.Activity,android.os.Bundle)
+androidx.compose.foundation.MutatePriority: androidx.compose.foundation.MutatePriority valueOf(java.lang.String)
+androidx.compose.runtime.collection.MutableVectorKt: void throwReversedIndicesException(int,int)
+androidx.compose.ui.unit.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl28: boolean equals(java.lang.Object)
+androidx.core.view.WindowInsetsCompat$BuilderImpl30: WindowInsetsCompat$BuilderImpl30()
+com.betterschool.wear.domain.WearHomework: java.lang.String getDueTime()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.unit.Density getDensity()
+androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction: androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction[] values()
+androidx.compose.foundation.internal.InlineClassHelperKt: void throwIndexOutOfBoundsException(java.lang.String)
+androidx.compose.ui.platform.AbstractComposeView: boolean getShouldCreateCompositionOnAttachedToWindow()
+com.betterschool.wear.domain.WearHomework: long getColorHex()
+androidx.core.view.ViewCompat$Api21Impl: void setOnApplyWindowInsetsListener(android.view.View,androidx.core.view.OnApplyWindowInsetsListener)
+androidx.core.view.WindowInsetsCompat$Impl20: void setSystemUiVisibility(int)
+androidx.core.view.WindowInsetsCompat$Impl20: boolean systemBarVisibilityEquals(int,int)
+androidx.compose.animation.core.MutatePriority: androidx.compose.animation.core.MutatePriority[] values()
+androidx.core.view.ViewCompat$Api30Impl: java.lang.CharSequence getStateDescription(android.view.View)
 kotlinx.coroutines.selects.TrySelectDetailedResult: kotlinx.coroutines.selects.TrySelectDetailedResult valueOf(java.lang.String)
 androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event[] values()
-com.betterschool.wear.domain.WearHomework: java.lang.String getSubject()
-androidx.compose.foundation.MutatePriority: androidx.compose.foundation.MutatePriority valueOf(java.lang.String)
-androidx.compose.runtime.Recomposer$State: androidx.compose.runtime.Recomposer$State[] values()
-androidx.compose.ui.platform.AndroidComposeView: void setShowLayoutBounds(boolean)
-androidx.graphics.path.ConicConverter: int internalConicToQuadratics(float[],int,float[],float,float)
-com.betterschool.wear.domain.WearGrade: int component10()
-com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode[] values()
-com.betterschool.wear.domain.WearGrade: boolean equals(java.lang.Object)
-com.betterschool.wear.domain.WearHomework: java.lang.String component2()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.LayoutNode getRoot()
-androidx.compose.runtime.collection.MutableVectorKt: void throwOutOfRangeException(int,int)
-com.betterschool.wear.domain.WearMockData: java.util.List getTodayCourses()
-androidx.compose.ui.text.internal.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getUsername()
-androidx.compose.ui.platform.AndroidComposeView: void getFontLoader$annotations()
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component4()
-com.betterschool.wear.domain.WearMessage: int hashCode()
-androidx.compose.runtime.ComposerKt: java.lang.Void composeRuntimeError(java.lang.String)
-androidx.compose.ui.text.AnnotationType: androidx.compose.ui.text.AnnotationType[] values()
+com.betterschool.wear.domain.WearMessage: boolean isUnread()
+com.betterschool.wear.domain.WearHomework: int getImportanceScore()
 androidx.activity.Api34Impl: android.window.BackEvent createOnBackEvent(float,float,float,int)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.unit.Density getDensity()
-androidx.compose.ui.platform.AndroidComposeView: void setCoroutineContext(kotlin.coroutines.CoroutineContext)
-androidx.compose.runtime.InvalidationResult: androidx.compose.runtime.InvalidationResult valueOf(java.lang.String)
-androidx.core.graphics.drawable.IconCompatParcelizer: IconCompatParcelizer()
-com.betterschool.wear.domain.WearPairingSessionPayload: WearPairingSessionPayload(int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,java.lang.Double,int,kotlin.jvm.internal.DefaultConstructorMarker)
-androidx.core.view.WindowInsetsCompat$Impl: boolean isVisible(int)
-com.betterschool.wear.domain.WearHomework: boolean isCompleted()
-androidx.compose.ui.text.style.ResolvedTextDirection: androidx.compose.ui.text.style.ResolvedTextDirection[] values()
-androidx.compose.ui.platform.AbstractComposeView: void setViewCompositionStrategy(androidx.compose.ui.platform.ViewCompositionStrategy)
-androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getInsetsIgnoringVisibility(int)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.OutOfFrameExecutor getOutOfFrameExecutor()
-androidx.core.view.WindowInsetsCompat$Impl: int hashCode()
-android.support.v4.app.RemoteActionCompatParcelizer: RemoteActionCompatParcelizer()
-kotlinx.coroutines.channels.BufferOverflow: kotlinx.coroutines.channels.BufferOverflow[] values()
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String getRoom()
-kotlin.coroutines.intrinsics.CoroutineSingletons: kotlin.coroutines.intrinsics.CoroutineSingletons[] values()
-androidx.compose.ui.platform.AndroidComposeView: androidx.collection.MutableIntObjectMap getLayoutNodes()
-androidx.compose.ui.contentcapture.AndroidContentCaptureManager$TranslateStatus: androidx.compose.ui.contentcapture.AndroidContentCaptureManager$TranslateStatus valueOf(java.lang.String)
-androidx.compose.ui.internal.InlineClassHelperKt: void throwIndexOutOfBoundsException(java.lang.String)
-androidx.lifecycle.ProcessLifecycleOwner$attach$1: void onActivityPaused(android.app.Activity)
-androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: android.util.DisplayMetrics getRearDisplayMetrics()
-androidx.compose.ui.node.LookaheadPassDelegate$PlacedState: androidx.compose.ui.node.LookaheadPassDelegate$PlacedState valueOf(java.lang.String)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.autofill.AutofillTree getAutofillTree()
-androidx.compose.ui.platform.AndroidComposeView: void getShowLayoutBounds$annotations()
-androidx.compose.ui.platform.AndroidComposeViewVerificationHelperMethodsO: void focusable(android.view.View,int,boolean)
-androidx.compose.ui.node.LayoutNode: java.lang.String exceptionMessageForParentingOrOwnership(androidx.compose.ui.node.LayoutNode)
-androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void removeRearDisplayStatusListener(androidx.window.extensions.core.util.function.Consumer)
-androidx.core.view.WindowInsetsCompat$Impl20: void copyRootViewBounds(android.view.View)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.unit.LayoutDirection getLayoutDirection()
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getStudentClass()
-androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setMandatorySystemGestureInsets(androidx.core.graphics.Insets)
-androidx.compose.ui.platform.AbstractComposeView: void getDisposeViewCompositionStrategy$annotations()
-com.betterschool.wear.domain.WearCourseEvent: boolean isCurrent()
-com.betterschool.wear.domain.WearStudentProfile: int hashCode()
-com.betterschool.wear.domain.WearCourseEvent: java.lang.String getEndTime()
-com.betterschool.wear.domain.WearMessage: java.lang.String getSenderName()
-androidx.compose.ui.input.pointer.util.VelocityTracker1D$Strategy: androidx.compose.ui.input.pointer.util.VelocityTracker1D$Strategy[] values()
-com.betterschool.wear.domain.WearMessage: boolean component7()
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getUserId()
-androidx.compose.ui.text.input.TextInputServiceAndroid$TextInputCommand: androidx.compose.ui.text.input.TextInputServiceAndroid$TextInputCommand[] values()
-androidx.compose.ui.platform.AndroidComposeViewTranslationCallbackS: void clearViewTranslationCallback(android.view.View)
-com.betterschool.wear.domain.WearMessage: java.lang.String getPreviewSnippet()
-kotlinx.coroutines.CoroutineStart: kotlinx.coroutines.CoroutineStart[] values()
-androidx.core.view.WindowInsetsCompat$Impl30: boolean isVisible(int)
-androidx.activity.OnBackPressedDispatcher$Api33Impl: void registerOnBackInvokedCallback(java.lang.Object,int,java.lang.Object)
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getSchoolName()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.TextToolbar getTextToolbar()
-com.betterschool.wear.domain.WearMessage: boolean getHasAttachment()
-androidx.compose.foundation.text.selection.DownResolution: androidx.compose.foundation.text.selection.DownResolution valueOf(java.lang.String)
-com.betterschool.wear.domain.WearMockData: com.betterschool.wear.domain.WearStudentProfile getProfile()
-androidx.core.view.WindowInsetsCompat$Impl21: WindowInsetsCompat$Impl21(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
-androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setSystemGestureInsets(androidx.core.graphics.Insets)
-androidx.compose.ui.node.Invalidation: androidx.compose.ui.node.Invalidation valueOf(java.lang.String)
-com.betterschool.wear.domain.WearCourseEvent: boolean component10()
-com.betterschool.wear.domain.WearGrade: java.lang.String getScoreText()
-androidx.core.view.WindowInsetsCompat$Impl34: WindowInsetsCompat$Impl34(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
-androidx.compose.runtime.collection.MutableVectorKt: void throwNegativeIndexException(int)
-androidx.core.view.WindowInsetsCompat$Impl28: boolean equals(java.lang.Object)
-androidx.core.view.WindowInsetsCompat$BuilderImpl: WindowInsetsCompat$BuilderImpl()
-androidx.core.view.WindowInsetsCompat$Impl20: boolean isRound()
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPostResumed(android.app.Activity)
-com.betterschool.wear.domain.WearHomework: long component10()
-com.betterschool.wear.domain.WearHomework: long getColorHex()
-androidx.core.app.CoreComponentFactory: CoreComponentFactory()
-com.betterschool.wear.domain.WearPairingSessionPayload: WearPairingSessionPayload()
-androidx.compose.ui.node.Invalidation: androidx.compose.ui.node.Invalidation[] values()
-androidx.lifecycle.ProcessLifecycleOwner$attach$1: void onActivityPreCreated(android.app.Activity,android.os.Bundle)
-androidx.core.view.ViewCompat$Api29Impl: android.view.View$AccessibilityDelegate getAccessibilityDelegate(android.view.View)
-androidx.compose.foundation.MutatePriority: androidx.compose.foundation.MutatePriority[] values()
-com.betterschool.wear.domain.WearMessage: boolean component8()
-androidx.compose.ui.platform.AndroidComposeView: void setConfiguration(android.content.res.Configuration)
-androidx.compose.ui.focus.CustomDestinationResult: androidx.compose.ui.focus.CustomDestinationResult[] values()
-androidx.core.view.WindowInsetsCompat$Impl20: void setRootWindowInsets(androidx.core.view.WindowInsetsCompat)
-androidx.lifecycle.ProcessLifecycleOwner$attach$1: void onActivityStopped(android.app.Activity)
-androidx.lifecycle.LegacySavedStateHandleController$OnRecreation: LegacySavedStateHandleController$OnRecreation()
-com.betterschool.wear.domain.WearMessage: com.betterschool.wear.domain.WearMessage copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean)
-kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState: kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState[] values()
-com.betterschool.wear.domain.WearHomework: java.lang.String getPlatformId()
-androidx.activity.OnBackPressedDispatcher$Api33Impl: android.window.OnBackInvokedCallback createOnBackInvokedCallback(kotlin.jvm.functions.Function0)
-androidx.core.view.ViewCompat$Api28Impl: java.lang.CharSequence getAccessibilityPaneTitle(android.view.View)
-androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void addRearDisplayPresentationStatusListener(androidx.window.extensions.core.util.function.Consumer)
-androidx.core.view.WindowInsetsCompat$Impl34: WindowInsetsCompat$Impl34(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl34)
-androidx.compose.ui.contentcapture.ContentCaptureEventType: androidx.compose.ui.contentcapture.ContentCaptureEventType valueOf(java.lang.String)
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPostCreated(android.app.Activity,android.os.Bundle)
-androidx.core.graphics.drawable.IconCompatParcelizer: void write(androidx.core.graphics.drawable.IconCompat,androidx.versionedparcelable.VersionedParcel)
-androidx.compose.ui.input.pointer.PointerInputEventHandler: java.lang.Object invoke(androidx.compose.ui.input.pointer.PointerInputScope,kotlin.coroutines.Continuation)
-androidx.window.area.reflectionguard.ExtensionWindowAreaStatusRequirements: int getWindowAreaStatus()
-com.betterschool.wear.domain.WearHomework: WearHomework(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,long)
-androidx.compose.animation.core.PreconditionsKt: void throwIllegalArgumentException(java.lang.String)
-androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void startRearDisplaySession(android.app.Activity,androidx.window.extensions.core.util.function.Consumer)
-com.betterschool.wear.MainActivity: MainActivity()
-androidx.core.view.WindowInsetsCompat$Impl: boolean isRound()
-androidx.core.view.WindowInsetsCompat$Impl20: boolean systemBarVisibilityEquals(int,int)
-androidx.core.app.RemoteActionCompatParcelizer: RemoteActionCompatParcelizer()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.OwnerSnapshotObserver getSnapshotObserver()
-androidx.compose.runtime.PreconditionsKt: void throwIllegalArgumentException(java.lang.String)
-androidx.compose.ui.platform.TextToolbarStatus: androidx.compose.ui.platform.TextToolbarStatus valueOf(java.lang.String)
-kotlinx.coroutines.flow.SharingCommand: kotlinx.coroutines.flow.SharingCommand valueOf(java.lang.String)
-com.betterschool.wear.domain.WearGrade: java.lang.String component2()
-com.betterschool.wear.domain.WearGrade: com.betterschool.wear.domain.WearGrade copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,double,java.lang.String,java.lang.String,java.lang.String,boolean,int,java.lang.String)
-androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1: void onActivityPostResumed(android.app.Activity)
-androidx.compose.ui.platform.AndroidComposeView: void getLastMatrixRecalculationAnimationTime$ui$annotations()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.input.pointer.PointerIconService getPointerIconService()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.ClipboardManager getClipboardManager()
-androidx.compose.ui.platform.AndroidComposeView: long getLastMatrixRecalculationAnimationTime$ui()
+com.betterschool.wear.domain.WearMessage: java.lang.String component3()
+androidx.compose.ui.platform.AndroidComposeView: void getRoot$annotations()
+android.support.v4.graphics.drawable.IconCompatParcelizer: androidx.core.graphics.drawable.IconCompat read(androidx.versionedparcelable.VersionedParcel)
+com.betterschool.wear.domain.WearCourseEvent: long component9()
+com.betterschool.wear.domain.WearMessage: java.lang.String getDateLabel()
+androidx.compose.ui.node.LayoutNode$LayoutState: androidx.compose.ui.node.LayoutNode$LayoutState valueOf(java.lang.String)
 com.betterschool.wear.domain.WearStudentProfile: java.lang.String component2()
-androidx.core.view.WindowInsetsCompat$Impl20: boolean equals(java.lang.Object)
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String getFullName()
-androidx.emoji2.text.EmojiExclusions$EmojiExclusions_Api34: java.util.Set getExclusions()
-com.betterschool.wear.domain.WearPairingSessionPayload: int hashCode()
-androidx.core.view.ViewCompat$Api21Impl$1: ViewCompat$Api21Impl$1(android.view.View,androidx.core.view.OnApplyWindowInsetsListener)
-androidx.compose.ui.platform.AndroidComposeView: void getPrimaryDirectionalMotionAxisOverride-dqNNBbU$ui$annotations()
-androidx.core.view.WindowInsetsCompat$Impl34: androidx.core.graphics.Insets getInsets(int)
-androidx.core.view.WindowInsetsCompat$TypeImpl34: int toPlatformType(int)
-kotlin.time.DurationUnit: kotlin.time.DurationUnit valueOf(java.lang.String)
-androidx.core.view.WindowInsetsCompat$Impl20: void setOverriddenInsets(androidx.core.graphics.Insets[])
-androidx.compose.runtime.SlotTableKt: void throwConcurrentModificationException()
-androidx.compose.ui.platform.AndroidComposeView: androidx.collection.IntObjectMap getLayoutNodes()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.text.font.FontFamily$Resolver getFontFamilyResolver()
-com.betterschool.wear.domain.WearMessage: java.lang.String getId()
-androidx.core.view.WindowInsetsCompat$Impl: void copyRootViewBounds(android.view.View)
-com.betterschool.wear.domain.WearCourseEvent: java.lang.Integer getRemainingMinutes()
-com.betterschool.wear.domain.WearMessage: java.lang.String component4()
-com.betterschool.wear.domain.WearGrade: java.lang.String getPeriodName()
-android.support.v4.app.RemoteActionCompatParcelizer: androidx.core.app.RemoteActionCompat read(androidx.versionedparcelable.VersionedParcel)
-com.betterschool.wear.domain.WearMessage: WearMessage(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean)
-com.betterschool.wear.domain.WearHomework: boolean component8()
-com.betterschool.wear.domain.WearPairingSessionPayload: com.betterschool.wear.domain.WearPairingSessionPayload copy(int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,java.lang.Double)
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.text.font.Font$ResourceLoader getFontLoader()
-androidx.compose.ui.node.LookaheadPassDelegate$PlacedState: androidx.compose.ui.node.LookaheadPassDelegate$PlacedState[] values()
-androidx.compose.ui.unit.ConstraintsKt: void throwInvalidConstraintException(int,int)
-androidx.core.view.WindowInsetsCompat$Impl28: WindowInsetsCompat$Impl28(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl28)
-androidx.compose.ui.graphics.Path$Direction: androidx.compose.ui.graphics.Path$Direction[] values()
-androidx.compose.ui.text.input.TextInputServiceAndroid$TextInputCommand: androidx.compose.ui.text.input.TextInputServiceAndroid$TextInputCommand valueOf(java.lang.String)
-androidx.activity.Api34Impl: float progress(android.window.BackEvent)
-com.betterschool.wear.domain.WearHomework: java.lang.String component1()
-com.betterschool.wear.ui.WearViewModel: WearViewModel(android.app.Application)
-com.betterschool.wear.domain.WearGrade: boolean component9()
-androidx.compose.ui.platform.AndroidComposeViewStartDragAndDropN: boolean startDragAndDrop(android.view.View,androidx.compose.ui.draganddrop.DragAndDropTransferData,androidx.compose.ui.draganddrop.ComposeDragShadowBuilder)
-com.betterschool.wear.domain.WearGrade: java.lang.String getTeacherName()
-androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getSystemWindowInsets()
-com.betterschool.wear.domain.WearCourseEvent: float component13()
-com.betterschool.wear.domain.WearGrade: java.lang.String component4()
-androidx.compose.ui.platform.AndroidViewsHandler: java.util.HashMap getHolderToLayoutNode()
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String component3()
-androidx.activity.Api34Impl: float touchX(android.window.BackEvent)
-com.betterschool.wear.domain.WearGrade: java.lang.String getTitle()
-androidx.compose.ui.platform.AbstractComposeView: boolean getHasComposition()
-androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidComposeView$ViewTreeOwners get_viewTreeOwners()
-androidx.profileinstaller.FileSectionType: androidx.profileinstaller.FileSectionType valueOf(java.lang.String)
-androidx.core.view.WindowInsetsCompat$Impl20: WindowInsetsCompat$Impl20(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl20)
-androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void removeRearDisplayPresentationStatusListener(androidx.window.extensions.core.util.function.Consumer)
-androidx.core.view.WindowInsetsCompat$Impl: WindowInsetsCompat$Impl(androidx.core.view.WindowInsetsCompat)
-androidx.compose.ui.input.pointer.PointerEventPass: androidx.compose.ui.input.pointer.PointerEventPass[] values()
-com.betterschool.wear.domain.WearStudentProfile: java.lang.String component6()
-com.betterschool.wear.domain.WearGrade: WearGrade(java.lang.String,java.lang.String,java.lang.String,java.lang.String,double,java.lang.String,java.lang.String,java.lang.String,boolean,int,java.lang.String)
-okhttp3.Protocol: okhttp3.Protocol[] values()
-androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityCreated(android.app.Activity,android.os.Bundle)
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event valueOf(java.lang.String)
-androidx.profileinstaller.ProfileInstallReceiver: ProfileInstallReceiver()
-androidx.lifecycle.LifecycleDispatcher$DispatcherActivityCallback: LifecycleDispatcher$DispatcherActivityCallback()
-com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component3()
-kotlin.coroutines.intrinsics.CoroutineSingletons: kotlin.coroutines.intrinsics.CoroutineSingletons valueOf(java.lang.String)
-androidx.compose.ui.platform.AbstractComposeView: int getAutoClearFocusBehavior-4UtRPd4()
-androidx.window.area.reflectionguard.ExtensionWindowAreaPresentationRequirements: android.content.Context getPresentationContext()
-androidx.compose.ui.platform.AbstractComposeView: boolean getShouldCreateCompositionOnAttachedToWindow()
-androidx.compose.ui.platform.AbstractComposeView: void setParentContext(androidx.compose.runtime.CompositionContext)
-androidx.compose.ui.platform.TextToolbarStatus: androidx.compose.ui.platform.TextToolbarStatus[] values()
-androidx.core.view.WindowInsetsCompat$Impl30: androidx.core.graphics.Insets getInsetsIgnoringVisibility(int)
-okhttp3.TlsVersion: okhttp3.TlsVersion valueOf(java.lang.String)
-kotlin.text.RegexOption: kotlin.text.RegexOption valueOf(java.lang.String)
-androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getRootStableInsets()
-androidx.compose.ui.input.pointer.util.VelocityTracker1D$Strategy: androidx.compose.ui.input.pointer.util.VelocityTracker1D$Strategy valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl: boolean isVisible(int)
+androidx.compose.ui.platform.AndroidComposeView: void setConfiguration(android.content.res.Configuration)
+androidx.compose.ui.platform.AndroidComposeView: void getFontLoader$annotations()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.geometry.Rect getEmbeddedViewFocusRect()
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getTappableElementInsets()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String component8()
 kotlinx.coroutines.android.AndroidDispatcherFactory: AndroidDispatcherFactory()
-com.betterschool.wear.domain.WearCourseEvent: com.betterschool.wear.domain.WearCourseEvent copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,long,boolean,boolean,java.lang.Integer,float)
-androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getSystemWindowInsets()
-com.betterschool.wear.domain.WearStudentProfile: com.betterschool.wear.domain.WearStudentProfile copy$default(com.betterschool.wear.domain.WearStudentProfile,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,java.lang.Object)
-android.support.v4.graphics.drawable.IconCompatParcelizer: void write(androidx.core.graphics.drawable.IconCompat,androidx.versionedparcelable.VersionedParcel)
-com.betterschool.wear.domain.WearHomework: boolean equals(java.lang.Object)
+androidx.compose.ui.platform.AndroidComposeView: void setLastMatrixRecalculationAnimationTime$ui(long)
 com.betterschool.wear.domain.WearHomework: java.lang.String getTypeLabel()
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getSystemWindowInsets()
+androidx.core.view.WindowInsetsCompat$Impl20: void copyRootViewBounds(android.view.View)
+androidx.core.view.WindowInsetsCompat$Impl: void setOverriddenInsets(androidx.core.graphics.Insets[])
+androidx.core.view.WindowInsetsCompat$Impl: boolean equals(java.lang.Object)
+com.betterschool.wear.domain.WearMessage: boolean getHasAttachment()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String toString()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.input.pointer.PointerIconService getPointerIconService()
+androidx.compose.ui.platform.AndroidComposeView: void setDensity(androidx.compose.ui.unit.Density)
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityStarted(android.app.Activity)
+androidx.compose.ui.node.LayoutNode$UsageByParent: androidx.compose.ui.node.LayoutNode$UsageByParent[] values()
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: androidx.core.view.WindowInsetsCompat build()
+androidx.compose.ui.unit.ConstraintsKt: void throwInvalidConstraintException(int,int)
+androidx.core.view.WindowInsetsCompat$Impl29: WindowInsetsCompat$Impl29(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
+androidx.compose.ui.platform.AndroidComposeView: androidx.collection.IntObjectMap getLayoutNodes()
+com.betterschool.wear.domain.WearHomework: java.lang.String component2()
+androidx.compose.ui.platform.AndroidComposeView: android.content.res.Configuration getConfiguration()
+androidx.core.view.WindowInsetsCompat$BuilderImpl: void applyInsetTypes()
+kotlin.time.DurationUnit: kotlin.time.DurationUnit valueOf(java.lang.String)
+androidx.compose.ui.text.AnnotationType: androidx.compose.ui.text.AnnotationType valueOf(java.lang.String)
+com.betterschool.wear.domain.WearCourseEvent: boolean isCurrent()
+androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void addRearDisplayPresentationStatusListener(androidx.window.extensions.core.util.function.Consumer)
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivitySaveInstanceState(android.app.Activity,android.os.Bundle)
+androidx.compose.ui.platform.AbstractComposeView: void setAutoClearFocusBehavior-17tfJxM(int)
+androidx.core.view.WindowInsetsCompat$Impl20: void setRootWindowInsets(androidx.core.view.WindowInsetsCompat)
+com.betterschool.wear.domain.WearMockData: java.util.List getTodayCourses()
+kotlinx.coroutines.android.AndroidExceptionPreHandler: AndroidExceptionPreHandler()
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String component1()
+com.betterschool.wear.domain.WearPairingSessionPayload: WearPairingSessionPayload()
+androidx.core.view.WindowInsetsCompat$BuilderImpl: void setMandatorySystemGestureInsets(androidx.core.graphics.Insets)
+androidx.core.view.WindowInsetsCompat$Impl: void copyWindowDataInto(androidx.core.view.WindowInsetsCompat)
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getInsets(int,boolean)
+androidx.compose.ui.text.internal.InlineClassHelperKt: java.lang.Void throwIllegalArgumentExceptionForNullCheck(java.lang.String)
+androidx.compose.ui.node.LayoutNode$LayoutState: androidx.compose.ui.node.LayoutNode$LayoutState[] values()
+androidx.compose.ui.platform.AndroidComposeView: android.view.View findViewByAccessibilityIdTraversal(int)
+androidx.compose.ui.text.input.TextInputServiceAndroid$TextInputCommand: androidx.compose.ui.text.input.TextInputServiceAndroid$TextInputCommand valueOf(java.lang.String)
+androidx.compose.runtime.collection.MutableVectorKt: void throwOutOfRangeException(int,int)
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component6()
+androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void startRearDisplayPresentationSession(android.app.Activity,androidx.window.extensions.core.util.function.Consumer)
+com.betterschool.wear.domain.TileDisplayMode: java.lang.String getLabel()
+com.betterschool.wear.domain.WearGrade: java.lang.String getScoreText()
+androidx.core.view.WindowInsetsCompat$Impl28: androidx.core.view.WindowInsetsCompat consumeDisplayCutout()
+androidx.core.view.WindowInsetsCompat$BuilderImpl34: WindowInsetsCompat$BuilderImpl34()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPostStarted(android.app.Activity)
+androidx.compose.ui.platform.Api30Impl: boolean isShowingLayoutBounds(android.view.View)
+androidx.core.view.WindowInsetsCompat$Impl: WindowInsetsCompat$Impl(androidx.core.view.WindowInsetsCompat)
+androidx.compose.ui.focus.CustomDestinationResult: androidx.compose.ui.focus.CustomDestinationResult valueOf(java.lang.String)
+androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void removeRearDisplayStatusListener(androidx.window.extensions.core.util.function.Consumer)
+androidx.compose.ui.text.style.ResolvedTextDirection: androidx.compose.ui.text.style.ResolvedTextDirection valueOf(java.lang.String)
+com.betterschool.wear.domain.WearMessage: java.lang.String getFullBodyText()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getPlatformId()
+com.betterschool.wear.domain.WearGrade: com.betterschool.wear.domain.WearGrade copy$default(com.betterschool.wear.domain.WearGrade,java.lang.String,java.lang.String,java.lang.String,java.lang.String,double,java.lang.String,java.lang.String,java.lang.String,boolean,int,java.lang.String,int,java.lang.Object)
+com.betterschool.wear.domain.WearGrade: boolean component9()
+com.betterschool.wear.domain.WearMessage: java.lang.String component1()
+androidx.compose.ui.platform.AbstractComposeView: void setTransitionGroup(boolean)
+com.betterschool.wear.domain.WearHomework: java.lang.String getId()
+com.betterschool.wear.domain.WearHomework: int hashCode()
+androidx.compose.ui.platform.AndroidComposeView: int getImportantForAutofill()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPostResumed(android.app.Activity)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.Clipboard getClipboard()
+androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction: androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction valueOf(java.lang.String)
+com.betterschool.wear.domain.WearPairingSessionPayload: int getVersion()
+androidx.compose.ui.text.internal.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
+androidx.compose.foundation.gestures.DragDetectionState$AwaitDown$AwaitTouchSlop: androidx.compose.foundation.gestures.DragDetectionState$AwaitDown$AwaitTouchSlop valueOf(java.lang.String)
+com.betterschool.wear.domain.WearGrade: java.lang.String component11()
+androidx.compose.ui.platform.AndroidComposeView: void setLayoutDirection(androidx.compose.ui.unit.LayoutDirection)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getInsetsIgnoringVisibility(int)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.draganddrop.AndroidDragAndDropManager getDragAndDropManager()
+androidx.compose.ui.platform.TextToolbarStatus: androidx.compose.ui.platform.TextToolbarStatus[] values()
+com.betterschool.wear.domain.WearPairingSessionPayload: com.betterschool.wear.domain.WearPairingSessionPayload copy$default(com.betterschool.wear.domain.WearPairingSessionPayload,int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,java.lang.Double,int,java.lang.Object)
+androidx.compose.foundation.layout.Direction: androidx.compose.foundation.layout.Direction valueOf(java.lang.String)
+androidx.compose.ui.node.Invalidation: androidx.compose.ui.node.Invalidation[] values()
+androidx.core.view.WindowInsetsCompat$Impl29: androidx.core.graphics.Insets getMandatorySystemGestureInsets()
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setSystemWindowInsets(androidx.core.graphics.Insets)
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component13()
+com.betterschool.wear.domain.WearMessage: boolean component8()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getBirthDate()
+androidx.compose.foundation.text.selection.DownResolution: androidx.compose.foundation.text.selection.DownResolution valueOf(java.lang.String)
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.Double getOverallAveragePct()
+androidx.core.view.WindowInsetsCompat$Impl34: WindowInsetsCompat$Impl34(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl34)
+androidx.graphics.path.PathIteratorPreApi34Impl: int internalPathIteratorSize(long)
+com.betterschool.wear.domain.WearGrade: int getHoursPerWeek()
+androidx.compose.runtime.InvalidationResult: androidx.compose.runtime.InvalidationResult valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setSystemGestureInsets(androidx.core.graphics.Insets)
+com.betterschool.wear.domain.WearMessage: java.lang.String component5()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getCookies()
+okhttp3.Protocol: okhttp3.Protocol valueOf(java.lang.String)
+com.betterschool.wear.domain.WearMessage: com.betterschool.wear.domain.WearMessage copy$default(com.betterschool.wear.domain.WearMessage,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,int,java.lang.Object)
+androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1: void onActivityPostStarted(android.app.Activity)
 androidx.profileinstaller.ProfileInstallerInitializer: ProfileInstallerInitializer()
+com.betterschool.wear.domain.WearCourseEvent: boolean component11()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String getSubject()
+com.betterschool.wear.domain.WearGrade: double getPercentage()
+com.betterschool.wear.domain.WearPairingSessionPayload: boolean component12()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getHost()
+androidx.compose.ui.platform.AndroidComposeView: void set_viewTreeOwners(androidx.compose.ui.platform.AndroidComposeView$ViewTreeOwners)
+androidx.compose.ui.platform.AndroidComposeView: void setFrameEndScheduler$ui(androidx.compose.ui.platform.LifecycleRetainedValuesStoreOwner$FrameEndScheduler)
+com.betterschool.wear.domain.WearGrade: java.lang.String getDate()
+androidx.compose.ui.platform.AndroidComposeView: void getTextInputService$annotations()
+androidx.compose.ui.graphics.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.LayoutNodeDrawScope getSharedDrawScope()
+androidx.core.view.WindowInsetsCompat$Impl20: void setOverriddenInsets(androidx.core.graphics.Insets[])
+com.betterschool.wear.domain.WearCourseEvent: boolean component10()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String component2()
+androidx.compose.ui.platform.AndroidComposeView: boolean getHasPendingMeasureOrLayout()
+androidx.compose.animation.core.PreconditionsKt: void throwIllegalStateException(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getInsetsForType(int,boolean)
+com.betterschool.wear.domain.WearCourseEvent: boolean isUpcoming()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.input.InputModeManager getInputModeManager()
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.WindowInsetsCompat consumeStableInsets()
+androidx.graphics.path.PathIteratorPreApi34Impl: void destroyInternalPathIterator(long)
+com.betterschool.wear.domain.WearHomework: java.lang.String getSubject()
+kotlinx.coroutines.channels.BufferOverflow: kotlinx.coroutines.channels.BufferOverflow valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeViewTranslationCallbackS: void clearViewTranslationCallback(android.view.View)
+androidx.core.view.WindowInsetsCompat$BuilderImpl: void setTappableElementInsets(androidx.core.graphics.Insets)
+androidx.compose.runtime.ComposerKt: void composeImmediateRuntimeError(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl: void setSystemUiVisibility(int)
+androidx.core.view.WindowInsetsCompat$Impl20: boolean equals(java.lang.Object)
+com.betterschool.wear.domain.WearGrade: WearGrade(java.lang.String,java.lang.String,java.lang.String,java.lang.String,double,java.lang.String,java.lang.String,java.lang.String,boolean,int,java.lang.String)
+com.betterschool.wear.domain.WearHomework: com.betterschool.wear.domain.WearHomework copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,long,int)
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String getPlatformId()
+kotlin.LazyThreadSafetyMode: kotlin.LazyThreadSafetyMode valueOf(java.lang.String)
+androidx.core.view.ViewCompat$Api28Impl: boolean isScreenReaderFocusable(android.view.View)
+androidx.activity.OnBackPressedDispatcher$Api33Impl: android.window.OnBackInvokedCallback createOnBackInvokedCallback(kotlin.jvm.functions.Function0)
+com.betterschool.wear.domain.WearGrade: WearGrade(java.lang.String,java.lang.String,java.lang.String,java.lang.String,double,java.lang.String,java.lang.String,java.lang.String,boolean,int,java.lang.String,int,kotlin.jvm.internal.DefaultConstructorMarker)
+androidx.lifecycle.ProcessLifecycleOwner$attach$1: void onActivityStopped(android.app.Activity)
+kotlin.time.DurationUnit: kotlin.time.DurationUnit[] values()
+androidx.compose.ui.platform.AndroidComposeView: void setContentCaptureManager$ui(androidx.compose.ui.contentcapture.AndroidContentCaptureManager)
+androidx.compose.ui.input.pointer.util.VelocityTracker1D$Strategy: androidx.compose.ui.input.pointer.util.VelocityTracker1D$Strategy[] values()
+androidx.tracing.TraceApi29Impl: boolean isEnabled()
+com.betterschool.wear.domain.WearMessage: boolean component7()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String component5()
+android.support.v4.app.RemoteActionCompatParcelizer: androidx.core.app.RemoteActionCompat read(androidx.versionedparcelable.VersionedParcel)
+kotlinx.coroutines.channels.BufferOverflow: kotlinx.coroutines.channels.BufferOverflow[] values()
+androidx.lifecycle.LegacySavedStateHandleController$OnRecreation: LegacySavedStateHandleController$OnRecreation()
+com.betterschool.wear.domain.WearGrade: java.lang.String component1()
+androidx.core.view.WindowInsetsCompat$Impl28: int hashCode()
+com.betterschool.wear.domain.WearPairingSessionPayload: WearPairingSessionPayload(int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,java.lang.Double,int,kotlin.jvm.internal.DefaultConstructorMarker)
+androidx.compose.ui.platform.AndroidComposeView: void setShowLayoutBounds(boolean)
+com.betterschool.wear.domain.WearHomework: java.lang.String component6()
+androidx.core.view.WindowInsetsCompat$Impl20: void copyWindowDataInto(androidx.core.view.WindowInsetsCompat)
+androidx.core.view.WindowInsetsCompat$Impl29: androidx.core.graphics.Insets getSystemGestureInsets()
+androidx.core.view.WindowInsetsCompat$BuilderImpl: WindowInsetsCompat$BuilderImpl()
+androidx.compose.runtime.PausedCompositionState: androidx.compose.runtime.PausedCompositionState[] values()
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityDestroyed(android.app.Activity)
+com.betterschool.wear.domain.WearGrade: boolean isSommatif()
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String getTeacher()
+com.betterschool.wear.domain.WearMessage: WearMessage(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,int,kotlin.jvm.internal.DefaultConstructorMarker)
+com.betterschool.wear.domain.WearMessage: java.lang.String component6()
+androidx.graphics.path.PathIteratorPreApi34Impl: int internalPathIteratorNext(long,float[],int)
+com.betterschool.wear.domain.WearHomework: java.lang.String component1()
+androidx.lifecycle.ProcessLifecycleOwner$attach$1: ProcessLifecycleOwner$attach$1(androidx.lifecycle.ProcessLifecycleOwner)
+com.betterschool.wear.domain.WearCourseEvent: WearCourseEvent(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,long,boolean,boolean,java.lang.Integer,float,int,kotlin.jvm.internal.DefaultConstructorMarker)
+androidx.graphics.path.PathIteratorPreApi34Impl: int internalPathIteratorPeek(long)
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String getRoom()
+kotlin.coroutines.intrinsics.CoroutineSingletons: kotlin.coroutines.intrinsics.CoroutineSingletons valueOf(java.lang.String)
+kotlin.DeprecationLevel: kotlin.DeprecationLevel[] values()
+androidx.compose.ui.contentcapture.ContentCaptureEventType: androidx.compose.ui.contentcapture.ContentCaptureEventType[] values()
+androidx.compose.foundation.gestures.Orientation: androidx.compose.foundation.gestures.Orientation valueOf(java.lang.String)
+kotlinx.coroutines.CoroutineStart: kotlinx.coroutines.CoroutineStart valueOf(java.lang.String)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPreDestroyed(android.app.Activity)
+androidx.compose.ui.platform.AndroidComposeViewTranslationCallbackS: void setViewTranslationCallback(android.view.View)
+androidx.core.view.ViewCompat$Api28Impl: boolean isAccessibilityHeading(android.view.View)
+androidx.compose.foundation.text.selection.DownResolution: androidx.compose.foundation.text.selection.DownResolution[] values()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component8()
+androidx.compose.animation.core.AnimationEndReason: androidx.compose.animation.core.AnimationEndReason[] values()
+androidx.core.view.ViewCompat$Api21Impl$1: ViewCompat$Api21Impl$1(android.view.View,androidx.core.view.OnApplyWindowInsetsListener)
+androidx.compose.ui.graphics.Path$Direction: androidx.compose.ui.graphics.Path$Direction[] values()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getStudentClass()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.SoftwareKeyboardController getSoftwareKeyboardController()
+com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode valueOf(java.lang.String)
+okhttp3.TlsVersion: okhttp3.TlsVersion[] values()
+androidx.window.area.reflectionguard.ExtensionWindowAreaStatusRequirements: int getWindowAreaStatus()
+okhttp3.Protocol: okhttp3.Protocol[] values()
+androidx.activity.Api34Impl: float touchX(android.window.BackEvent)
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component9()
+androidx.compose.ui.internal.InlineClassHelperKt: void throwIndexOutOfBoundsException(java.lang.String)
+kotlin.text.RegexOption: kotlin.text.RegexOption[] values()
+androidx.core.view.WindowInsetsCompat$Impl28: WindowInsetsCompat$Impl28(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl28)
+androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void removeRearDisplayPresentationStatusListener(androidx.window.extensions.core.util.function.Consumer)
+androidx.core.graphics.drawable.IconCompatParcelizer: IconCompatParcelizer()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String getSchoolName()
+com.betterschool.wear.ui.WearViewModel: WearViewModel(android.app.Application)
+androidx.compose.runtime.collection.MutableVectorKt: void throwNegativeIndexException(int)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.text.font.FontFamily$Resolver getFontFamilyResolver()
+androidx.core.view.WindowInsetsCompat$Impl34: androidx.core.graphics.Insets getInsetsIgnoringVisibility(int)
+com.betterschool.wear.domain.WearHomework: WearHomework(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,long,int,int,kotlin.jvm.internal.DefaultConstructorMarker)
+com.betterschool.wear.domain.WearHomework: boolean component8()
+androidx.core.view.WindowInsetsCompat$Impl: boolean isConsumed()
+androidx.compose.ui.platform.AbstractComposeView: int getAutoClearFocusBehavior-4UtRPd4()
+androidx.core.view.WindowInsetsCompat$Impl30: WindowInsetsCompat$Impl30(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl30)
+com.betterschool.wear.domain.WearCourseEvent: int hashCode()
+androidx.compose.ui.node.LookaheadPassDelegate$PlacedState: androidx.compose.ui.node.LookaheadPassDelegate$PlacedState valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidComposeView$ViewTreeOwners getViewTreeOwners()
+androidx.core.view.WindowInsetsCompat$Impl28: WindowInsetsCompat$Impl28(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPaused(android.app.Activity)
+androidx.compose.ui.platform.AbstractComposeView: void getShowLayoutBounds$annotations()
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String getUserId()
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String component6()
+com.betterschool.wear.domain.WearPairingSessionPayload: int component1()
+androidx.compose.ui.platform.AndroidComposeView: long getLastMatrixRecalculationAnimationTime$ui()
+androidx.core.view.WindowInsetsCompat$Impl30: androidx.core.graphics.Insets getInsetsIgnoringVisibility(int)
+androidx.compose.ui.node.Invalidation: androidx.compose.ui.node.Invalidation valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.OutOfFrameExecutor getOutOfFrameExecutor()
+androidx.core.app.RemoteActionCompatParcelizer: androidx.core.app.RemoteActionCompat read(androidx.versionedparcelable.VersionedParcel)
+androidx.emoji2.text.ConcurrencyHelpers$Handler28Impl: android.os.Handler createAsync(android.os.Looper)
+com.betterschool.wear.domain.WearCourseEvent: java.lang.String component1()
+androidx.compose.ui.platform.TextToolbarStatus: androidx.compose.ui.platform.TextToolbarStatus valueOf(java.lang.String)
+androidx.compose.ui.focus.CustomDestinationResult: androidx.compose.ui.focus.CustomDestinationResult[] values()
+androidx.core.view.ViewCompat$Api21Impl$1: android.view.WindowInsets onApplyWindowInsets(android.view.View,android.view.WindowInsets)
+androidx.core.view.WindowInsetsCompat$Impl34: WindowInsetsCompat$Impl34(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
+androidx.core.view.WindowInsetsCompat$Impl21: boolean isConsumed()
+androidx.compose.ui.platform.ComposeView: void setContent(kotlin.jvm.functions.Function2)
+androidx.core.app.CoreComponentFactory: CoreComponentFactory()
+androidx.core.view.WindowInsetsCompat$Impl: int hashCode()
+androidx.compose.ui.contentcapture.AndroidContentCaptureManager$TranslateStatus: androidx.compose.ui.contentcapture.AndroidContentCaptureManager$TranslateStatus[] values()
+androidx.lifecycle.ProcessLifecycleOwner$attach$1: void onActivityPaused(android.app.Activity)
+com.betterschool.wear.domain.WearStudentProfile: WearStudentProfile(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)
+com.betterschool.wear.domain.WearMessage: boolean equals(java.lang.Object)
+androidx.lifecycle.LifecycleDispatcher$DispatcherActivityCallback: void onActivityCreated(android.app.Activity,android.os.Bundle)
+androidx.profileinstaller.ProfileInstallReceiver: ProfileInstallReceiver()
+com.betterschool.wear.domain.WearPairingSessionPayload: java.lang.String component2()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityStarted(android.app.Activity)
+com.betterschool.wear.MainActivity: MainActivity()
+androidx.window.area.reflectionguard.WindowAreaComponentApi3Requirements: void startRearDisplaySession(android.app.Activity,androidx.window.extensions.core.util.function.Consumer)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidClipboardManager getClipboardManager()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.LayoutNode getRoot()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.autofill.AutofillManager getAutofillManager()
+kotlinx.coroutines.flow.SharingCommand: kotlinx.coroutines.flow.SharingCommand[] values()
+com.betterschool.wear.domain.WearMessage: java.lang.String component2()
+androidx.compose.ui.platform.AndroidComposeView: kotlin.coroutines.CoroutineContext getCoroutineContext()
+android.support.v4.app.RemoteActionCompatParcelizer: RemoteActionCompatParcelizer()
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String getSchoolName()
+com.betterschool.wear.domain.WearMessage: java.lang.String getId()
+androidx.lifecycle.SavedStateHandlesVM: SavedStateHandlesVM()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidComposeView$ViewTreeOwners get_viewTreeOwners()
+com.betterschool.wear.domain.TileDisplayMode: com.betterschool.wear.domain.TileDisplayMode[] values()
+com.betterschool.wear.domain.WearHomework: int component11()
+androidx.compose.ui.focus.FocusStateImpl: androidx.compose.ui.focus.FocusStateImpl valueOf(java.lang.String)
+com.betterschool.wear.domain.WearMessage: java.lang.String toString()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.layout.Placeable$PlacementScope getPlacementScope()
+com.betterschool.wear.domain.WearStudentProfile: boolean equals(java.lang.Object)
+androidx.activity.ComponentActivity: void setContentView(android.view.View)
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String toString()
+androidx.compose.ui.node.LayoutNode$UsageByParent: androidx.compose.ui.node.LayoutNode$UsageByParent valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl21: androidx.core.graphics.Insets getStableInsets()
+com.betterschool.wear.domain.WearMockData: com.betterschool.wear.domain.WearStudentProfile getProfile()
+com.betterschool.wear.domain.WearHomework: boolean isCompleted()
+kotlin.coroutines.intrinsics.CoroutineSingletons: kotlin.coroutines.intrinsics.CoroutineSingletons[] values()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.RootForTest$UncaughtExceptionHandler getUncaughtExceptionHandler$ui()
+androidx.compose.runtime.Recomposer$State: androidx.compose.runtime.Recomposer$State valueOf(java.lang.String)
+com.betterschool.wear.domain.WearMessage: WearMessage(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.focus.FocusOwner getFocusOwner()
+com.betterschool.wear.domain.WearGrade: double component5()
+androidx.profileinstaller.FileSectionType: androidx.profileinstaller.FileSectionType valueOf(java.lang.String)
+com.betterschool.wear.domain.WearStudentProfile: java.lang.String getFullName()
+com.betterschool.wear.domain.WearHomework: java.lang.String toString()
+androidx.lifecycle.LifecycleDispatcher$DispatcherActivityCallback: LifecycleDispatcher$DispatcherActivityCallback()
+androidx.lifecycle.ProcessLifecycleOwner$attach$1: void onActivityPreCreated(android.app.Activity,android.os.Bundle)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.hapticfeedback.HapticFeedback getHapticFeedBack()
+androidx.compose.ui.platform.CalculateMatrixToWindowApi29: void calculateMatrixToWindow-EL8BTi8(android.view.View,float[])
+com.betterschool.wear.domain.WearHomework: long component10()

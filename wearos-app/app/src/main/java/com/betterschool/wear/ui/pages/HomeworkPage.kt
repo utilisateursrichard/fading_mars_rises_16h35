@@ -3,6 +3,7 @@ package com.betterschool.wear.ui.pages
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,14 +18,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.rotary.onRotaryScrollEvent
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -35,23 +43,58 @@ import com.betterschool.wear.domain.WearHomework
 import com.betterschool.wear.ui.M3ETheme
 
 /**
- * Page 4 (Carrousel Horizontal) : CHECKLIST DES DEVOIRS (M3E Pro)
- * Un tap sur la carte Bento centrale coche ou décoche le devoir directement sur Smartschool.
+ * Page 4 (Carrousel Horizontal) : DEVOIRS TRIÉS PAR IMPORTANCE (M3E Pro)
+ * - Les devoirs sont classés par score d'importance décroissant (0 à 10).
+ * - Supporte la couronne rotative et les boutons ‹ / › pour passer d'un devoir à l'autre.
  */
 @Composable
 fun HomeworkPage(
     homeworks: List<WearHomework>,
-    onToggleHomework: (WearHomework) -> Unit
+    onToggleHomework: (WearHomework) -> Unit,
+    isPageActive: Boolean = true
 ) {
     var index by remember(homeworks.size) { mutableIntStateOf(0) }
+    var rotaryAccum by remember { mutableFloatStateOf(0f) }
+    val focusRequester = remember { FocusRequester() }
+    val haptic = LocalHapticFeedback.current
+
     val safeIndex = if (homeworks.isEmpty()) 0 else index.coerceIn(0, homeworks.lastIndex)
     val hw = homeworks.getOrNull(safeIndex)
     val pendingCount = homeworks.count { !it.isCompleted }
+
+    LaunchedEffect(isPageActive) {
+        if (isPageActive) {
+            runCatching { focusRequester.requestFocus() }
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(M3ETheme.CanvasBg)
+            .onRotaryScrollEvent { event ->
+                if (homeworks.size > 1) {
+                    rotaryAccum += event.verticalScrollPixels
+                    if (rotaryAccum > 48f) {
+                        val next = (safeIndex + 1).coerceAtMost(homeworks.lastIndex)
+                        if (next != safeIndex) {
+                            index = next
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        }
+                        rotaryAccum = 0f
+                    } else if (rotaryAccum < -48f) {
+                        val prev = (safeIndex - 1).coerceAtLeast(0)
+                        if (prev != safeIndex) {
+                            index = prev
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        }
+                        rotaryAccum = 0f
+                    }
+                }
+                true
+            }
+            .focusRequester(focusRequester)
+            .focusable()
             .padding(horizontal = 20.dp, vertical = 18.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -87,8 +130,13 @@ fun HomeworkPage(
                         .border(1.dp, if (pendingCount == 0) M3ETheme.EmeraldBorder else M3ETheme.AmberBorder, CircleShape)
                         .padding(horizontal = 10.dp, vertical = 3.dp)
                 ) {
+                    val label = if (homeworks.size > 1) {
+                        "DEVOIR ${safeIndex + 1}/${homeworks.size}"
+                    } else {
+                        "DEVOIRS ($pendingCount)"
+                    }
                     Text(
-                        text = "DEVOIRS ($pendingCount À FAIRE)",
+                        text = label,
                         color = if (pendingCount == 0) M3ETheme.EmeraldText else M3ETheme.AmberText,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.ExtraBold
@@ -132,6 +180,8 @@ fun HomeworkPage(
                 }
             } else {
                 val palette = M3ETheme.getSubjectPalette(hw.subject)
+                val isHighPriority = !hw.isCompleted && hw.importanceScore >= 5
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -139,7 +189,11 @@ fun HomeworkPage(
                         .background(M3ETheme.CardBg)
                         .border(
                             width = 1.dp,
-                            color = if (hw.isCompleted) M3ETheme.EmeraldBorder else M3ETheme.CardBorder,
+                            color = when {
+                                hw.isCompleted -> M3ETheme.EmeraldBorder
+                                isHighPriority -> M3ETheme.RoseBorder
+                                else -> M3ETheme.CardBorder
+                            },
                             shape = RoundedCornerShape(22.dp)
                         )
                         .clickable { onToggleHomework(hw) }
@@ -167,11 +221,17 @@ fun HomeworkPage(
                             )
                         }
 
+                        // Badge d'importance M3E Pro (ex: 8/10 • Date)
+                        val rightLabel = if (hw.isCompleted) {
+                            hw.dueDate
+                        } else {
+                            "${hw.importanceScore}/10 • ${hw.dueDate}"
+                        }
                         Text(
-                            text = hw.dueDate,
-                            color = M3ETheme.TextMuted,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold
+                            text = rightLabel,
+                            color = if (isHighPriority) M3ETheme.RoseText else M3ETheme.TextMuted,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.ExtraBold
                         )
                     }
 

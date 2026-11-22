@@ -3,6 +3,7 @@ package com.betterschool.wear.ui.pages
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,13 +18,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.rotary.onRotaryScrollEvent
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,19 +42,54 @@ import com.betterschool.wear.ui.M3ETheme
 
 /**
  * Page 1 (Carrousel Horizontal) : DERNIER MESSAGE (M3E Pro)
- * Zéro LazyColumn imbriqué -> Fluidité 60 FPS et aucun texte coupé sur l'écran rond.
- * Permet de consulter le dernier message et de passer aux messages précédents avec ‹ / ›.
+ * Supporte la couronne rotative et les boutons ‹ / › pour parcourir les messages reçus.
  */
 @Composable
-fun MessagesPage(messages: List<WearMessage>) {
+fun MessagesPage(
+    messages: List<WearMessage>,
+    isPageActive: Boolean = true
+) {
     var index by remember(messages.size) { mutableIntStateOf(0) }
+    var rotaryAccum by remember { mutableFloatStateOf(0f) }
+    val focusRequester = remember { FocusRequester() }
+    val haptic = LocalHapticFeedback.current
+
     val safeIndex = if (messages.isEmpty()) 0 else index.coerceIn(0, messages.lastIndex)
     val msg = messages.getOrNull(safeIndex)
+
+    LaunchedEffect(isPageActive) {
+        if (isPageActive) {
+            runCatching { focusRequester.requestFocus() }
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(M3ETheme.CanvasBg)
+            .onRotaryScrollEvent { event ->
+                if (messages.size > 1) {
+                    rotaryAccum += event.verticalScrollPixels
+                    if (rotaryAccum > 48f) {
+                        val next = (safeIndex + 1).coerceAtMost(messages.lastIndex)
+                        if (next != safeIndex) {
+                            index = next
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        }
+                        rotaryAccum = 0f
+                    } else if (rotaryAccum < -48f) {
+                        val prev = (safeIndex - 1).coerceAtLeast(0)
+                        if (prev != safeIndex) {
+                            index = prev
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        }
+                        rotaryAccum = 0f
+                    }
+                }
+                true
+            }
+            .focusRequester(focusRequester)
+            .focusable()
             .padding(horizontal = 20.dp, vertical = 18.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -55,7 +98,6 @@ fun MessagesPage(messages: List<WearMessage>) {
             verticalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            // En-tête capsule M3E Pro avec navigation rapide ‹ 1/N ›
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -128,7 +170,6 @@ fun MessagesPage(messages: List<WearMessage>) {
                     )
                 }
             } else {
-                // Carte Bento M3E Pro
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
