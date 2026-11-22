@@ -25,7 +25,7 @@ Ce dossier documente les points d'accès internes (endpoints HTTP, requêtes AJA
 | 👤 **Profil & Établissement** | [`profil.md`](./profil.md) | 🟢 Documenté | `POST /Studentcard/Student/getStudents` |
 | 💬 **Messagerie** | [`messages.md`](./messages.md) | 🟢 Documenté | `POST /?module=Messages&file=dispatcher` |
 | 📊 **Résultats (Skore)** | [`resultats.md`](./resultats.md) | 🟢 Documenté | `GET /results/api/v1/evaluations/` |
-| 📚 **Espace Cours** | [`cours.md`](./cours.md) | ⚪ À documenter | `GET /courses` |
+| 📚 **Espace Cours** | [`cours.md`](./cours.md) | 🟢 Documenté | `POST /Topnav/getCourseConfig` |
 
 > [!IMPORTANT]
 > **Activation dans l'application (`isReadyInLive`) :**

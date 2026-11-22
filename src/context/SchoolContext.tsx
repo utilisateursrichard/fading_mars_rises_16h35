@@ -35,7 +35,9 @@ import {
   getCachedRealStudent, 
   getCachedRealEvaluations,
   getCachedRealTeachers,
+  getCachedRealCourses,
   fetchRealTeachers,
+  fetchRealCourses,
   syncAllSmartschoolData,
   toggleCachedRealHomework,
   resolveSmartschoolHomework,
@@ -137,6 +139,8 @@ interface SchoolContextType {
   toggleGradeExclusion: (gradeId: string) => void;
   // Cours
   courses: SubjectCourse[];
+  coursesLoading: boolean;
+  refreshCourses: () => Promise<void>;
   selectedCourseId: string | null;
   setSelectedCourseId: (id: string | null) => void;
   // Professeurs
@@ -337,7 +341,25 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [isDemoMode, skoreEvaluations, excludedGradeIds, activePeriodName]);
 
   const [courses, setCourses] = useState<SubjectCourse[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState<boolean>(false);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+
+  const refreshCourses = async () => {
+    setCoursesLoading(true);
+    try {
+      if (isDemoMode) {
+        const crss = await schoolService.getCourses();
+        setCourses(crss);
+      } else {
+        const crss = await fetchRealCourses();
+        setCourses(crss);
+      }
+    } catch (err) {
+      console.warn('Erreur lors du rafraîchissement des cours:', err);
+    } finally {
+      setCoursesLoading(false);
+    }
+  };
 
   // Professeurs
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -417,6 +439,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Initialisation des données en fonction du mode démo
   useEffect(() => {
     const initData = async () => {
+      setSelectedCourseId(null);
       if (!isDemoMode) {
         // En mode Réel : chargement des données réelles Smartschool
         // En mode Réel : chargement du cache réel
@@ -425,8 +448,10 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const realStudentData = getCachedRealStudent();
         const realEvals = getCachedRealEvaluations();
         const realTeachers = getCachedRealTeachers();
+        const realCourses = getCachedRealCourses();
         setSkoreEvaluations(realEvals);
         setTeachers(realTeachers);
+        setCourses(realCourses);
 
         if (realStudentData) {
           setStudent({
@@ -464,12 +489,17 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // Modules non encore branchés restent vierges en mode réel
         setConversations([]);
         setActiveMessages([]);
-        setCourses([]);
         setNotifications([]);
 
         // Si BetterSchool tourne au sein de Smartschool, synchroniser en direct
         if (isInsideSmartschoolPlatform) {
           syncAllSmartschoolData().then(res => {
+            if (res.courses && res.courses.length > 0) {
+              setCourses(res.courses);
+            } else {
+              const cachedCrs = getCachedRealCourses();
+              if (cachedCrs.length > 0) setCourses(cachedCrs);
+            }
             if (res.success) {
               setEvents(res.events);
               setHomeworks(res.homeworks);
@@ -1050,6 +1080,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         excludedGradeIds,
         toggleGradeExclusion,
         courses,
+        coursesLoading,
+        refreshCourses,
         selectedCourseId,
         setSelectedCourseId,
         teachers,

@@ -60,8 +60,8 @@ export const FEATURES_REGISTRY: Record<FeatureKey, FeatureConfig> = {
   courses: {
     id: 'courses',
     label: "Espace Cours",
-    description: "Supports pédagogiques et documents partagés",
-    isReadyInLive: false,
+    description: "Liste des cours Smartschool, enseignants et accès rapide",
+    isReadyInLive: true,
   },
   teachers: {
     id: 'teachers',

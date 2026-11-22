@@ -99,22 +99,61 @@ export const SUBJECT_THEMES: { [key: string]: SubjectTheme } = {
     badgeClass: 'bg-teal-50 text-teal-700 border-teal-200/80',
     pillClass: 'bg-teal-50/70 text-teal-700 hover:bg-teal-100',
     dotClass: 'bg-teal-600',
+  },
+  'NL': {
+    code: 'NL',
+    accent: '#db2777',
+    bgLight: '#fdf2f8',
+    text: '#9d174d',
+    border: '#fbcfe8',
+    badgeClass: 'bg-pink-50 text-pink-700 border-pink-200/80',
+    pillClass: 'bg-pink-50/70 text-pink-700 hover:bg-pink-100',
+    dotClass: 'bg-pink-600',
+  },
+  'FR': {
+    code: 'FR',
+    accent: '#7c3aed',
+    bgLight: '#f5f3ff',
+    text: '#5b21b6',
+    border: '#ddd6fe',
+    badgeClass: 'bg-violet-50 text-violet-700 border-violet-200/80',
+    pillClass: 'bg-violet-50/70 text-violet-700 hover:bg-violet-100',
+    dotClass: 'bg-violet-600',
+  },
+  'REL': {
+    code: 'REL',
+    accent: '#b45309',
+    bgLight: '#fffbeb',
+    text: '#92400e',
+    border: '#fde68a',
+    badgeClass: 'bg-amber-50 text-amber-800 border-amber-200/80',
+    pillClass: 'bg-amber-50/70 text-amber-800 hover:bg-amber-100',
+    dotClass: 'bg-amber-600',
   }
 };
 
 export const getSubjectTheme = (codeOrName: string): SubjectTheme => {
-  const upper = (codeOrName || '').toUpperCase();
+  const upper = (codeOrName || '').toUpperCase().trim();
+  if (upper && SUBJECT_THEMES[upper]) {
+    return SUBJECT_THEMES[upper];
+  }
+
+  if (upper.includes('MATH') || upper.includes('M5IM') || upper.includes('OLYMPIADE')) return SUBJECT_THEMES['MATH'];
+  if (upper.includes('SCI') || upper.includes('INFO') || upper.includes('NUM')) return SUBJECT_THEMES['SCI'] || SUBJECT_THEMES['NSI'];
+  if (upper.includes('CHIM') || upper.includes('PHYS')) return SUBJECT_THEMES['PC'];
+  if (upper.includes('NÉERLAND') || upper.includes('NEERLAND') || upper.includes('NEDERLAND') || /\bNL\b/.test(upper)) return SUBJECT_THEMES['NL'];
+  if (upper.includes('FRANÇ') || upper.includes('FRANC') || /\bFR\b/.test(upper)) return SUBJECT_THEMES['FR'];
+  if (upper.includes('RELIG') || /\bREL\b/.test(upper)) return SUBJECT_THEMES['REL'];
+  if (upper.includes('PHIL')) return SUBJECT_THEMES['PHILO'];
+  if (upper.includes('HIST') || upper.includes('GEO') || upper.includes('GÉO')) return SUBJECT_THEMES['HIST-GEO'];
+  if (upper.includes('ANG') || upper.includes('ENGL')) return SUBJECT_THEMES['ANG'];
+  if (upper.includes('EPS') || upper.includes('SPORT') || upper.includes('GYM')) return SUBJECT_THEMES['EPS'];
+
   for (const key in SUBJECT_THEMES) {
-    if (upper.includes(key) || key.includes(upper)) {
+    if (upper.includes(key)) {
       return SUBJECT_THEMES[key];
     }
   }
-  if (upper.includes('MATH')) return SUBJECT_THEMES['MATH'];
-  if (upper.includes('SCI') || upper.includes('INFO') || upper.includes('NUM')) return SUBJECT_THEMES['SCI'] || SUBJECT_THEMES['NSI'];
-  if (upper.includes('CHIM') || upper.includes('PHYS')) return SUBJECT_THEMES['PC'];
-  if (upper.includes('PHIL')) return SUBJECT_THEMES['PHILO'];
-  if (upper.includes('HIST') || upper.includes('GEO')) return SUBJECT_THEMES['HIST-GEO'];
-  if (upper.includes('ANGL')) return SUBJECT_THEMES['ANG'];
 
   return {
     code: 'GEN',

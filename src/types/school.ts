@@ -364,12 +364,52 @@ export interface CourseAssignment {
   obtainedGrade?: number;
 }
 
+export interface SmartschoolCourseFilter {
+  title: string;
+  type: string;
+  icon: string;
+}
+
+export interface SmartschoolCourseItem {
+  id: number;
+  platformId: number;
+  name: string;
+  descr: string;
+  icon: string;
+  url: string;
+  teacher: string;
+  categoryType?: 'own' | 'titu' | 'community' | 'virtual' | string;
+  isFavourite?: boolean;
+}
+
+export interface SmartschoolCourseConfigResponse {
+  courseFilters?: SmartschoolCourseFilter[];
+  own?: SmartschoolCourseItem[];
+  titu?: SmartschoolCourseItem[];
+  community?: SmartschoolCourseItem[];
+  virtual?: SmartschoolCourseItem[];
+  favourites?: {
+    type: string;
+    courses: { platformId: number; id: number }[];
+  }[];
+  courseManagementLink?: string | null;
+}
+
 export interface SubjectCourse {
   id: string;
+  courseId?: number;
+  platformId?: number;
   subject: string;
   subjectCode: string;
+  description?: string;
+  icon?: string;
+  iconUrl?: string;
+  url?: string;
+  isFavourite?: boolean;
+  categoryType?: string;
   color: string;
   teacher: string;
+  teacherTrigram?: string;
   teacherEmail: string;
   room: string;
   hoursPerWeek: number;

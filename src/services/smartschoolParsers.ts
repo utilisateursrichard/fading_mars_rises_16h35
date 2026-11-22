@@ -15,7 +15,10 @@ import {
   GradeGoal,
   SubjectReport,
   SkoreEvaluation,
-  Teacher
+  Teacher,
+  SubjectCourse,
+  SmartschoolCourseConfigResponse,
+  SmartschoolCourseItem
 } from '../types/school';
 import { calculateHomeworkImportance, getHomeworkPriority } from '../utils/homeworkImportance';
 import { isInvalidClassCandidate } from '../utils/student';
@@ -1053,6 +1056,200 @@ export const extractTeachersFromPlanner = (items: any[], effectiveUserId?: strin
     const comp = a.lastName.localeCompare(b.lastName, 'fr', { sensitivity: 'base' });
     if (comp !== 0) return comp;
     return a.firstName.localeCompare(b.firstName, 'fr', { sensitivity: 'base' });
+  });
+};
+
+// ==========================================
+// 📚 MODULE ESPACE COURS (/Topnav/getCourseConfig)
+// ==========================================
+
+/**
+ * Déduit un code matière court et lisible à partir du nom et de la description d'un cours Smartschool.
+ */
+export const deriveCourseSubjectCode = (name: string, descr?: string): string => {
+  const combined = `${name || ''} ${descr || ''}`
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
+  if (/hist/i.test(combined)) return 'HIST';
+  if (/geo/i.test(combined)) return 'GEO';
+  if (/ang|engl/i.test(combined)) return 'ANG';
+  if (/neerland|nederland|\bnl\b/i.test(combined)) return 'NL';
+  if (/francais|\bfr\b/i.test(combined)) return 'FR';
+  if (/math|m[0-9]im|olympiade/i.test(combined)) return 'MATH';
+  if (/sci/i.test(combined)) return 'SCI';
+  if (/phys/i.test(combined)) return 'PHYS';
+  if (/chim/i.test(combined)) return 'CHIM';
+  if (/bio/i.test(combined)) return 'BIO';
+  if (/relig/i.test(combined)) return 'REL';
+  if (/philo|morale/i.test(combined)) return 'PHILO';
+  if (/eps|sport|gym/i.test(combined)) return 'EPS';
+  if (/latin|\blat\b/i.test(combined)) return 'LAT';
+  if (/espagnol/i.test(combined)) return 'ESP';
+  if (/allemand/i.test(combined)) return 'ALL';
+  if (/info|numerique/i.test(combined)) return 'INFO';
+
+  const cleaned = (name || 'COURS').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  return cleaned.substring(0, 4) || 'COURS';
+};
+
+const normalizeTextForMatch = (value: string): string =>
+  (value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+/**
+ * Construit l'URL officielle de l'icône SVG Smartschool depuis le CDN static2.smart-school.net.
+ */
+export const getSmartschoolCourseIconUrl = (iconName?: string): string | undefined => {
+  const cleanIcon = (iconName || '').trim();
+  if (!cleanIcon) return undefined;
+  const encoded = encodeURIComponent(cleanIcon);
+  return `https://static2.smart-school.net/smsc/svg/${encoded}/${encoded}_24x24.svg`;
+};
+
+/**
+ * Convertit la réponse JSON de POST /Topnav/getCourseConfig en liste de SubjectCourse BetterSchool.
+ */
+export const parseSmartschoolCourseConfig = (
+  raw: SmartschoolCourseConfigResponse,
+  cachedTeachers: Teacher[] = [],
+  cachedEvents: CourseEvent[] = []
+): SubjectCourse[] => {
+  if (!raw || typeof raw !== 'object') return [];
+
+  // 1. Indexer les favoris (par clé `${platformId}_${id}` et fallback par `_${id}`)
+  const favouriteKeys = new Set<string>();
+  if (Array.isArray(raw.favourites)) {
+    for (const favGroup of raw.favourites) {
+      if (Array.isArray(favGroup?.courses)) {
+        for (const fc of favGroup.courses) {
+          if (fc && fc.id !== undefined) {
+            favouriteKeys.add(`${fc.platformId ?? ''}_${fc.id}`);
+            favouriteKeys.add(`_${fc.id}`);
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Déterminer les catégories disponibles sans doublons
+  const categoryOrder: string[] = [];
+  const pushCat = (cat?: string) => {
+    if (cat && !categoryOrder.includes(cat)) {
+      categoryOrder.push(cat);
+    }
+  };
+  if (Array.isArray(raw.courseFilters)) {
+    for (const filter of raw.courseFilters) {
+      pushCat(filter?.type);
+    }
+  }
+  for (const fallbackCat of ['own', 'titu', 'community', 'virtual']) {
+    if (Array.isArray((raw as Record<string, unknown>)[fallbackCat])) {
+      pushCat(fallbackCat);
+    }
+  }
+
+  // 3. Parcourir et convertir les cours
+  const seenKeys = new Set<string>();
+  const courses: SubjectCourse[] = [];
+
+  for (const category of categoryOrder) {
+    const list = (raw as Record<string, unknown>)[category];
+    if (!Array.isArray(list)) continue;
+
+    for (const item of list as SmartschoolCourseItem[]) {
+      if (!item || item.id === undefined || !item.name) continue;
+
+      const dedupeKey = `${item.platformId ?? ''}_${item.id}`;
+      if (seenKeys.has(dedupeKey)) continue;
+      seenKeys.add(dedupeKey);
+
+      const isFavourite =
+        favouriteKeys.has(dedupeKey) ||
+        favouriteKeys.has(`_${item.id}`) ||
+        Boolean(item.isFavourite);
+
+      // Extraction du nom et trigramme professeur (ex: "Deridder DR")
+      const rawTeacher = (item.teacher || '').trim();
+      let teacherDisplay = rawTeacher || 'Enseignant';
+      let teacherTrigram: string | undefined;
+
+      const trigramMatch = rawTeacher.match(/^(.+?)\s+([A-Z0-9]{2,4})$/);
+      const baseTeacherLast = trigramMatch ? trigramMatch[1].trim() : rawTeacher;
+      if (trigramMatch) {
+        teacherTrigram = trigramMatch[2].trim();
+      }
+
+      // Enrichissement depuis les enseignants connus de l'agenda
+      if (cachedTeachers.length > 0 && rawTeacher) {
+        const normBaseLast = normalizeTextForMatch(baseTeacherLast);
+        const matchedTeacher = cachedTeachers.find(t => {
+          if (teacherTrigram && t.trigram && t.trigram.toUpperCase() === teacherTrigram.toUpperCase()) {
+            return true;
+          }
+          const tLastNorm = normalizeTextForMatch(t.lastName);
+          return Boolean(tLastNorm && normBaseLast && (tLastNorm === normBaseLast || normBaseLast.includes(tLastNorm)));
+        });
+
+        if (matchedTeacher) {
+          teacherDisplay = matchedTeacher.fullName || `${matchedTeacher.firstName} ${matchedTeacher.lastName}`.trim() || teacherDisplay;
+          teacherTrigram = teacherTrigram || matchedTeacher.trigram;
+        } else if (teacherTrigram && baseTeacherLast) {
+          teacherDisplay = baseTeacherLast;
+        }
+      } else if (teacherTrigram && baseTeacherLast) {
+        teacherDisplay = baseTeacherLast;
+      }
+
+      // Salle éventuelle depuis l'agenda
+      const normName = normalizeTextForMatch(item.name);
+      const matchingEvent = cachedEvents.find(evt => {
+        if (!evt.room || evt.room === 'Salle indéterminée') return false;
+        const evtSubj = normalizeTextForMatch(evt.subject);
+        return evtSubj === normName || (normName.length >= 4 && (evtSubj.includes(normName) || normName.includes(evtSubj)));
+      });
+
+      const hoursMatch = item.name.match(/\((\d+)\s*h\)/i);
+      const hoursPerWeek = hoursMatch?.[1] ? parseInt(hoursMatch[1], 10) || 0 : 0;
+      const subjectCode = deriveCourseSubjectCode(item.name, item.descr);
+      const iconName = (item.icon || 'schoolbord').trim();
+
+      courses.push({
+        id: String(item.id),
+        courseId: item.id,
+        platformId: item.platformId,
+        subject: item.name.trim(),
+        subjectCode,
+        description: (item.descr || '').trim(),
+        icon: iconName,
+        iconUrl: getSmartschoolCourseIconUrl(iconName),
+        url: item.url || undefined,
+        isFavourite,
+        categoryType: item.categoryType || category,
+        color: '#4f46e5',
+        teacher: teacherDisplay,
+        teacherTrigram,
+        teacherEmail: '',
+        room: matchingEvent?.room || '',
+        hoursPerWeek,
+        progressPercent: 0,
+        chapters: [],
+        assignments: []
+      });
+    }
+  }
+
+  // Favoris en premier, puis tri alphabétique naturel
+  return courses.sort((a, b) => {
+    if (Boolean(a.isFavourite) !== Boolean(b.isFavourite)) {
+      return a.isFavourite ? -1 : 1;
+    }
+    return a.subject.localeCompare(b.subject, 'fr', { sensitivity: 'base' });
   });
 };
 

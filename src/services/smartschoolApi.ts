@@ -5,13 +5,22 @@
  * et stocke les données réelles de l'élève en cache local.
  */
 
-import { CourseEvent, Homework, Student, SkoreEvaluation, Teacher } from '../types/school';
+import {
+  CourseEvent,
+  Homework,
+  Student,
+  SkoreEvaluation,
+  Teacher,
+  SubjectCourse,
+  SmartschoolCourseConfigResponse
+} from '../types/school';
 import { fetchSmartschool, queryHostDOM, getHostPageInfo, evalHostExpression } from './smartschoolBridge';
 import { 
   parseSmartschoolCourse, 
   parseSmartschoolHomework, 
   extractMetadataFromPlanner,
   extractTeachersFromPlanner,
+  parseSmartschoolCourseConfig,
   splitFullName
 } from './smartschoolParsers';
 import { isInvalidClassCandidate, cleanStudentClass } from '../utils/student';
@@ -23,7 +32,8 @@ const REAL_STORAGE_KEYS = {
   STUDENT: 'betterschool_real_student',
   LAST_SYNC: 'betterschool_real_last_sync',
   EVALUATIONS: 'betterschool_real_evaluations',
-  TEACHERS: 'betterschool_real_teachers'
+  TEACHERS: 'betterschool_real_teachers',
+  COURSES: 'betterschool_real_courses'
 };
 
 export interface SmartschoolStudentcardTeacher {
@@ -501,6 +511,7 @@ export interface SyncResult {
   student: Partial<Student> | null;
   evaluations: SkoreEvaluation[];
   teachers?: Teacher[];
+  courses?: SubjectCourse[];
   error?: string;
 }
 
@@ -743,6 +754,47 @@ export const fetchRealEvaluations = async (
 };
 
 /**
+ * Récupère la liste des cours réels de l'élève via POST /Topnav/getCourseConfig
+ */
+export const fetchRealCourses = async (): Promise<SubjectCourse[]> => {
+  try {
+    const res = await fetchSmartschool('/Topnav/getCourseConfig', {
+      method: 'POST',
+      headers: {
+        'Accept': '*/*',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: ''
+    });
+
+    if (!res.ok || !res.body) {
+      return getCachedRealCourses();
+    }
+
+    let rawData: SmartschoolCourseConfigResponse;
+    try {
+      rawData = typeof res.body === 'string' ? JSON.parse(res.body) : res.body;
+    } catch (parseErr) {
+      console.warn('Erreur lors du parsing JSON de /Topnav/getCourseConfig:', parseErr);
+      return getCachedRealCourses();
+    }
+
+    const parsed = parseSmartschoolCourseConfig(
+      rawData,
+      getCachedRealTeachers(),
+      getCachedRealEvents()
+    );
+
+    setCachedRealCourses(parsed);
+    return parsed;
+  } catch (err) {
+    console.warn('Erreur lors de la récupération des cours réels Smartschool:', err);
+    return getCachedRealCourses();
+  }
+};
+
+/**
  * Synchronise l'ensemble des données réelles de l'élève
  */
 export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string | null): Promise<SyncResult> => {
@@ -763,6 +815,8 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
   }
 
   if (!effectiveUserId) {
+    // /Topnav/getCourseConfig ne dépend pas du userId
+    const fallbackCourses = await fetchRealCourses();
     return {
       success: false,
       events: getCachedRealEvents(),
@@ -770,15 +824,17 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       student: partialStudent,
       evaluations: getCachedRealEvaluations(),
       teachers: getCachedRealTeachers(),
+      courses: fallbackCourses,
       error: 'Identifiant élève non trouvé'
     };
   }
 
   try {
-    const [rawEvents, homeworks, evaluations] = await Promise.all([
+    const [rawEvents, homeworks, evaluations, courses] = await Promise.all([
       fetchRealAgenda(effectiveUserId, targetDate),
       fetchRealHomeworks(effectiveUserId, targetDate),
-      fetchRealEvaluations()
+      fetchRealEvaluations(),
+      fetchRealCourses()
     ]);
 
     // Associer les devoirs aux cours correspondants
@@ -793,13 +849,54 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
     // Re-lire le profil enrichi par fetchRealAgenda (schoolName, studentClass)
     const finalStudent = getCachedRealStudent() || partialStudent;
 
+    // Enrichir les cours avec les enseignants et salles fraîchement récupérés depuis l'agenda
+    const freshTeachers = getCachedRealTeachers();
+    const enrichedCourses = courses.map(course => {
+      let updatedTeacher = course.teacher;
+      let updatedTrigram = course.teacherTrigram;
+      let updatedRoom = course.room;
+
+      if (freshTeachers.length > 0) {
+        const matchedTeacher = freshTeachers.find(t =>
+          (course.teacherTrigram && t.trigram && t.trigram.toUpperCase() === course.teacherTrigram.toUpperCase()) ||
+          (t.lastName && course.teacher.toLowerCase().includes(t.lastName.toLowerCase()))
+        );
+        if (matchedTeacher) {
+          updatedTeacher = matchedTeacher.fullName || updatedTeacher;
+          updatedTrigram = updatedTrigram || matchedTeacher.trigram;
+        }
+      }
+
+      if (!updatedRoom) {
+        const normCourse = course.subject.toLowerCase();
+        const matchedEvt = events.find(e =>
+          e.room &&
+          e.room !== 'Salle indéterminée' &&
+          (e.subject.toLowerCase() === normCourse ||
+            (normCourse.length >= 4 && (e.subject.toLowerCase().includes(normCourse) || normCourse.includes(e.subject.toLowerCase()))))
+        );
+        if (matchedEvt) {
+          updatedRoom = matchedEvt.room;
+        }
+      }
+
+      if (updatedTeacher !== course.teacher || updatedTrigram !== course.teacherTrigram || updatedRoom !== course.room) {
+        return { ...course, teacher: updatedTeacher, teacherTrigram: updatedTrigram, room: updatedRoom };
+      }
+      return course;
+    });
+    if (enrichedCourses.length > 0) {
+      setCachedRealCourses(enrichedCourses);
+    }
+
     return {
       success: true,
       events,
       homeworks,
       student: finalStudent,
       evaluations,
-      teachers: getCachedRealTeachers()
+      teachers: freshTeachers,
+      courses: enrichedCourses
     };
   } catch (err: any) {
     return {
@@ -809,6 +906,7 @@ export const syncAllSmartschoolData = async (targetDate?: Date, userId?: string 
       student: getCachedRealStudent() || partialStudent,
       evaluations: getCachedRealEvaluations(),
       teachers: getCachedRealTeachers(),
+      courses: getCachedRealCourses(),
       error: err.message || 'Erreur de synchronisation'
     };
   }
@@ -841,6 +939,24 @@ export const setCachedRealTeachers = (teachers: Teacher[]): void => {
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem(REAL_STORAGE_KEYS.TEACHERS, JSON.stringify(teachers));
+    } catch {}
+  }
+};
+
+export const getCachedRealCourses = (): SubjectCourse[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(REAL_STORAGE_KEYS.COURSES);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const setCachedRealCourses = (courses: SubjectCourse[]): void => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(REAL_STORAGE_KEYS.COURSES, JSON.stringify(courses));
     } catch {}
   }
 };
