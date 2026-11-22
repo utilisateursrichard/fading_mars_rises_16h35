@@ -134,14 +134,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
           <span>{isDemoMode ? 'Mode Démo' : 'Mode Réel'}</span>
         </button>
 
-        {/* Wear OS Pairing Button */}
+        {/* Wear OS Pairing & APK Download Button */}
         <button
           onClick={() => setIsWearModalOpen(true)}
-          className="relative p-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-          title="Connecter une montre Wear OS"
-          aria-label="Connecter une montre Wear OS"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 text-xs font-bold transition-all shadow-sm m3-press"
+          title="Télécharger et connecter l'application Wear OS"
         >
-          <Watch className="w-4 h-4" />
+          <Watch className="w-3.5 h-3.5 stroke-[2.2]" />
+          <span>Wear OS</span>
         </button>
 
         {/* Direct Messages Shortcut */}

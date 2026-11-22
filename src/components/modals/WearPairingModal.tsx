@@ -291,6 +291,26 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
 
         {/* Corps simplifié sans jargon technique */}
         <div className="p-6 space-y-5">
+          {/* Bouton bien visible pour télécharger l'APK Wear OS */}
+          <div className="p-4 rounded-2xl bg-indigo-600 text-white flex items-center justify-between gap-3 shadow-subtle">
+            <div className="min-w-0">
+              <p className="text-xs font-extrabold">
+                Application BetterSchool Wear OS
+              </p>
+              <p className="text-[11px] text-indigo-100 mt-0.5">
+                Fichier d'installation Android Wear (.apk)
+              </p>
+            </div>
+            <a
+              href="/betterschool-wearos.apk"
+              download="betterschool-wearos.apk"
+              className="shrink-0 px-4 py-2.5 rounded-xl bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-extrabold inline-flex items-center gap-1.5 shadow-sm transition-all m3-press"
+            >
+              <Download className="w-4 h-4" />
+              <span>Télécharger l'APK</span>
+            </a>
+          </div>
+
           {/* Compte actuellement connecté (Verrouillé & Non modifiable pour empêcher toute usurpation) */}
           <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
@@ -405,19 +425,6 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
               </>
             )}
           </button>
-
-          {/* Lien discret pour télécharger l'application Wear OS */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Application pas encore installée ?</span>
-            <a
-              href="/betterschool-wearos.apk"
-              download="betterschool-wearos.apk"
-              className="font-bold text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Télécharger l'app (.apk)</span>
-            </a>
-          </div>
         </div>
       </div>
     </div>
