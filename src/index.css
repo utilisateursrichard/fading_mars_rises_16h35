@@ -95,3 +95,23 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Glissement de haut en bas avec un très léger rebond subtil */
+@keyframes wearModalSlideDownBounce {
+  0% {
+    opacity: 0;
+    transform: translateY(-32px) scale(0.985);
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.003);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.wear-modal-slide-bounce {
+  animation: wearModalSlideDownBounce 0.34s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
