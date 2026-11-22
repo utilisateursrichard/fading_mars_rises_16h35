@@ -30,6 +30,7 @@ import {
 } from '../data/mockMessages';
 import { isInsideSmartschool } from '../utils/platform';
 import { 
+  getActiveUserId,
   getCachedRealEvents, 
   getCachedRealHomeworks, 
   getCachedRealStudent, 
@@ -333,6 +334,30 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (!activePeriodName && computed.periods[0]) {
           setActivePeriodName(computed.periods[0]);
         }
+      }
+
+      // Synchronisation automatique de la moyenne générale vers la base SQLite du serveur BetterSchool
+      const activeUserId = getActiveUserId() || student?.ineNumber || '';
+      if (activeUserId && computed.overallAveragePct > 0) {
+        const avgPayload = {
+          userId: activeUserId,
+          platformId: activeUserId.split('_')[0] || '4907',
+          studentName: student ? `${student.firstName} ${student.lastName}`.trim() : '',
+          studentClass: student?.studentClass || '',
+          schoolName: student?.schoolName || '',
+          activePeriod: activePeriodName || computed.periods[0] || '',
+          overallAveragePct: computed.overallAveragePct,
+          overallAverage20: computed.overallAverage20,
+          totalWeeklyHours: computed.totalWeeklyHours
+        };
+
+        ['/api/user-average', 'https://betterschool.dino.icu/api/user-average'].forEach((endpoint) => {
+          fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(avgPayload)
+          }).catch(() => {});
+        });
       }
     } else {
       setSubjectReports([]);

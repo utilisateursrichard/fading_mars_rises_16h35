@@ -1,0 +1,19 @@
+<lint-module
+    format="1"
+    dir="/home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app"
+    name=":app"
+    type="APP"
+    maven="BetterSchoolWearOS:app:unspecified"
+    agpVersion="9.3.0-alpha09"
+    buildFolder="build"
+    bootClassPath="/home/richard/Android/Sdk/platforms/android-37.0/android.jar:/home/richard/Android/Sdk/build-tools/36.0.0/core-lambda-stubs.jar"
+    javaSourceLevel="17"
+    compileTarget="android-37.0"
+    highlightGradualR8Api="false">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>

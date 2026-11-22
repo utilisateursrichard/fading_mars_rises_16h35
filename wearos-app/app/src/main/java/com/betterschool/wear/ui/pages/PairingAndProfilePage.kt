@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,95 +14,82 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.betterschool.wear.domain.TileDisplayMode
+import com.betterschool.wear.ui.M3ETheme
 import com.betterschool.wear.ui.WearUiState
 
 /**
- * Page 5 du carrousel horizontal : APPAIRAGE QR CODE (GÉNÉRÉ SUR LA MONTRE) & PROFIL
+ * Écran de Connexion M3E Pro (affiché directement si la montre n'est pas connectée)
+ * et page de gestion du compte une fois connecté.
+ * Conçu pour la Safe Area circulaire d'une montre Wear OS (zéro débordement sur les bords ronds).
  */
 @Composable
 fun PairingAndProfilePage(
     uiState: WearUiState,
-    onStartQrPairing: () -> Unit,
-    onStopQrPairing: () -> Unit,
-    onRefresh: () -> Unit,
-    onToggleDemo: () -> Unit,
-    onSelectTileMode: (TileDisplayMode) -> Unit
+    onRegenerateCode: () -> Unit,
+    onEnterDemo: () -> Unit,
+    onDisconnect: () -> Unit,
+    onRefresh: () -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 18.dp, bottom = 28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+    var showFullQr by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(M3ETheme.CanvasBg)
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        contentAlignment = Alignment.Center
     ) {
-        item {
-            Text(
-                text = "◂ DEVOIRS  •  CONNEXION & TUILE",
-                color = Color(0xFF94A3B8),
-                fontSize = 9.sp,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(bottom = 2.dp)
-            )
-        }
+        if (!uiState.isPaired && !uiState.isDemoMode) {
+            val code = uiState.pairingTicket?.code ?: "------"
+            val formattedCode = if (code.length == 6) "${code.substring(0, 3)} ${code.substring(3, 6)}" else code
 
-        val ticket = uiState.pairingTicket
-        if (uiState.isPollingPairing && ticket != null) {
-            item {
-                val matrix = remember(ticket.code) {
-                    QrMatrixGenerator.encodeNumericOrByte(ticket.code)
-                }
-
+            if (showFullQr) {
+                // Vue plein centre du QR Code pour un scan facile sur écran rond
+                val matrix = remember(code) { QrMatrixGenerator.encodeCode(code) }
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(Color(0xFF111827))
-                        .border(1.dp, Color(0xFF6366F1), RoundedCornerShape(22.dp))
-                        .padding(10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Text(
-                        text = "SCANNEZ DEPUIS LE WEB",
-                        color = Color(0xFFA5B4FC),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
                     Box(
                         modifier = Modifier
-                            .size(116.dp)
-                            .clip(RoundedCornerShape(14.dp))
+                            .size(114.dp)
+                            .clip(RoundedCornerShape(16.dp))
                             .background(Color.White)
+                            .border(1.dp, M3ETheme.CardBorder, RoundedCornerShape(16.dp))
                             .padding(8.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             val n = matrix.size
-                            val cellSize = size.width / n.toFloat()
+                            val cell = size.width / n.toFloat()
                             for (r in 0 until n) {
                                 for (c in 0 until n) {
                                     if (matrix[r][c]) {
                                         drawRect(
-                                            color = Color.Black,
-                                            topLeft = Offset(c * cellSize, r * cellSize),
-                                            size = Size(cellSize + 0.5f, cellSize + 0.5f)
+                                            color = M3ETheme.TextPrimary,
+                                            topLeft = Offset(c * cell, r * cell),
+                                            size = Size(cell + 0.4f, cell + 0.4f)
                                         )
                                     }
                                 }
@@ -113,158 +99,241 @@ fun PairingAndProfilePage(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    Text(
-                        text = "CODE : ${ticket.code}",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Black
-                    )
-
-                    Text(
-                        text = "En attente de betterschool.dino.icu...",
-                        color = Color(0xFF94A3B8),
-                        fontSize = 9.sp,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(Color(0xFF1E293B))
-                            .clickable { onStopQrPairing() }
+                            .clip(CircleShape)
+                            .background(M3ETheme.TextPrimary)
+                            .clickable { showFullQr = false }
+                            .padding(horizontal = 14.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = "Voir code ($formattedCode)",
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            } else {
+                // Vue M3E Pro par défaut : Code à 6 chiffres géant + bouton QR + bouton Démo
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Badge supérieur capsule M3E Pro
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(M3ETheme.BrandIndigoBg)
+                            .border(1.dp, M3ETheme.BrandIndigoBorder, CircleShape)
+                            .padding(horizontal = 10.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = "CONNEXION MONTRE",
+                            color = M3ETheme.BrandIndigoText,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+
+                    // Carte Bento centrale M3E Pro avec le code à 6 chiffres
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(22.dp))
+                            .background(M3ETheme.CardBg)
+                            .border(1.dp, M3ETheme.CardBorder, RoundedCornerShape(22.dp))
+                            .padding(vertical = 10.dp, horizontal = 12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Entrez ce code sur le Web",
+                            color = M3ETheme.TextMuted,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(2.dp))
+
+                        Text(
+                            text = formattedCode,
+                            color = M3ETheme.TextPrimary,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 21.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.5.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(M3ETheme.BrandIndigo)
+                                    .clickable { showFullQr = true }
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = "QR Code",
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(M3ETheme.SubtleSurface)
+                                    .border(1.dp, M3ETheme.CardBorder, RoundedCornerShape(10.dp))
+                                    .clickable { onRegenerateCode() }
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = "Nouveau",
+                                    color = M3ETheme.TextPrimary,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    // Bouton secondaire discret : Essayer le Mode Démo
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(M3ETheme.SubtleSurface)
+                            .clickable { onEnterDemo() }
                             .padding(horizontal = 12.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = "Annuler",
-                            color = Color(0xFFF87171),
-                            fontSize = 10.sp,
+                            text = "Essayer le Mode Démo",
+                            color = M3ETheme.TextSecondary,
+                            fontSize = 9.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
         } else {
-            item {
+            // Montre connectée (ou en mode démo volontaire) : Carte Compte M3E Pro
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(if (uiState.isDemoMode) M3ETheme.AmberBg else M3ETheme.EmeraldBg)
+                        .border(
+                            1.dp,
+                            if (uiState.isDemoMode) M3ETheme.AmberBorder else M3ETheme.EmeraldBorder,
+                            CircleShape
+                        )
+                        .padding(horizontal = 10.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = if (uiState.isDemoMode) "MODE DÉMO" else "SESSION VÉRIFIÉE",
+                        color = if (uiState.isDemoMode) M3ETheme.AmberText else M3ETheme.EmeraldText,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFF4F46E5))
-                        .clickable { onStartQrPairing() }
-                        .padding(vertical = 10.dp, horizontal = 12.dp),
-                    contentAlignment = Alignment.Center
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(M3ETheme.CardBg)
+                        .border(1.dp, M3ETheme.CardBorder, RoundedCornerShape(22.dp))
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "📲 Afficher QR Code d'appairage",
-                        color = Color.White,
-                        fontSize = 11.sp,
+                        text = uiState.profile.fullName.ifEmpty { "Compte Élève" },
+                        color = M3ETheme.TextPrimary,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        textAlign = TextAlign.Center
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                }
-            }
-        }
 
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(Color(0xFF0F172A))
-                    .border(1.dp, Color(0xFF1E293B), RoundedCornerShape(18.dp))
-                    .padding(10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "${uiState.profile.fullName} (${uiState.profile.studentClass})",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = uiState.statusBanner ?: uiState.schoolHost,
-                    color = if (uiState.isDemoMode) Color(0xFFFBBF24) else Color(0xFF34D399),
-                    fontSize = 9.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+                    val subtitle = listOfNotNull(
+                        uiState.profile.studentClass.takeIf { it.isNotBlank() },
+                        uiState.profile.schoolName.takeIf { it.isNotBlank() }
+                    ).joinToString(" • ")
 
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Color(0xFF1E293B))
-                        .clickable { onRefresh() }
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "🔄 Sync",
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(if (uiState.isDemoMode) Color(0xFF422006) else Color(0xFF064E3B))
-                        .clickable { onToggleDemo() }
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (uiState.isDemoMode) "🟡 Démo" else "🟢 Réel",
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(Color(0xFF0F172A))
-                    .border(1.dp, Color(0xFF1E293B), RoundedCornerShape(18.dp))
-                    .padding(10.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "INFO DANS LA TUILE WEAR OS :",
-                    color = Color(0xFF94A3B8),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                TileDisplayMode.entries.forEach { mode ->
-                    val selected = uiState.tileDisplayMode == mode
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (selected) Color(0xFF312E81) else Color(0xFF1E293B))
-                            .clickable { onSelectTileMode(mode) }
-                            .padding(horizontal = 8.dp, vertical = 5.dp)
-                    ) {
+                    if (subtitle.isNotEmpty()) {
                         Text(
-                            text = (if (selected) "● " else "○ ") + mode.label,
-                            color = if (selected) Color.White else Color(0xFFCBD5E1),
+                            text = subtitle,
+                            color = M3ETheme.TextMuted,
                             fontSize = 10.sp,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
+                    }
+
+                    if (!uiState.statusBanner.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            text = uiState.statusBanner,
+                            color = M3ETheme.BrandIndigo,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (!uiState.isDemoMode) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(M3ETheme.TextPrimary)
+                                    .clickable { onRefresh() }
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = "Actualiser",
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(M3ETheme.RoseBg)
+                                .border(1.dp, M3ETheme.RoseBorder, RoundedCornerShape(10.dp))
+                                .clickable { onDisconnect() }
+                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                        ) {
+                            Text(
+                                text = if (uiState.isDemoMode) "Connecter compte" else "Déconnecter",
+                                color = M3ETheme.RoseText,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
@@ -273,11 +342,10 @@ fun PairingAndProfilePage(
 }
 
 /**
- * Encodeur QR Code Version 1 (21x21 ISO/IEC 18004) pur Kotlin sans dépendance externe
- * pour encoder le code d'appairage à 6 chiffres et être décodé par BarcodeDetector.
+ * Encodeur QR Code Version 1-L (21x21 ISO/IEC 18004) pur Kotlin ultra-léger
  */
 object QrMatrixGenerator {
-    fun encodeNumericOrByte(text: String): Array<BooleanArray> {
+    fun encodeCode(text: String): Array<BooleanArray> {
         val size = 21
         val grid = Array(size) { BooleanArray(size) }
         val reserved = Array(size) { BooleanArray(size) }
@@ -308,7 +376,6 @@ object QrMatrixGenerator {
             reserved[i][6] = true
         }
 
-        // Format info & Dark module
         grid[size - 8][8] = true
         reserved[size - 8][8] = true
         for (i in 0..8) {
@@ -320,7 +387,6 @@ object QrMatrixGenerator {
             reserved[size - 1 - i][8] = true
         }
 
-        // Encodage Mode Byte (0100) + longueur + octets + Reed-Solomon V1-L (7 octets EC)
         val bytes = text.toByteArray(Charsets.ISO_8859_1).take(17)
         val bits = mutableListOf<Boolean>()
         fun addBits(value: Int, len: Int) {
@@ -357,7 +423,6 @@ object QrMatrixGenerator {
         for (cw in dataCodewords) addBitsTo(allBits, cw, 8)
         for (cw in ecCodewords) addBitsTo(allBits, cw, 8)
 
-        // Placement en zigzag avec masque 0 ((r + c) % 2 == 0)
         var bitIndex = 0
         var upward = true
         var col = size - 1
@@ -378,7 +443,6 @@ object QrMatrixGenerator {
             col -= 2
         }
 
-        // Format bits pour Level L, Mask 0 : 111011111000100
         val formatBits = 0b111011111000100
         val fCoords1 = listOf(
             8 to 0, 8 to 1, 8 to 2, 8 to 3, 8 to 4, 8 to 5, 8 to 7, 8 to 8,

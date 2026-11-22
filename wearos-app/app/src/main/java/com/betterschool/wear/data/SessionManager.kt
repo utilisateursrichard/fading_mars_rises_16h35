@@ -7,24 +7,28 @@ import com.betterschool.wear.domain.WearPairingSessionPayload
 
 /**
  * Gestionnaire de session sur la montre Wear OS.
- * Conserve les tokens Smartschool (PHPSESSID, smscndc, pid), l'hôte de l'école et le userId
- * reçus lors du scan du QR Code affiché par la montre.
+ * Par défaut, aucune session n'est active et le Mode Démo est DÉSACTIVÉ :
+ * la montre s'ouvre directement sur l'écran de Connexion.
  */
 class SessionManager(context: Context) {
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_FILE_NAME, Context.MODE_PRIVATE)
 
+    var isPaired: Boolean
+        get() = prefs.getBoolean(KEY_IS_PAIRED, false)
+        set(value) = prefs.edit().putBoolean(KEY_IS_PAIRED, value).apply()
+
     var schoolHost: String
-        get() = prefs.getString(KEY_HOST, "https://jean23.smartschool.be") ?: "https://jean23.smartschool.be"
+        get() = prefs.getString(KEY_HOST, "") ?: ""
         set(value) = prefs.edit().putString(KEY_HOST, value.trimEnd('/')).apply()
 
     var userId: String
-        get() = prefs.getString(KEY_USER_ID, "4907_5748_0") ?: "4907_5748_0"
+        get() = prefs.getString(KEY_USER_ID, "") ?: ""
         set(value) = prefs.edit().putString(KEY_USER_ID, value.trim()).apply()
 
     var platformId: String
-        get() = prefs.getString(KEY_PLATFORM_ID, "4907") ?: "4907"
+        get() = prefs.getString(KEY_PLATFORM_ID, "") ?: ""
         set(value) = prefs.edit().putString(KEY_PLATFORM_ID, value.trim()).apply()
 
     var cookies: String
@@ -32,20 +36,34 @@ class SessionManager(context: Context) {
         set(value) = prefs.edit().putString(KEY_COOKIES, value.trim()).apply()
 
     var studentName: String
-        get() = prefs.getString(KEY_STUDENT_NAME, "Richard De Gandt") ?: "Richard De Gandt"
+        get() = prefs.getString(KEY_STUDENT_NAME, "") ?: ""
         set(value) = prefs.edit().putString(KEY_STUDENT_NAME, value).apply()
 
     var studentClass: String
-        get() = prefs.getString(KEY_STUDENT_CLASS, "4T1") ?: "4T1"
+        get() = prefs.getString(KEY_STUDENT_CLASS, "") ?: ""
         set(value) = prefs.edit().putString(KEY_STUDENT_CLASS, value).apply()
 
     var schoolName: String
-        get() = prefs.getString(KEY_SCHOOL_NAME, "Collège Jean XXIII") ?: "Collège Jean XXIII"
+        get() = prefs.getString(KEY_SCHOOL_NAME, "") ?: ""
         set(value) = prefs.edit().putString(KEY_SCHOOL_NAME, value).apply()
 
+    // Par défaut false : si la montre n'est pas connectée, on affiche l'écran de connexion (pas de démo imposée)
     var isDemoMode: Boolean
-        get() = prefs.getBoolean(KEY_DEMO_MODE, cookies.isBlank())
+        get() = prefs.getBoolean(KEY_DEMO_MODE, false)
         set(value) = prefs.edit().putBoolean(KEY_DEMO_MODE, value).apply()
+
+    var cachedAveragePct: Double?
+        get() {
+            val raw = prefs.getFloat(KEY_CACHED_AVG_PCT, -1f)
+            return if (raw > 0f) ((raw.toDouble() * 10.0).toInt() / 10.0) else null
+        }
+        set(value) {
+            if (value != null && value > 0.0) {
+                prefs.edit().putFloat(KEY_CACHED_AVG_PCT, value.toFloat()).apply()
+            } else {
+                prefs.edit().remove(KEY_CACHED_AVG_PCT).apply()
+            }
+        }
 
     var tileDisplayMode: TileDisplayMode
         get() {
@@ -59,32 +77,40 @@ class SessionManager(context: Context) {
         set(value) = prefs.edit().putString(KEY_TILE_MODE, value.name).apply()
 
     val hasValidLiveSession: Boolean
-        get() = cookies.isNotBlank() && userId.isNotBlank() && schoolHost.startsWith("http")
+        get() = isPaired && cookies.isNotBlank() && schoolHost.startsWith("http")
 
     fun savePairedSession(payload: WearPairingSessionPayload) {
-        prefs.edit()
+        val editor = prefs.edit()
+            .putBoolean(KEY_IS_PAIRED, true)
             .putString(KEY_HOST, payload.host.trimEnd('/'))
             .putString(KEY_USER_ID, payload.userId.trim())
-            .putString(KEY_PLATFORM_ID, payload.platformId.trim().ifEmpty {
-                payload.userId.substringBefore('_', "4907")
-            })
+            .putString(KEY_PLATFORM_ID, payload.platformId.trim())
             .putString(KEY_STUDENT_NAME, payload.studentName)
             .putString(KEY_STUDENT_CLASS, payload.studentClass)
             .putString(KEY_SCHOOL_NAME, payload.schoolName)
             .putString(KEY_COOKIES, payload.cookies.trim())
-            .putBoolean(KEY_DEMO_MODE, payload.isDemoMode || payload.cookies.isBlank())
-            .apply()
+            .putBoolean(KEY_DEMO_MODE, payload.isDemoMode)
+
+        if (payload.overallAveragePct != null && payload.overallAveragePct > 0.0) {
+            editor.putFloat(KEY_CACHED_AVG_PCT, payload.overallAveragePct.toFloat())
+        }
+        editor.apply()
     }
 
     fun clearSession() {
         prefs.edit()
+            .putBoolean(KEY_IS_PAIRED, false)
             .remove(KEY_COOKIES)
-            .putBoolean(KEY_DEMO_MODE, true)
+            .remove(KEY_USER_ID)
+            .remove(KEY_STUDENT_NAME)
+            .remove(KEY_CACHED_AVG_PCT)
+            .putBoolean(KEY_DEMO_MODE, false)
             .apply()
     }
 
     companion object {
-        private const val PREFS_FILE_NAME = "betterschool_wear_secure_prefs"
+        private const val PREFS_FILE_NAME = "betterschool_wear_prefs_v2"
+        private const val KEY_IS_PAIRED = "smsc_is_paired"
         private const val KEY_HOST = "smsc_host"
         private const val KEY_USER_ID = "smsc_user_id"
         private const val KEY_PLATFORM_ID = "smsc_platform_id"
@@ -94,5 +120,6 @@ class SessionManager(context: Context) {
         private const val KEY_SCHOOL_NAME = "smsc_school_name"
         private const val KEY_DEMO_MODE = "smsc_demo_mode"
         private const val KEY_TILE_MODE = "smsc_tile_mode"
+        private const val KEY_CACHED_AVG_PCT = "smsc_cached_avg_pct"
     }
 }

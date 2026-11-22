@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import fs from 'node:fs';
 import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 
 // 1. Synchronisation automatique de .env.api vers .env
 const envApiPath = path.resolve(__dirname, '.env.api');
@@ -38,6 +39,104 @@ loadCustomEnvFile(envApiPath);
 loadCustomEnvFile(envPath);
 
 // https://vitejs.dev/config/
+// 3. Base de données SQLite automatique pour persister la moyenne générale exacte de chaque utilisateur
+const dataDir = path.resolve(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+const sqliteDbPath = path.resolve(dataDir, 'betterschool_wear.sqlite');
+const sqliteDb = new DatabaseSync(sqliteDbPath);
+
+sqliteDb.exec(`
+  CREATE TABLE IF NOT EXISTS user_averages (
+    user_id TEXT PRIMARY KEY,
+    platform_id TEXT DEFAULT '',
+    student_name TEXT DEFAULT '',
+    student_class TEXT DEFAULT '',
+    school_name TEXT DEFAULT '',
+    active_period TEXT DEFAULT '',
+    overall_average_pct REAL NOT NULL,
+    overall_average_20 REAL NOT NULL,
+    total_weekly_hours INTEGER DEFAULT 0,
+    updated_at TEXT NOT NULL
+  );
+`);
+
+const upsertUserAverageStmt = sqliteDb.prepare(`
+  INSERT INTO user_averages (
+    user_id,
+    platform_id,
+    student_name,
+    student_class,
+    school_name,
+    active_period,
+    overall_average_pct,
+    overall_average_20,
+    total_weekly_hours,
+    updated_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  ON CONFLICT(user_id) DO UPDATE SET
+    platform_id = excluded.platform_id,
+    student_name = CASE WHEN excluded.student_name != '' THEN excluded.student_name ELSE user_averages.student_name END,
+    student_class = CASE WHEN excluded.student_class != '' THEN excluded.student_class ELSE user_averages.student_class END,
+    school_name = CASE WHEN excluded.school_name != '' THEN excluded.school_name ELSE user_averages.school_name END,
+    active_period = excluded.active_period,
+    overall_average_pct = excluded.overall_average_pct,
+    overall_average_20 = excluded.overall_average_20,
+    total_weekly_hours = excluded.total_weekly_hours,
+    updated_at = excluded.updated_at;
+`);
+
+const getUserAverageStmt = sqliteDb.prepare(`
+  SELECT
+    user_id,
+    platform_id,
+    student_name,
+    student_class,
+    school_name,
+    active_period,
+    overall_average_pct,
+    overall_average_20,
+    total_weekly_hours,
+    updated_at
+  FROM user_averages
+  WHERE user_id = ?;
+`);
+
+const saveUserAverageToSqlite = (data: {
+  userId?: string;
+  platformId?: string;
+  studentName?: string;
+  studentClass?: string;
+  schoolName?: string;
+  activePeriod?: string;
+  overallAveragePct?: number;
+  overallAverage20?: number;
+  totalWeeklyHours?: number;
+}) => {
+  const cleanUserId = String(data.userId || '').trim();
+  const pct = Number(data.overallAveragePct);
+  if (!cleanUserId || isNaN(pct) || pct <= 0) return false;
+
+  const avg20 = typeof data.overallAverage20 === 'number' && !isNaN(data.overallAverage20)
+    ? data.overallAverage20
+    : Number(((pct / 100) * 20).toFixed(2));
+
+  upsertUserAverageStmt.run(
+    cleanUserId,
+    String(data.platformId || ''),
+    String(data.studentName || ''),
+    String(data.studentClass || ''),
+    String(data.schoolName || ''),
+    String(data.activePeriod || ''),
+    Number(pct.toFixed(1)),
+    Number(avg20.toFixed(2)),
+    Number(data.totalWeeklyHours || 0),
+    new Date().toISOString()
+  );
+  return true;
+};
+
 interface WearPairingEntry {
   code: string;
   createdAt: number;
@@ -57,6 +156,78 @@ const cleanExpiredPairings = () => {
 };
 
 const attachWearPairingMiddleware = (middlewares: any) => {
+  // Endpoint SQLite pour synchroniser et lire la moyenne générale exacte de chaque élève
+  middlewares.use('/api/user-average', (req: any, res: any, next: any) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+
+    if (req.method === 'OPTIONS') {
+      res.statusCode = 204;
+      res.end();
+      return;
+    }
+
+    const parsedUrl = new URL(req.url || '/', 'http://localhost');
+
+    if (req.method === 'GET') {
+      const userId = (parsedUrl.searchParams.get('userId') || '').trim();
+      if (!userId) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ ok: false, error: 'Paramètre userId manquant.' }));
+        return;
+      }
+
+      const row = getUserAverageStmt.get(userId) as any;
+      if (!row) {
+        res.statusCode = 404;
+        res.end(JSON.stringify({ ok: false, error: 'Aucune moyenne enregistrée pour cet utilisateur.' }));
+        return;
+      }
+
+      res.statusCode = 200;
+      res.end(JSON.stringify({
+        ok: true,
+        userId: row.user_id,
+        platformId: row.platform_id,
+        studentName: row.student_name,
+        studentClass: row.student_class,
+        schoolName: row.school_name,
+        activePeriod: row.active_period,
+        overallAveragePct: row.overall_average_pct,
+        overallAverage20: row.overall_average_20,
+        totalWeeklyHours: row.total_weekly_hours,
+        updatedAt: row.updated_at
+      }));
+      return;
+    }
+
+    if (req.method === 'POST') {
+      let bodyStr = '';
+      req.on('data', (chunk: any) => { bodyStr += chunk; });
+      req.on('end', () => {
+        try {
+          const payload = JSON.parse(bodyStr || '{}');
+          const saved = saveUserAverageToSqlite(payload);
+          if (!saved) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ ok: false, error: 'userId ou overallAveragePct invalide.' }));
+            return;
+          }
+          res.statusCode = 200;
+          res.end(JSON.stringify({ ok: true }));
+        } catch (err: any) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ ok: false, error: err?.message || 'JSON invalide.' }));
+        }
+      });
+      return;
+    }
+
+    next();
+  });
+
   middlewares.use('/api/wear-pair', (req: any, res: any, next: any) => {
     cleanExpiredPairings();
 
@@ -162,11 +333,32 @@ const attachWearPairingMiddleware = (middlewares: any) => {
 
           const now = Date.now();
           const existing = wearPairingStore.get(rawCode);
+          const sessionObj = payload.session || null;
+
+          // Si la session poussée contient une moyenne générale, la persister immédiatement dans SQLite
+          if (sessionObj && sessionObj.userId && typeof sessionObj.overallAveragePct === 'number') {
+            saveUserAverageToSqlite({
+              userId: sessionObj.userId,
+              platformId: sessionObj.platformId,
+              studentName: sessionObj.studentName,
+              studentClass: sessionObj.studentClass,
+              schoolName: sessionObj.schoolName,
+              activePeriod: sessionObj.activePeriod,
+              overallAveragePct: sessionObj.overallAveragePct
+            });
+          } else if (sessionObj && sessionObj.userId) {
+            // Enrichir avec la moyenne SQLite déjà connue si disponible
+            const existingRow = getUserAverageStmt.get(String(sessionObj.userId).trim()) as any;
+            if (existingRow && typeof existingRow.overall_average_pct === 'number') {
+              sessionObj.overallAveragePct = existingRow.overall_average_pct;
+            }
+          }
+
           wearPairingStore.set(rawCode, {
             code: rawCode,
             createdAt: existing ? existing.createdAt : now,
             expiresAt: now + 5 * 60 * 1000,
-            session: payload.session || null
+            session: sessionObj
           });
 
           res.statusCode = 200;

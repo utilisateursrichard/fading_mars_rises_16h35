@@ -1,0 +1,8 @@
+com.betterschool.wear.app-updated_navigation_xml-0 /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/build/generated/updated_navigation_xml/release
+com.betterschool.wear.app-packageReleaseResources-1 /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/build/intermediates/incremental/release/packageReleaseResources/merged.dir
+com.betterschool.wear.app-packageReleaseResources-2 /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/build/intermediates/incremental/release/packageReleaseResources/stripped.dir
+com.betterschool.wear.app-merged-not-compiled-resources-3 /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/build/intermediates/merged-not-compiled-resources/release
+com.betterschool.wear.app-release-4 /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/build/intermediates/merged_res/release/mergeReleaseResources
+com.betterschool.wear.app-main-5 /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/main/res
+com.betterschool.wear.app-release-6 /home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/src/release/res
+gradleHome-0 /home/richard/.gradle

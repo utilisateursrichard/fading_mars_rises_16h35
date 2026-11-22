@@ -1,0 +1,9 @@
+com.betterschool.wear
+drawable ic_launcher
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+string tile_description
+string tile_label

@@ -2,85 +2,144 @@ package com.betterschool.wear.ui.pages
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.betterschool.wear.domain.WearCourseEvent
+import com.betterschool.wear.ui.M3ETheme
 
+/**
+ * Page 3 (Carrousel Horizontal) : PROCHAIN COURS & HORAIRE (M3E Pro)
+ * Affiche le cours en cours ou à venir avec la salle en évidence et permet de parcourir la journée via ‹ / ›.
+ */
 @Composable
 fun SchedulePage(
     courses: List<WearCourseEvent>,
     isLoading: Boolean
 ) {
-    val heroCourse = courses.firstOrNull { it.isCurrent }
-        ?: courses.firstOrNull { it.isUpcoming }
-        ?: courses.firstOrNull()
+    val defaultIdx = remember(courses) {
+        val currentIdx = courses.indexOfFirst { it.isCurrent }
+        if (currentIdx >= 0) currentIdx else courses.indexOfFirst { it.isUpcoming }.coerceAtLeast(0)
+    }
+    var index by remember(courses.size, defaultIdx) { mutableIntStateOf(defaultIdx) }
+    val safeIndex = if (courses.isEmpty()) 0 else index.coerceIn(0, courses.lastIndex)
+    val course = courses.getOrNull(safeIndex)
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 18.dp, bottom = 28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(M3ETheme.CanvasBg)
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        contentAlignment = Alignment.Center
     ) {
-        item {
-            Text(
-                text = "◂ NOTE  •  HORAIRE  •  DEVOIRS ▸",
-                color = Color(0xFF94A3B8),
-                fontSize = 9.sp,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(bottom = 2.dp)
-            )
-        }
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                if (courses.size > 1) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(M3ETheme.SubtleSurface)
+                            .border(1.dp, M3ETheme.CardBorder, CircleShape)
+                            .clickable {
+                                index = if (safeIndex > 0) safeIndex - 1 else courses.lastIndex
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("‹", color = M3ETheme.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
 
-        if (heroCourse == null) {
-            item {
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(M3ETheme.BrandIndigoBg)
+                        .border(1.dp, M3ETheme.BrandIndigoBorder, CircleShape)
+                        .padding(horizontal = 10.dp, vertical = 3.dp)
+                ) {
+                    val label = if (courses.size > 1) "COURS ${safeIndex + 1}/${courses.size}" else "HORAIRE"
+                    Text(
+                        text = label,
+                        color = M3ETheme.BrandIndigoText,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+
+                if (courses.size > 1) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(M3ETheme.SubtleSurface)
+                            .border(1.dp, M3ETheme.CardBorder, CircleShape)
+                            .clickable {
+                                index = if (safeIndex < courses.lastIndex) safeIndex + 1 else 0
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("›", color = M3ETheme.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            if (course == null) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFF111827))
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(M3ETheme.CardBg)
+                        .border(1.dp, M3ETheme.CardBorder, RoundedCornerShape(22.dp))
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (isLoading) "Chargement de l'horaire..." else "Aucun cours prévu aujourd'hui.",
-                        color = Color(0xFF94A3B8),
-                        fontSize = 12.sp,
+                        text = if (isLoading) "Synchronisation..." else "Aucun cours aujourd'hui",
+                        color = M3ETheme.TextMuted,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center
                     )
                 }
-            }
-        } else {
-            item {
-                val accentColor = Color(heroCourse.colorHex)
+            } else {
+                val palette = M3ETheme.getSubjectPalette(course.subject)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(22.dp))
-                        .background(Color(0xFF111827))
-                        .border(1.dp, accentColor.copy(alpha = 0.7f), RoundedCornerShape(22.dp))
+                        .background(M3ETheme.CardBg)
+                        .border(1.dp, M3ETheme.CardBorder, RoundedCornerShape(22.dp))
                         .padding(12.dp)
                 ) {
                     Row(
@@ -88,28 +147,31 @@ fun SchedulePage(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val statusLabel = when {
-                            heroCourse.isCurrent -> "🟢 EN COURS (${heroCourse.remainingMinutes ?: 0}m)"
-                            heroCourse.isUpcoming -> "⏳ DANS ${heroCourse.remainingMinutes ?: 0} MIN"
-                            else -> "${heroCourse.startTime} - ${heroCourse.endTime}"
+                        // Statut temporel
+                        val statusText = when {
+                            course.isCurrent -> "EN COURS • ${course.remainingMinutes ?: 0}m"
+                            course.isUpcoming && course.remainingMinutes != null -> "DANS ${course.remainingMinutes} MIN"
+                            else -> "${course.startTime} - ${course.endTime}"
                         }
                         Text(
-                            text = statusLabel,
-                            color = accentColor,
-                            fontSize = 10.sp,
+                            text = statusText,
+                            color = palette.text,
+                            fontSize = 9.sp,
                             fontWeight = FontWeight.ExtraBold
                         )
 
+                        // Badge Salle M3E Pro WCAG AA
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(accentColor.copy(alpha = 0.25f))
+                                .background(palette.bg)
+                                .border(1.dp, palette.border, RoundedCornerShape(8.dp))
                                 .padding(horizontal = 7.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = heroCourse.room,
-                                color = Color.White,
-                                fontSize = 12.sp,
+                                text = course.room,
+                                color = palette.text,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Black
                             )
                         }
@@ -118,98 +180,41 @@ fun SchedulePage(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = heroCourse.subject,
-                        color = Color.White,
-                        fontSize = 15.sp,
+                        text = course.subject,
+                        color = M3ETheme.TextPrimary,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.ExtraBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
 
                     Text(
-                        text = "${heroCourse.startTime} - ${heroCourse.endTime}  •  ${heroCourse.teacher}",
-                        color = Color(0xFF94A3B8),
+                        text = "${course.startTime} - ${course.endTime} • ${course.teacher}",
+                        color = M3ETheme.TextMuted,
                         fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    if (heroCourse.isCurrent) {
+                    if (course.isCurrent) {
                         Spacer(modifier = Modifier.height(6.dp))
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(4.dp)
-                                .clip(RoundedCornerShape(999.dp))
-                                .background(Color(0xFF1E293B))
+                                .clip(CircleShape)
+                                .background(M3ETheme.SubtleSurface)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth(heroCourse.progressFraction.coerceIn(0.08f, 1f))
+                                    .fillMaxWidth(course.progressFraction.coerceIn(0.1f, 1f))
                                     .height(4.dp)
-                                    .clip(RoundedCornerShape(999.dp))
-                                    .background(accentColor)
+                                    .clip(CircleShape)
+                                    .background(palette.dot)
                             )
                         }
                     }
-                }
-            }
-
-            item {
-                Text(
-                    text = "PROGRAMME DU JOUR",
-                    color = Color(0xFF64748B),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-
-            items(courses) { course ->
-                val cColor = Color(course.colorHex)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(if (course.isCurrent) Color(0xFF1E1B4B) else Color(0xFF0F172A))
-                        .border(
-                            width = 1.dp,
-                            color = if (course.isCurrent) cColor else Color(0xFF1E293B),
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .padding(horizontal = 10.dp, vertical = 7.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .width(3.dp)
-                            .height(24.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(cColor)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = course.subject,
-                            color = Color.White,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = "${course.startTime} - ${course.endTime} • ${course.teacher}",
-                            color = Color(0xFF94A3B8),
-                            fontSize = 9.sp,
-                            maxLines = 1
-                        )
-                    }
-                    Text(
-                        text = course.room,
-                        color = cColor,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
                 }
             }
         }

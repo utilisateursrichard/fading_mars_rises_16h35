@@ -18,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.betterschool.wear.ui.pages.GradesPage
 import com.betterschool.wear.ui.pages.HomeworkPage
@@ -27,78 +26,85 @@ import com.betterschool.wear.ui.pages.PairingAndProfilePage
 import com.betterschool.wear.ui.pages.SchedulePage
 
 /**
- * Écran principal Wear OS avec navigation par scroll horizontal (gauche <-> droite) :
- * - Page 0 : Dernier Message (lecture directe sans réponses pré-définies)
- * - Page 1 : Dernière Note Skore & Moyenne Générale
- * - Page 2 : Prochain Cours en direct & Horaire du jour
- * - Page 3 : Checklist des Devoirs cochables au poignet
- * - Page 4 : QR Code d'Appairage (affiché par la montre) & Profil
+ * Écran principal Wear OS optimisé 60 FPS (M3E Pro).
+ * - Si la montre n'est PAS connectée (!isPaired && !isDemoMode) :
+ *   affiche DIRECTEMENT l'écran de Connexion (Code à 6 chiffres + QR Code).
+ * - Une fois connectée (ou si l'utilisateur lance manuellement la démo) :
+ *   active le carrousel horizontal fluide (Message <-> Note <-> Horaire <-> Devoirs <-> Compte).
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WearMainScreen(viewModel: WearViewModel) {
     val uiState by viewModel.uiState.collectAsState()
 
-    val pagerState = rememberPagerState(
-        initialPage = 0,
-        pageCount = { 5 }
-    )
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF090D16)) // Noir OLED M3E Pro
+            .background(M3ETheme.CanvasBg)
     ) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize()
-        ) { pageIndex ->
-            when (pageIndex) {
-                0 -> MessagesPage(
-                    messages = uiState.messages,
-                    isDemoMode = uiState.isDemoMode
-                )
-                1 -> GradesPage(
-                    grades = uiState.grades,
-                    weightedAverage = uiState.weightedAverage
-                )
-                2 -> SchedulePage(
-                    courses = uiState.todayCourses,
-                    isLoading = uiState.isLoading
-                )
-                3 -> HomeworkPage(
-                    homeworks = uiState.homeworks,
-                    onToggleHomework = { viewModel.toggleHomework(it) }
-                )
-                4 -> PairingAndProfilePage(
-                    uiState = uiState,
-                    onStartQrPairing = { viewModel.startQrPairingOnWatch() },
-                    onStopQrPairing = { viewModel.stopQrPairingOnWatch() },
-                    onRefresh = { viewModel.refreshFromSmartschool() },
-                    onToggleDemo = { viewModel.toggleDemoMode() },
-                    onSelectTileMode = { viewModel.setTileDisplayMode(it) }
-                )
-            }
-        }
+        if (!uiState.isPaired && !uiState.isDemoMode) {
+            // Montre non connectée : ouverture directe sur l'écran de Connexion (zéro fausse donnée)
+            PairingAndProfilePage(
+                uiState = uiState,
+                onRegenerateCode = { viewModel.startQrPairingOnWatch() },
+                onEnterDemo = { viewModel.enterDemoMode() },
+                onDisconnect = { viewModel.disconnectAndReturnToPairing() },
+                onRefresh = { viewModel.refreshFromSmartschool() }
+            )
+        } else {
+            val pagerState = rememberPagerState(
+                initialPage = 0,
+                pageCount = { 5 }
+            )
 
-        // Indicateur de page horizontal en bas de l'écran rond
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(bottom = 6.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            repeat(5) { idx ->
-                val isSelected = pagerState.currentPage == idx
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 3.dp)
-                        .size(if (isSelected) 7.dp else 5.dp)
-                        .clip(CircleShape)
-                        .background(if (isSelected) Color(0xFF6366F1) else Color(0xFF334155))
-                )
+            HorizontalPager(
+                state = pagerState,
+                beyondViewportPageCount = 1,
+                modifier = Modifier.fillMaxSize()
+            ) { pageIndex ->
+                when (pageIndex) {
+                    0 -> MessagesPage(messages = uiState.messages)
+                    1 -> GradesPage(
+                        grades = uiState.grades,
+                        weightedAverage = uiState.weightedAverage
+                    )
+                    2 -> SchedulePage(
+                        courses = uiState.todayCourses,
+                        isLoading = uiState.isLoading
+                    )
+                    3 -> HomeworkPage(
+                        homeworks = uiState.homeworks,
+                        onToggleHomework = { viewModel.toggleHomework(it) }
+                    )
+                    4 -> PairingAndProfilePage(
+                        uiState = uiState,
+                        onRegenerateCode = { viewModel.startQrPairingOnWatch() },
+                        onEnterDemo = { viewModel.enterDemoMode() },
+                        onDisconnect = { viewModel.disconnectAndReturnToPairing() },
+                        onRefresh = { viewModel.refreshFromSmartschool() }
+                    )
+                }
+            }
+
+            // Indicateur de pagination M3E Pro en bas du cadran rond
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                repeat(5) { idx ->
+                    val isSelected = pagerState.currentPage == idx
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 2.5.dp)
+                            .size(width = if (isSelected) 12.dp else 5.dp, height = 5.dp)
+                            .clip(CircleShape)
+                            .background(if (isSelected) M3ETheme.BrandIndigo else M3ETheme.CardBorder)
+                    )
+                }
             }
         }
     }

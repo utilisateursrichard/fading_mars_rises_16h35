@@ -18,7 +18,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.math.roundToInt
 
 /**
- * Parsers JSON (org.json natif Android) et XML RPC conformes à documentation/api_smartschool/
+ * Parsers JSON et XML RPC alignés à 100% avec src/services/smartschoolParsers.ts
  */
 object SmartschoolParsers {
 
@@ -32,7 +32,17 @@ object SmartschoolParsers {
         val homeworks = mutableListOf<WearHomework>()
 
         val array = try {
-            JSONArray(rawJson)
+            val trimmed = rawJson.trim()
+            if (trimmed.startsWith("[")) {
+                JSONArray(trimmed)
+            } else {
+                val root = JSONObject(trimmed)
+                root.optJSONArray("items")
+                    ?: root.optJSONArray("elements")
+                    ?: root.optJSONArray("plannedElements")
+                    ?: root.optJSONArray("data")
+                    ?: JSONArray()
+            }
         } catch (_: Exception) {
             return Pair(emptyList(), emptyList())
         }
@@ -157,99 +167,170 @@ object SmartschoolParsers {
         )
     }
 
-    fun parseSkoreEvaluations(rawJson: String): List<WearGrade> {
-        val array = try {
-            JSONArray(rawJson)
-        } catch (_: Exception) {
-            return emptyList()
+    /**
+     * Parse un objet évaluation Skore (type "normal" ou "project" enrichi avec details.projectGoals)
+     * en appliquant exactement extractScoreFromEvaluation() et isFormativeEvaluation() de smartschoolParsers.ts.
+     */
+    fun parseSingleSkoreEvaluation(obj: JSONObject): WearGrade? {
+        val isPublished = obj.optBoolean("isPublished", true)
+        if (!isPublished) return null
+
+        val identifier = obj.optString("identifier").takeIf { it.isNotEmpty() } ?: return null
+        val name = obj.optString("name", "Évaluation")
+        val dateIso = obj.optString("date", "")
+        val evalType = obj.optString("type", "normal")
+        val doesCount = obj.optBoolean("doesCount", true)
+
+        val compObj = obj.optJSONObject("component")
+        val compAbbr = compObj?.optString("abbreviation", "")?.uppercase() ?: ""
+        val compName = compObj?.optString("name", "") ?: ""
+
+        // Règle officielle isFormativeEvaluation (smartschoolParsers.ts:653)
+        val isFormative = compAbbr == "F" ||
+            compName.contains("formatif", ignoreCase = true) ||
+            compName.contains("formatief", ignoreCase = true) ||
+            !doesCount
+
+        val courseName = obj.optJSONArray("courses")
+            ?.optJSONObject(0)
+            ?.optString("name")?.takeIf { it.isNotEmpty() } ?: "Autre matière"
+
+        // Poids horaire hebdomadaire : (Xh) ou 1 par défaut (identique à smartschoolParsers.ts:774)
+        val hoursPerWeek = extractHoursFromCourseName(courseName)
+
+        val teacherName = obj.optJSONObject("gradebookOwner")
+            ?.optJSONObject("name")
+            ?.optString("startingWithLastName").orEmpty()
+
+        val graphic = obj.optJSONObject("graphic")
+        val colorName = graphic?.optString("color", "green") ?: "green"
+
+        var obtained: Double? = null
+        var total: Double? = null
+        var scoreText: String? = null
+        var percentage: Double? = null
+
+        // Cas 1 : Évaluation de type "project" avec details.projectGoals (smartschoolParsers.ts:680)
+        if (evalType == "project") {
+            val goalsArr = obj.optJSONObject("details")?.optJSONArray("projectGoals")
+            if (goalsArr != null && goalsArr.length() > 0) {
+                var sumObt = 0.0
+                var sumTot = 0.0
+                for (gIdx in 0 until goalsArr.length()) {
+                    val gObj = goalsArr.optJSONObject(gIdx) ?: continue
+                    val desc = gObj.optJSONObject("graphic")?.optString("description")
+                    val frac = parseFractionPair(desc)
+                    if (frac != null && frac.second > 0) {
+                        sumObt += frac.first
+                        sumTot += frac.second
+                    }
+                }
+                if (sumTot > 0) {
+                    obtained = sumObt
+                    total = sumTot
+                    scoreText = "${formatNumberClean(sumObt)}/${formatNumberClean(sumTot)}"
+                    percentage = ((sumObt / sumTot) * 100.0).roundToInt().toDouble()
+                }
+            }
         }
 
-        val grades = mutableListOf<WearGrade>()
-
-        for (i in 0 until array.length()) {
-            val obj = array.optJSONObject(i) ?: continue
-            val isPublished = obj.optBoolean("isPublished", true)
-            if (!isPublished) continue
-
-            val identifier = obj.optString("identifier").takeIf { it.isNotEmpty() } ?: continue
-            val name = obj.optString("name", "Évaluation")
-            val dateIso = obj.optString("date", "")
-            val doesCount = obj.optBoolean("doesCount", true)
-
-            val componentAbbr = obj.optJSONObject("component")
-                ?.optString("abbreviation", "S") ?: "S"
-            val isSommatif = doesCount && componentAbbr != "F" && !name.contains("formatif", ignoreCase = true)
-
-            val courseName = obj.optJSONArray("courses")
-                ?.optJSONObject(0)
-                ?.optString("name")?.takeIf { it.isNotEmpty() } ?: "Matière"
-            val hoursPerWeek = extractHoursFromCourseName(courseName)
-
-            val teacherName = obj.optJSONObject("gradebookOwner")
-                ?.optJSONObject("name")
-                ?.optString("startingWithLastName").orEmpty()
-
-            val graphic = obj.optJSONObject("graphic")
-            val description = graphic?.optString("description")?.takeIf { it.isNotEmpty() && it != "null" }
-            val pctValue = if (graphic != null && !graphic.isNull("value")) {
-                graphic.optDouble("value", Double.NaN).takeIf { !it.isNaN() }
-            } else null
-            val colorName = graphic?.optString("color", "green") ?: "green"
-
-            val computedPct = pctValue ?: parseFractionPercentage(description) ?: continue
-            val scoreText = description ?: "${computedPct.roundToInt()}%"
-
-            grades.add(
-                WearGrade(
-                    id = identifier,
-                    subject = courseName,
-                    title = name,
-                    scoreText = scoreText,
-                    percentage = computedPct,
-                    date = dateIso.take(10),
-                    colorName = colorName,
-                    teacherName = teacherName,
-                    isSommatif = isSommatif,
-                    hoursPerWeek = hoursPerWeek
-                )
-            )
+        // Cas 2 : Description directe X/Y (ex: "35,5/40")
+        if (obtained == null) {
+            val desc = graphic?.optString("description")?.takeIf { it.isNotEmpty() && it != "null" }
+            val frac = parseFractionPair(desc)
+            if (frac != null && frac.second > 0) {
+                obtained = frac.first
+                total = frac.second
+                scoreText = desc
+                val graphicVal = if (graphic != null && !graphic.isNull("value")) {
+                    graphic.optDouble("value", Double.NaN).takeIf { !it.isNaN() }
+                } else null
+                percentage = graphicVal ?: ((frac.first / frac.second) * 100.0).roundToInt().toDouble()
+            }
         }
 
-        return grades.sortedByDescending { it.date }
+        // Cas 3 : Pourcentage brut (ex: value: 89)
+        if (obtained == null && graphic != null && !graphic.isNull("value")) {
+            val pctVal = graphic.optDouble("value", Double.NaN)
+            if (!pctVal.isNaN() && pctVal >= 0.0) {
+                obtained = pctVal
+                total = 100.0
+                scoreText = "${pctVal.roundToInt()}%"
+                percentage = pctVal
+            }
+        }
+
+        val finalPct = percentage ?: return null
+        val finalText = scoreText ?: "${finalPct.roundToInt()}%"
+        val periodName = obj.optJSONObject("period")?.optString("name", "") ?: ""
+
+        return WearGrade(
+            id = identifier,
+            subject = courseName,
+            title = name,
+            scoreText = finalText,
+            percentage = finalPct,
+            date = dateIso.take(10),
+            colorName = colorName,
+            teacherName = teacherName,
+            isSommatif = !isFormative,
+            hoursPerWeek = hoursPerWeek,
+            periodName = periodName
+        )
     }
 
+    /**
+     * Calcule la moyenne générale pondérée EXACTEMENT comme buildSubjectReportsFromEvaluations()
+     * dans src/services/smartschoolParsers.ts (lignes 855-960) :
+     * - Filtre sur la première période active (computed.periods[0]) si présente,
+     * - Ignore les évaluations formatives (isSommatif == false),
+     * - Somme les points bruts (sumObtained / sumTotal) par matière, arrondis à 0.1%,
+     * - Pondère par les heures de cours hebdomadaires ((Xh) ou 1 par défaut).
+     */
     fun computeWeightedGeneralAverage(grades: List<WearGrade>): Double? {
-        val sommatifs = grades.filter { it.isSommatif }
+        if (grades.isEmpty()) return null
+        val activePeriod = grades.firstOrNull { it.periodName.isNotBlank() }?.periodName
+        val periodFiltered = if (!activePeriod.isNullOrBlank()) {
+            grades.filter { it.periodName.isBlank() || it.periodName == activePeriod }
+        } else {
+            grades
+        }
+        val sommatifs = periodFiltered.filter { it.isSommatif }
         if (sommatifs.isEmpty()) return null
 
         val bySubject = sommatifs.groupBy { it.subject }
-        var weightedSum = 0.0
-        var totalHours = 0
+        var totalWeightedPercentage = 0.0
+        var totalActiveHours = 0
 
-        for ((_, subjectGrades) in bySubject) {
-            var obtainedTotal = 0.0
-            var possibleTotal = 0.0
+        for ((subjectName, subjectGrades) in bySubject) {
+            var sumObtained = 0.0
+            var sumTotal = 0.0
 
             for (g in subjectGrades) {
                 val frac = parseFractionPair(g.scoreText)
                 if (frac != null && frac.second > 0) {
-                    obtainedTotal += frac.first
-                    possibleTotal += frac.second
-                } else {
-                    obtainedTotal += g.percentage
-                    possibleTotal += 100.0
+                    sumObtained += frac.first
+                    sumTotal += frac.second
+                } else if (g.percentage >= 0.0) {
+                    sumObtained += g.percentage
+                    sumTotal += 100.0
                 }
             }
 
-            if (possibleTotal > 0) {
-                val subjectPct = (obtainedTotal / possibleTotal) * 100.0
-                val hours = subjectGrades.first().hoursPerWeek.coerceAtLeast(1)
-                weightedSum += subjectPct * hours
-                totalHours += hours
+            if (sumTotal > 0.0) {
+                // Arrondi à 1 décimale par matière comme Number(((sumObtained / sumTotal) * 100).toFixed(1))
+                val coursePct = ((sumObtained / sumTotal) * 1000.0).roundToInt() / 10.0
+                val hours = extractHoursFromCourseName(subjectName)
+                totalWeightedPercentage += coursePct * hours
+                totalActiveHours += hours
             }
         }
 
-        return if (totalHours > 0) ((weightedSum / totalHours) * 10.0).roundToInt() / 10.0 else null
+        return if (totalActiveHours > 0) {
+            ((totalWeightedPercentage / totalActiveHours) * 10.0).roundToInt() / 10.0
+        } else {
+            null
+        }
     }
 
     fun parseMessagesListXml(rawXml: String): List<WearMessage> {
@@ -342,7 +423,7 @@ object SmartschoolParsers {
                 userId = if (userIdNum > 0) "${fallbackPlatformId}_${userIdNum}_0" else fallbackUserId,
                 platformId = fallbackPlatformId,
                 fullName = fullNameBin,
-                studentClass = studentClass.ifEmpty { "4T1" },
+                studentClass = studentClass,
                 schoolName = "Smartschool",
                 avatarUrl = photoUrl
             )
@@ -385,34 +466,38 @@ object SmartschoolParsers {
         }
     }
 
-    private fun extractHoursFromCourseName(courseName: String): Int {
+    /**
+     * Identique à extractHoursFromCourseName dans src/services/smartschoolParsers.ts (ligne 774) :
+     * Renvoie 1 par défaut si "(Xh)" n'est pas présent dans le titre du cours.
+     */
+    fun extractHoursFromCourseName(courseName: String): Int {
         val match = Regex("\\((\\d+)\\s*h\\)", RegexOption.IGNORE_CASE).find(courseName)
-        return match?.groupValues?.getOrNull(1)?.toIntOrNull() ?: 4
+        val parsed = match?.groupValues?.getOrNull(1)?.toIntOrNull()
+        return if (parsed != null && parsed > 0) parsed else 1
     }
 
-    private fun parseFractionPair(text: String?): Pair<Double, Double>? {
+    fun parseFractionPair(text: String?): Pair<Double, Double>? {
         if (text.isNullOrBlank()) return null
-        val match = Regex("([0-9]+(?:[.,][0-9]+)?)\\s*/\\s*([0-9]+(?:[.,][0-9]+)?)").find(text)
+        val match = Regex("^([0-9]+(?:[.,][0-9]+)?)\\s*/\\s*([0-9]+(?:[.,][0-9]+)?)$").find(text.trim())
+            ?: Regex("([0-9]+(?:[.,][0-9]+)?)\\s*/\\s*([0-9]+(?:[.,][0-9]+)?)").find(text.trim())
             ?: return null
         val obtained = match.groupValues[1].replace(',', '.').toDoubleOrNull() ?: return null
         val total = match.groupValues[2].replace(',', '.').toDoubleOrNull() ?: return null
         return Pair(obtained, total)
     }
 
-    private fun parseFractionPercentage(text: String?): Double? {
-        val pair = parseFractionPair(text) ?: return null
-        if (pair.second <= 0.0) return null
-        return ((pair.first / pair.second) * 1000.0).roundToInt() / 10.0
+    private fun formatNumberClean(v: Double): String {
+        return if (v % 1.0 == 0.0) v.toInt().toString() else v.toString().replace('.', ',')
     }
 
     private fun mapSmartschoolColor(token: String): Long {
         return when {
-            token.contains("green") || token.contains("mint") -> 0xFF10B981
-            token.contains("aqua") || token.contains("blue") -> 0xFF06B6D4
-            token.contains("yellow") || token.contains("amber") || token.contains("orange") -> 0xFFF59E0B
-            token.contains("red") || token.contains("rose") || token.contains("pink") -> 0xFFEC4899
-            token.contains("purple") || token.contains("violet") -> 0xFF8B5CF6
-            else -> 0xFF6366F1
+            token.contains("green") || token.contains("mint") -> 0xFF059669
+            token.contains("aqua") || token.contains("blue") -> 0xFF0284C7
+            token.contains("yellow") || token.contains("amber") || token.contains("orange") -> 0xFFEA580C
+            token.contains("red") || token.contains("rose") || token.contains("pink") -> 0xFFE11D48
+            token.contains("purple") || token.contains("violet") -> 0xFF9333EA
+            else -> 0xFF4F46E5
         }
     }
 }

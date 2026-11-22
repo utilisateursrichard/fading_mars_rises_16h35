@@ -34,11 +34,14 @@ if [ -z "$GRADLE_CMD" ]; then
   exit 1
 fi
 
-echo "🚀 Compilation de l'APK Wear OS avec : $GRADLE_CMD"
+echo "🚀 Compilation de l'APK Wear OS (Release optimisé R8) avec : $GRADLE_CMD"
 cd "$WEAR_DIR"
-"$GRADLE_CMD" assembleDebug --no-daemon
+"$GRADLE_CMD" assembleRelease --no-daemon
 
-APK_SOURCE="$WEAR_DIR/app/build/outputs/apk/debug/app-debug.apk"
+APK_SOURCE="$WEAR_DIR/app/build/outputs/apk/release/app-release.apk"
+if [ ! -f "$APK_SOURCE" ]; then
+  APK_SOURCE="$WEAR_DIR/app/build/outputs/apk/debug/app-debug.apk"
+fi
 APK_DEST="$ROOT_DIR/public/betterschool-wearos.apk"
 
 if [ -f "$APK_SOURCE" ]; then

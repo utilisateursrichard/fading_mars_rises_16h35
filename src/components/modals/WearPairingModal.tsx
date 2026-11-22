@@ -38,11 +38,13 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
     isDemoMode,
     todayEvents,
     homeworks,
-    mailMessages
+    mailMessages,
+    overallStats,
+    activePeriodName
   } = useSchool();
 
   const [pairCode, setPairCode] = useState(initialPairCode);
-  const [schoolHost, setSchoolHost] = useState('https://jean23.smartschool.be');
+  const [schoolHost, setSchoolHost] = useState('');
   const [cookiesStr, setCookiesStr] = useState('');
   const [isScanningCamera, setIsScanningCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -82,6 +84,15 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
     if (!isOpen) {
       stopCamera();
       return;
+    }
+
+    if (typeof document !== 'undefined' && document.referrer) {
+      try {
+        const refOrigin = new URL(document.referrer).origin;
+        if (refOrigin.includes('smartschool.be')) {
+          setSchoolHost(refOrigin);
+        }
+      } catch {}
     }
 
     getHostPageInfo().then((info) => {
@@ -188,6 +199,7 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
     const verifiedUserId = getActiveUserId() || student?.ineNumber || '';
     const verifiedPlatformId = getPlatformIdFromContext() || '4907';
     const realEvals = getCachedRealEvaluations() || [];
+    const exactWebAveragePct = overallStats?.currentPct ?? overallStats?.current ?? undefined;
 
     const sessionPayload = {
       version: 1,
@@ -199,6 +211,8 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
       schoolName: student?.schoolName || 'Smartschool',
       cookies: cookiesStr.trim(),
       isDemoMode,
+      activePeriod: activePeriodName || '',
+      overallAveragePct: exactWebAveragePct,
       pairedAt: new Date().toISOString(),
       snapshot: {
         courses: todayEvents.slice(0, 12).map((c) => ({
@@ -230,16 +244,56 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
           previewSnippet: m.snippet || m.subject,
           isUnread: m.unread
         })),
-        grades: realEvals.slice(0, 10).map((ev) => ({
-          id: ev.identifier,
-          subject: ev.courses?.[0]?.name || 'Matière',
-          title: ev.name,
-          scoreText: ev.graphic?.description || `${ev.graphic?.value || ''}%`,
-          percentage: typeof ev.graphic?.value === 'number' ? ev.graphic.value : 75,
-          date: (ev.date || '').slice(0, 10),
-          colorName: ev.graphic?.color || 'green',
-          teacherName: ev.gradebookOwner?.name?.startingWithLastName || ''
-        }))
+        grades: realEvals.map((ev) => {
+          const isFormative =
+            ev.component?.abbreviation?.toUpperCase() === 'F' ||
+            /formatif|formatief/i.test(ev.component?.name || '') ||
+            ev.doesCount === false;
+
+          let scoreText = ev.graphic?.description || '';
+          let percentage = typeof ev.graphic?.value === 'number' ? ev.graphic.value : 0;
+
+          if (ev.type === 'project' && ev.details?.projectGoals && ev.details.projectGoals.length > 0) {
+            let sumObt = 0;
+            let sumTot = 0;
+            for (const g of ev.details.projectGoals) {
+              const m = (g.graphic?.description || '').trim().match(/^([\d,.]+)\s*\/\s*([\d,.]+)$/);
+              if (m) {
+                const o = parseFloat(m[1].replace(',', '.'));
+                const t = parseFloat(m[2].replace(',', '.'));
+                if (!isNaN(o) && !isNaN(t) && t > 0) {
+                  sumObt += o;
+                  sumTot += t;
+                }
+              }
+            }
+            if (sumTot > 0) {
+              scoreText = `${sumObt}/${sumTot}`;
+              percentage = Math.round((sumObt / sumTot) * 100);
+            }
+          } else if (scoreText) {
+            const m = scoreText.trim().match(/^([\d,.]+)\s*\/\s*([\d,.]+)$/);
+            if (m && typeof ev.graphic?.value !== 'number') {
+              const o = parseFloat(m[1].replace(',', '.'));
+              const t = parseFloat(m[2].replace(',', '.'));
+              if (!isNaN(o) && !isNaN(t) && t > 0) {
+                percentage = Math.round((o / t) * 100);
+              }
+            }
+          }
+
+          return {
+            id: ev.identifier,
+            subject: ev.courses?.[0]?.name || 'Matière',
+            title: ev.name,
+            scoreText: scoreText || `${percentage}%`,
+            percentage,
+            date: (ev.date || '').slice(0, 10),
+            colorName: ev.graphic?.color || 'green',
+            teacherName: ev.gradebookOwner?.name?.startingWithLastName || '',
+            isSommatif: !isFormative && ev.isPublished !== false
+          };
+        })
       }
     };
 

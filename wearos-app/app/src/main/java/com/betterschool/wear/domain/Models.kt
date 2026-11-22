@@ -1,28 +1,33 @@
 package com.betterschool.wear.domain
 
+import androidx.compose.runtime.Immutable
+
 enum class TileDisplayMode(val label: String) {
     NEXT_COURSE("Prochain Cours & Salle"),
-    LATEST_GRADE("Dernière Note Skore"),
+    LATEST_GRADE("Dernière Note"),
     LATEST_MESSAGE("Dernier Message")
 }
 
+@Immutable
 data class WearPairingSessionPayload(
     val version: Int = 1,
-    val host: String = "https://jean23.smartschool.be",
+    val host: String = "",
     val userId: String = "",
-    val platformId: String = "4907",
-    val studentName: String = "Richard De Gandt",
-    val studentClass: String = "4T1",
-    val schoolName: String = "Collège Jean XXIII",
+    val platformId: String = "",
+    val studentName: String = "",
+    val studentClass: String = "",
+    val schoolName: String = "",
     val cookies: String = "",
     val isDemoMode: Boolean = false,
     val pairedAt: String = "",
+    val overallAveragePct: Double? = null,
     val snapshotCourses: List<WearCourseEvent> = emptyList(),
     val snapshotHomeworks: List<WearHomework> = emptyList(),
     val snapshotMessages: List<WearMessage> = emptyList(),
     val snapshotGrades: List<WearGrade> = emptyList()
 )
 
+@Immutable
 data class WearStudentProfile(
     val userId: String,
     val platformId: String,
@@ -32,15 +37,16 @@ data class WearStudentProfile(
     val avatarUrl: String? = null
 )
 
+@Immutable
 data class WearCourseEvent(
     val id: String,
     val subject: String,
     val subjectCode: String,
     val teacher: String,
     val room: String,
-    val startTime: String, // HH:mm
-    val endTime: String,   // HH:mm
-    val date: String,      // YYYY-MM-DD
+    val startTime: String,
+    val endTime: String,
+    val date: String,
     val colorHex: Long,
     val isCurrent: Boolean = false,
     val isUpcoming: Boolean = false,
@@ -48,6 +54,7 @@ data class WearCourseEvent(
     val progressFraction: Float = 0f
 )
 
+@Immutable
 data class WearHomework(
     val id: String,
     val assignmentId: String,
@@ -58,22 +65,25 @@ data class WearHomework(
     val dueTime: String?,
     val isCompleted: Boolean,
     val typeLabel: String = "Devoir",
-    val colorHex: Long = 0xFF6366F1
+    val colorHex: Long = 0xFF4F46E5
 )
 
+@Immutable
 data class WearGrade(
     val id: String,
     val subject: String,
     val title: String,
-    val scoreText: String,      // ex: "35,5/40"
-    val percentage: Double,     // ex: 88.75
+    val scoreText: String,
+    val percentage: Double,
     val date: String,
-    val colorName: String,      // "green", "mint", "yellow", "orange", "red"
+    val colorName: String,
     val teacherName: String,
     val isSommatif: Boolean = true,
-    val hoursPerWeek: Int = 4
+    val hoursPerWeek: Int = 1,
+    val periodName: String = ""
 )
 
+@Immutable
 data class WearMessage(
     val id: String,
     val senderName: String,
@@ -85,83 +95,72 @@ data class WearMessage(
     val hasAttachment: Boolean = false
 )
 
+/**
+ * Données neutres uniquement utilisées si l'utilisateur active manuellement le Mode Démo.
+ * Aucune donnée personnelle n'est présente.
+ */
 object WearMockData {
     val profile = WearStudentProfile(
-        userId = "4907_5748_0",
-        platformId = "4907",
-        fullName = "Richard De Gandt",
-        studentClass = "4T1",
-        schoolName = "Collège Jean XXIII"
+        userId = "demo_01",
+        platformId = "0000",
+        fullName = "Élève Démo",
+        studentClass = "Terminale",
+        schoolName = "Mode Démo BetterSchool"
     )
 
     val todayCourses = listOf(
         WearCourseEvent(
-            id = "c1",
-            subject = "Math. Imm. (5h)",
-            subjectCode = "M5IM",
-            teacher = "Nicolau NI",
-            room = "D21",
-            startTime = "08:25",
-            endTime = "09:15",
+            id = "demo_c1",
+            subject = "Mathématiques",
+            subjectCode = "MATH",
+            teacher = "M. Martin",
+            room = "B204",
+            startTime = "08:30",
+            endTime = "09:30",
             date = "Aujourd'hui",
-            colorHex = 0xFF6366F1,
-            isCurrent = false,
-            isUpcoming = false,
-            progressFraction = 1f
-        ),
-        WearCourseEvent(
-            id = "c2",
-            subject = "Sciences Nat.",
-            subjectCode = "SC5",
-            teacher = "Vandenberghe VB",
-            room = "A52",
-            startTime = "09:15",
-            endTime = "10:05",
-            date = "Aujourd'hui",
-            colorHex = 0xFF10B981,
+            colorHex = 0xFF0284C7,
             isCurrent = true,
             isUpcoming = false,
-            remainingMinutes = 18,
-            progressFraction = 0.64f
+            remainingMinutes = 25,
+            progressFraction = 0.58f
         ),
         WearCourseEvent(
-            id = "c3",
-            subject = "4 T1 History",
-            subjectCode = "HIST",
-            teacher = "Deridder DR",
-            room = "B14",
-            startTime = "10:20",
-            endTime = "11:10",
+            id = "demo_c2",
+            subject = "Physique-Chimie",
+            subjectCode = "PC",
+            teacher = "Mme Dubois",
+            room = "Labo 2",
+            startTime = "09:30",
+            endTime = "10:30",
             date = "Aujourd'hui",
-            colorHex = 0xFFF59E0B,
+            colorHex = 0xFF059669,
             isCurrent = false,
             isUpcoming = true,
-            remainingMinutes = 65,
-            progressFraction = 0f
+            remainingMinutes = 85
         ),
         WearCourseEvent(
-            id = "c4",
-            subject = "Anglais (4h)",
-            subjectCode = "ANG4",
-            teacher = "Deridder DR",
-            room = "D21",
-            startTime = "11:10",
-            endTime = "12:00",
+            id = "demo_c3",
+            subject = "Histoire-Géo",
+            subjectCode = "HIST",
+            teacher = "M. Laurent",
+            room = "A102",
+            startTime = "10:45",
+            endTime = "11:45",
             date = "Aujourd'hui",
-            colorHex = 0xFF06B6D4,
+            colorHex = 0xFFEA580C,
             isCurrent = false,
             isUpcoming = true
         ),
         WearCourseEvent(
-            id = "c5",
-            subject = "Français (5h)",
-            subjectCode = "FRA5",
-            teacher = "Tondeur TC",
-            room = "C12",
-            startTime = "13:50",
-            endTime = "14:40",
+            id = "demo_c4",
+            subject = "Anglais",
+            subjectCode = "ANG",
+            teacher = "Mme Moreau",
+            room = "C105",
+            startTime = "13:30",
+            endTime = "14:30",
             date = "Aujourd'hui",
-            colorHex = 0xFFEC4899,
+            colorHex = 0xFFE11D48,
             isCurrent = false,
             isUpcoming = true
         )
@@ -169,83 +168,47 @@ object WearMockData {
 
     val messages = listOf(
         WearMessage(
-            id = "984512",
-            senderName = "Deridder DR",
-            subject = "Synthèse d'Histoire — Chapitre 3",
-            dateLabel = "Aujourd'hui 09:12",
-            previewSnippet = "Bonjour à tous, n'oubliez pas d'apporter votre farde de documents pour le cours de 10h20 en salle B14.",
-            fullBodyText = "Bonjour à tous,\n\nN'oubliez pas d'apporter votre farde de documents pour le cours de 10h20 en salle B14. La synthèse du chapitre 3 a été déposée dans l'espace cours.\n\nBonne journée,\nM. Deridder",
-            isUnread = true,
-            hasAttachment = true
+            id = "demo_m1",
+            senderName = "M. Martin",
+            subject = "Rappel — Cours de Mathématiques",
+            dateLabel = "09:15",
+            previewSnippet = "Pensez à apporter votre calculatrice graphique pour la séance d'exercices en salle B204.",
+            fullBodyText = "Pensez à apporter votre calculatrice graphique pour la séance d'exercices en salle B204.",
+            isUnread = true
         ),
         WearMessage(
-            id = "984105",
-            senderName = "Nicolau NI",
-            subject = "Correction EndOfUnit Vectors",
-            dateLabel = "Hier 16:40",
-            previewSnippet = "Le corrigé détaillé de l'évaluation sur les vecteurs est disponible sur Smartschool.",
-            fullBodyText = "Bonjour,\n\nLe corrigé détaillé de l'évaluation sur les vecteurs est maintenant disponible dans Documents > Chapitre 2.\n\nCordialement,\nNicolau NI",
-            isUnread = false,
-            hasAttachment = true
-        ),
-        WearMessage(
-            id = "983890",
-            senderName = "Tondeur TC",
-            subject = "Sortie théâtre du vendredi",
-            dateLabel = "20 Nov.",
-            previewSnippet = "Rappel : rendez-vous à 13h30 devant l'entrée principale du collège.",
-            fullBodyText = "Chers élèves de 4T1,\n\nRappel pour notre sortie théâtre : rendez-vous à 13h30 précises devant l'entrée principale.\n\nMme Tondeur",
-            isUnread = false,
-            hasAttachment = false
+            id = "demo_m2",
+            senderName = "Mme Dubois",
+            subject = "Support de TP Chimie",
+            dateLabel = "Hier",
+            previewSnippet = "Le protocole du TP de demain a été publié dans l'espace cours.",
+            fullBodyText = "Le protocole du TP de demain a été publié dans l'espace cours.",
+            isUnread = false
         )
     )
 
     val grades = listOf(
         WearGrade(
-            id = "4907_5748_0_normal_58116",
-            subject = "Math. Imm. (5h)",
-            title = "EndOfUnit Vectors",
-            scoreText = "35,5/40",
-            percentage = 88.8,
+            id = "demo_g1",
+            subject = "Mathématiques",
+            title = "Contrôle — Suites & Limites",
+            scoreText = "17/20",
+            percentage = 85.0,
             date = "Aujourd'hui",
             colorName = "green",
-            teacherName = "Nicolau NI",
+            teacherName = "M. Martin",
             isSommatif = true,
-            hoursPerWeek = 5
+            hoursPerWeek = 6
         ),
         WearGrade(
-            id = "4907_5748_0_project_11632",
-            subject = "Sciences (8h)",
-            title = "Test T.P. 1-40 (Calorimétrie)",
-            scoreText = "16/20",
-            percentage = 80.0,
-            date = "18 Nov.",
-            colorName = "green",
-            teacherName = "Vandenberghe VB",
-            isSommatif = true,
-            hoursPerWeek = 8
-        ),
-        WearGrade(
-            id = "4907_5748_0_normal_57901",
-            subject = "4 T1 History (2h)",
-            title = "Analyse de documents",
-            scoreText = "14,5/20",
-            percentage = 72.5,
-            date = "15 Nov.",
+            id = "demo_g2",
+            subject = "Physique-Chimie",
+            title = "TP Cinétique chimique",
+            scoreText = "15,5/20",
+            percentage = 77.5,
+            date = "Cette semaine",
             colorName = "mint",
-            teacherName = "Deridder DR",
-            isSommatif = true,
-            hoursPerWeek = 2
-        ),
-        WearGrade(
-            id = "4907_5748_0_normal_57410",
-            subject = "Néerlandais (4h)",
-            title = "Woordenschat Hoofdstuk 2",
-            scoreText = "15/20",
-            percentage = 75.0,
-            date = "12 Nov.",
-            colorName = "mint",
-            teacherName = "Peeters PE",
+            teacherName = "Mme Dubois",
             isSommatif = true,
             hoursPerWeek = 4
         )
@@ -253,40 +216,28 @@ object WearMockData {
 
     val homeworks = listOf(
         WearHomework(
-            id = "81c03373-9411-4a93-8ede-bdc23665af7d",
-            assignmentId = "81c03373-9411-4a93-8ede-bdc23665af7d",
-            platformId = "4907",
-            subject = "Sciences Nat.",
-            title = "Interro de calorimétrie",
-            dueDate = "Aujourd'hui",
-            dueTime = "13:50",
-            isCompleted = false,
-            typeLabel = "Interrogation",
-            colorHex = 0xFF10B981
-        ),
-        WearHomework(
-            id = "4ab22089-ead4-4606-b52b-69960a62fc38",
-            assignmentId = "4ab22089-ead4-4606-b52b-69960a62fc38",
-            platformId = "4907",
-            subject = "Math. Imm.",
-            title = "Exercices p. 42 n° 4 à 8",
+            id = "demo_h1",
+            assignmentId = "demo_h1",
+            platformId = "0000",
+            subject = "Mathématiques",
+            title = "Exercices 12 à 15 p. 84",
             dueDate = "Demain",
-            dueTime = "08:25",
-            isCompleted = true,
+            dueTime = "08:30",
+            isCompleted = false,
             typeLabel = "Devoir",
-            colorHex = 0xFF6366F1
+            colorHex = 0xFF0284C7
         ),
         WearHomework(
-            id = "9bc31012-ead4-4606-b52b-69960a62fc99",
-            assignmentId = "9bc31012-ead4-4606-b52b-69960a62fc99",
-            platformId = "4907",
-            subject = "Anglais",
-            title = "Reading comprehension Unit 3",
-            dueDate = "Demain",
-            dueTime = "11:10",
-            isCompleted = false,
-            typeLabel = "Tâche",
-            colorHex = 0xFF06B6D4
+            id = "demo_h2",
+            assignmentId = "demo_h2",
+            platformId = "0000",
+            subject = "Physique-Chimie",
+            title = "Préparer le compte-rendu TP",
+            dueDate = "Jeudi",
+            dueTime = "09:30",
+            isCompleted = true,
+            typeLabel = "TP",
+            colorHex = 0xFF059669
         )
     )
 }
