@@ -253,10 +253,10 @@ fun HomeworkPage(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (hw.isCompleted) M3ETheme.EmeraldBg else M3ETheme.TextPrimary)
+                            .background(if (hw.isCompleted) M3ETheme.EmeraldBg else M3ETheme.BrandIndigo)
                             .border(
                                 width = 1.dp,
-                                color = if (hw.isCompleted) M3ETheme.EmeraldBorder else M3ETheme.TextPrimary,
+                                color = if (hw.isCompleted) M3ETheme.EmeraldBorder else M3ETheme.BrandIndigoBorder,
                                 shape = RoundedCornerShape(10.dp)
                             )
                             .padding(horizontal = 12.dp, vertical = 4.dp)

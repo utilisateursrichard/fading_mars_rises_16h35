@@ -1,4 +1,4 @@
-#Mon Nov 23 00:19:00 CET 2026
+#Mon Nov 23 00:35:08 CET 2026
 base.0=/home/richard/.gemini/antigravity/worktrees/better school/fading_mars_rises_16h35/wearos-app/app/build/intermediates/dex/release/minifyReleaseWithR8/classes.dex
 renamed.0=classes.dex
 path.0=classes.dex

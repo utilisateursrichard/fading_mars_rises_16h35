@@ -104,7 +104,8 @@ fun WearMainScreen(viewModel: WearViewModel) {
                 when (pageIndex) {
                     0 -> MessagesPage(
                         messages = uiState.messages,
-                        isPageActive = isPageActive
+                        isPageActive = isPageActive,
+                        onOpenMessage = { viewModel.loadMessageBodyIfNeeded(it) }
                     )
                     1 -> GradesPage(
                         grades = uiState.grades,

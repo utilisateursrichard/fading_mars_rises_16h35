@@ -21571,6 +21571,8 @@ com.betterschool.wear.data.SessionManager:
     public final void setUsername(java.lang.String)
 com.betterschool.wear.data.SmartschoolApiClient$createPairingTicket$2:
     int label
+com.betterschool.wear.data.SmartschoolApiClient$fetchMessageDetailById$2:
+    int label
 com.betterschool.wear.data.SmartschoolApiClient$fetchSqliteUserAverage$2:
     int label
 com.betterschool.wear.data.SmartschoolApiClient$loginToSmartschool$2:
@@ -21628,7 +21630,7 @@ com.betterschool.wear.ui.pages.GradesPageKt$GradesPage$1$1:
     int label
 com.betterschool.wear.ui.pages.HomeworkPageKt$HomeworkPage$1$1:
     int label
-com.betterschool.wear.ui.pages.MessagesPageKt$MessagesPage$1$1:
+com.betterschool.wear.ui.pages.MessagesPageKt$MessagesPage$2$1:
     int label
 com.betterschool.wear.ui.pages.QrMatrixGenerator:
     public static final int $stable
@@ -31810,7 +31812,6 @@ androidx.compose.foundation.layout.SizeKt$size-VpY3zN4$$inlined$debugInspectorIn
 androidx.compose.foundation.layout.SizeKt$width-3ABfNKs$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt:
     public static androidx.compose.ui.Modifier fillMaxSize$default()
-    public static synthetic androidx.compose.ui.Modifier fillMaxWidth$default(androidx.compose.ui.Modifier)
 androidx.compose.foundation.layout.WrapContentElement$Companion
 androidx.compose.foundation.layout.WrapContentElement
 androidx.compose.foundation.layout.WrapContentNode
@@ -32460,7 +32461,8 @@ androidx.compose.runtime.CancellationHandle:
     static void <clinit>()
 androidx.compose.runtime.Composable
 androidx.compose.runtime.ComposableSingletons$CompositionKt
-androidx.compose.runtime.ComposablesKt
+androidx.compose.runtime.ComposablesKt:
+    public static final void invalidApplier()
 androidx.compose.runtime.ComposePausableCompositionException$operationsSequence$1:
     public final java.lang.Object invoke$1()
 androidx.compose.runtime.ComposeRuntimeError:
@@ -32552,8 +32554,6 @@ androidx.compose.runtime.ComposerImpl:
     public final kotlin.coroutines.CoroutineContext getApplyCoroutineContext()
     public static boolean getAreChildrenComposing$runtime()
     public final long getCompositeKeyHashCode()
-    public final androidx.compose.runtime.internal.PersistentCompositionLocalHashMap getCurrentCompositionLocalMap()
-    public final boolean getInserting()
     public final androidx.compose.runtime.RecomposeScopeImpl getRecomposeScope()
     public static void insertMovableContentReferences()
     public static int insertedGroupVirtualIndex()
@@ -33777,7 +33777,6 @@ androidx.compose.ui.draw.CacheDrawScope:
     static void <clinit>()
     public final androidx.compose.ui.unit.LayoutDirection getLayoutDirection()
     public final long getSize-NH-jbRc()
-androidx.compose.ui.draw.ClipKt
 androidx.compose.ui.draw.DrawBackgroundModifier:
     static void <clinit>()
 androidx.compose.ui.draw.DrawBehindElement:
@@ -37804,6 +37803,8 @@ com.betterschool.wear.data.SmartschoolApiClient$fetchDirectStudentProfile$2:
     public java.lang.Object L$0
     public java.lang.Object L$1
     public final java.lang.Object invoke$3()
+com.betterschool.wear.data.SmartschoolApiClient$fetchMessageDetailById$2:
+    public final java.lang.Object invoke$3()
 com.betterschool.wear.data.SmartschoolApiClient$fetchSqliteUserAverage$2:
     public final java.lang.Object invoke$3()
 com.betterschool.wear.data.SmartschoolApiClient$loginToSmartschool$2:
@@ -37822,6 +37823,7 @@ com.betterschool.wear.data.SmartschoolApiClient:
     public static java.lang.Object fetchDirectMessages()
     public static java.lang.Object fetchDirectScheduleAndHomeworks()
     public static java.lang.Object fetchDirectStudentProfile()
+    public static java.lang.Object fetchMessageDetailById()
     public static java.lang.Object fetchSqliteUserAverage()
     public final java.lang.Object loginToSmartschool(kotlin.coroutines.jvm.internal.ContinuationImpl)
     public static java.lang.Object pollPairingSession()
@@ -37856,6 +37858,10 @@ com.betterschool.wear.ui.WearMainScreenKt$WearMainScreen$2$1:
 com.betterschool.wear.ui.WearUiState:
     static void <clinit>()
     public static com.betterschool.wear.ui.WearUiState copy()
+com.betterschool.wear.ui.WearViewModel$loadMessageBodyIfNeeded$1:
+    public int I$0
+    public java.lang.Object L$1
+    public final java.lang.Object invoke$3()
 com.betterschool.wear.ui.WearViewModel$refreshFromSmartschool$1$gradesDeferred$1:
     public int I$0
     public java.lang.Object L$1
@@ -37879,6 +37885,7 @@ com.betterschool.wear.ui.WearViewModel:
     public long lastSyncTimestampMs
     static void <clinit>()
     public final void enterDemoMode()
+    public static void loadMessageBodyIfNeeded()
     public static void onScreenPaused()
     public static void onScreenResumed()
     public static void toggleHomework()
@@ -37892,11 +37899,16 @@ com.betterschool.wear.ui.pages.HomeworkPageKt$$InternalSyntheticLambda$5$1e7a274
     public final synthetic int f$4
 com.betterschool.wear.ui.pages.HomeworkPageKt$HomeworkPage$1$1:
     public final java.lang.Object invoke$3()
-com.betterschool.wear.ui.pages.MessagesPageKt$$InternalSyntheticLambda$5$f6244aa752eacb4e7a6c579d45cc7f8dcb379aeb954b56e038b604a84f2c7bc9$3:
-    public final synthetic int f$2
+com.betterschool.wear.ui.pages.MessagesPageKt$$InternalSyntheticLambda$5$2f503bc283f6113daa427fcf636cfa5774f84e4a5c1be87235ca5add58d2ded9$8:
     public final synthetic int f$3
-com.betterschool.wear.ui.pages.MessagesPageKt$MessagesPage$1$1:
+    public final synthetic int f$4
+com.betterschool.wear.ui.pages.MessagesPageKt$MessagesPage$2$1:
     public final java.lang.Object invoke$3()
+com.betterschool.wear.ui.pages.MessagesPageKt$MessagesPage$3$1$1:
+    public final java.lang.Object invoke$3()
+com.betterschool.wear.ui.pages.MessagesPageKt:
+    public static final boolean MessagesPage$lambda$6(androidx.compose.runtime.MutableState)
+    public static final void MessagesPage$lambda$7(androidx.compose.runtime.MutableState,boolean)
 com.betterschool.wear.ui.pages.PairingAndProfilePageKt$$InternalSyntheticLambda$4$1c0baf32ddd3da760bd30ee6b7a0a5a62c51b3d95666e4120c019fd8a436a156$7:
     public final synthetic int f$5
 com.betterschool.wear.ui.pages.PairingAndProfilePageKt:

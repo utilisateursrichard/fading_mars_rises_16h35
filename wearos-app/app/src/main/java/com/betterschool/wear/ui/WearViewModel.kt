@@ -240,6 +240,34 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Charge le corps complet d'un message lorsqu'on clique dessus sur la montre
+     */
+    fun loadMessageBodyIfNeeded(message: WearMessage) {
+        if (_uiState.value.isDemoMode || !sessionManager.hasValidLiveSession) return
+        if (message.fullBodyText.isNotBlank() && message.fullBodyText != message.subject) return
+
+        viewModelScope.launch {
+            val body = runCatching { apiClient.fetchMessageDetailById(message.id) }.getOrNull()
+            if (!body.isNullOrBlank()) {
+                _uiState.update { state ->
+                    state.copy(
+                        messages = state.messages.map {
+                            if (it.id == message.id) {
+                                it.copy(
+                                    previewSnippet = body.take(140),
+                                    fullBodyText = body
+                                )
+                            } else {
+                                it
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+
     fun toggleHomework(homework: WearHomework) {
         val targetCompleted = !homework.isCompleted
 

@@ -487,6 +487,15 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         rawList
     }
 
+    /**
+     * Charge à la demande le contenu complet d'un message spécifique lorsqu'on clique dessus sur la montre
+     */
+    suspend fun fetchMessageDetailById(msgId: String): String? = withContext(Dispatchers.IO) {
+        val host = sessionManager.schoolHost.ifBlank { "https://jean23.smartschool.be" }
+        val dispatcherUrl = "$host/?module=Messages&file=dispatcher"
+        fetchSingleMessageBody(dispatcherUrl, msgId)
+    }
+
     private fun fetchSingleMessageBody(dispatcherUrl: String, msgId: String): String? {
         val showCommandXml = """
             <request>
