@@ -84,17 +84,102 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
                 val status = obj.optString("status")
                 val s = obj.optJSONObject("session")
                 if (status == "paired" && s != null) {
+                    val snap = s.optJSONObject("snapshot")
+                    val snapCourses = mutableListOf<WearCourseEvent>()
+                    val snapHomeworks = mutableListOf<WearHomework>()
+                    val snapMessages = mutableListOf<WearMessage>()
+                    val snapGrades = mutableListOf<WearGrade>()
+
+                    snap?.optJSONArray("courses")?.let { arr ->
+                        for (i in 0 until arr.length()) {
+                            val c = arr.optJSONObject(i) ?: continue
+                            snapCourses.add(
+                                WearCourseEvent(
+                                    id = c.optString("id", "c$i"),
+                                    subject = c.optString("subject", "Cours"),
+                                    subjectCode = c.optString("subjectCode", "CRS"),
+                                    teacher = c.optString("teacher", ""),
+                                    room = c.optString("room", "—"),
+                                    startTime = c.optString("startTime", ""),
+                                    endTime = c.optString("endTime", ""),
+                                    date = c.optString("date", ""),
+                                    colorHex = 0xFF6366F1,
+                                    isCurrent = c.optString("status") == "in_progress",
+                                    isUpcoming = c.optString("status") == "scheduled"
+                                )
+                            )
+                        }
+                    }
+
+                    snap?.optJSONArray("homeworks")?.let { arr ->
+                        for (i in 0 until arr.length()) {
+                            val h = arr.optJSONObject(i) ?: continue
+                            snapHomeworks.add(
+                                WearHomework(
+                                    id = h.optString("id", "h$i"),
+                                    assignmentId = h.optString("assignmentId", ""),
+                                    platformId = h.optString("platformId", "4907"),
+                                    subject = h.optString("subject", "Matière"),
+                                    title = h.optString("title", "Devoir"),
+                                    dueDate = h.optString("dueDate", ""),
+                                    dueTime = h.optString("dueTime", "").ifEmpty { null },
+                                    isCompleted = h.optBoolean("isCompleted", false)
+                                )
+                            )
+                        }
+                    }
+
+                    snap?.optJSONArray("messages")?.let { arr ->
+                        for (i in 0 until arr.length()) {
+                            val m = arr.optJSONObject(i) ?: continue
+                            val preview = m.optString("previewSnippet", "")
+                            snapMessages.add(
+                                WearMessage(
+                                    id = m.optString("id", "m$i"),
+                                    senderName = m.optString("senderName", "Smartschool"),
+                                    subject = m.optString("subject", ""),
+                                    dateLabel = m.optString("dateLabel", ""),
+                                    previewSnippet = preview,
+                                    fullBodyText = preview,
+                                    isUnread = m.optBoolean("isUnread", false)
+                                )
+                            )
+                        }
+                    }
+
+                    snap?.optJSONArray("grades")?.let { arr ->
+                        for (i in 0 until arr.length()) {
+                            val g = arr.optJSONObject(i) ?: continue
+                            snapGrades.add(
+                                WearGrade(
+                                    id = g.optString("id", "g$i"),
+                                    subject = g.optString("subject", "Matière"),
+                                    title = g.optString("title", "Évaluation"),
+                                    scoreText = g.optString("scoreText", ""),
+                                    percentage = g.optDouble("percentage", 75.0),
+                                    date = g.optString("date", ""),
+                                    colorName = g.optString("colorName", "green"),
+                                    teacherName = g.optString("teacherName", "")
+                                )
+                            )
+                        }
+                    }
+
                     WearPairingSessionPayload(
                         version = s.optInt("version", 1),
                         host = s.optString("host", "https://jean23.smartschool.be"),
-                        userId = s.optString("userId", "4907_5748_0"),
+                        userId = s.optString("userId", ""),
                         platformId = s.optString("platformId", "4907"),
                         studentName = s.optString("studentName", "Élève"),
-                        studentClass = s.optString("studentClass", "4T1"),
+                        studentClass = s.optString("studentClass", ""),
                         schoolName = s.optString("schoolName", "Smartschool"),
                         cookies = s.optString("cookies", ""),
                         isDemoMode = s.optBoolean("isDemoMode", false),
-                        pairedAt = s.optString("pairedAt", "")
+                        pairedAt = s.optString("pairedAt", ""),
+                        snapshotCourses = snapCourses,
+                        snapshotHomeworks = snapHomeworks,
+                        snapshotMessages = snapMessages,
+                        snapshotGrades = snapGrades
                     )
                 } else {
                     null

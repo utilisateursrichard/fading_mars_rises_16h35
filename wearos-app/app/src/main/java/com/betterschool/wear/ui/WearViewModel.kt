@@ -109,14 +109,16 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update { it.copy(isLoading = true, statusBanner = "Synchronisation Smartschool...") }
 
             try {
-                // 1. Profil Studentcard
-                val liveProfile = apiClient.fetchDirectStudentProfile()
-                if (liveProfile != null) {
-                    sessionManager.studentName = liveProfile.fullName
-                    sessionManager.studentClass = liveProfile.studentClass
+                // 1. Sécurité Anti-Usurpation : le userId est toujours résolu et certifié par le serveur
+                // Smartschool à partir du cookie de session (isCurrentUser == true dans /Studentcard/Student/getStudents)
+                val certifiedProfile = apiClient.fetchDirectStudentProfile()
+                if (certifiedProfile != null) {
+                    sessionManager.userId = certifiedProfile.userId
+                    sessionManager.studentName = certifiedProfile.fullName
+                    sessionManager.studentClass = certifiedProfile.studentClass
                 }
 
-                // 2. Horaire du jour & Devoirs (/planner/api/v1/...)
+                // 2. Horaire du jour & Devoirs (/planner/api/v1/...) avec le userId certifié par la session
                 val (courses, homeworks) = apiClient.fetchDirectScheduleAndHomeworks()
 
                 // 3. Dernières notes Skore (/results/api/v1/evaluations/)
@@ -131,13 +133,13 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                         isLoading = false,
                         isDemoMode = false,
                         isPaired = true,
-                        profile = liveProfile ?: state.profile,
-                        todayCourses = courses,
-                        homeworks = homeworks,
-                        grades = grades,
-                        weightedAverage = weightedAvg,
-                        messages = messages,
-                        statusBanner = "Connecté en direct à Smartschool"
+                        profile = certifiedProfile ?: state.profile,
+                        todayCourses = courses.ifEmpty { state.todayCourses },
+                        homeworks = homeworks.ifEmpty { state.homeworks },
+                        grades = grades.ifEmpty { state.grades },
+                        weightedAverage = weightedAvg ?: state.weightedAverage,
+                        messages = messages.ifEmpty { state.messages },
+                        statusBanner = "Synchronisé avec Smartschool"
                     )
                 }
             } catch (e: Exception) {
@@ -199,17 +201,32 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                 val pairedPayload = apiClient.pollPairingSession(ticket.code)
                 if (pairedPayload != null) {
                     sessionManager.savePairedSession(pairedPayload)
-                    _uiState.update {
-                        it.copy(
+                    val snapAvg = SmartschoolParsers.computeWeightedGeneralAverage(pairedPayload.snapshotGrades)
+                    _uiState.update { state ->
+                        state.copy(
                             isPollingPairing = false,
                             pairingTicket = null,
-                            isDemoMode = sessionManager.isDemoMode,
-                            isPaired = sessionManager.hasValidLiveSession,
+                            isDemoMode = pairedPayload.isDemoMode,
+                            isPaired = true,
                             schoolHost = sessionManager.schoolHost,
-                            statusBanner = "Montre associée à ${pairedPayload.studentName} !"
+                            profile = WearStudentProfile(
+                                userId = pairedPayload.userId,
+                                platformId = pairedPayload.platformId,
+                                fullName = pairedPayload.studentName,
+                                studentClass = pairedPayload.studentClass,
+                                schoolName = pairedPayload.schoolName
+                            ),
+                            todayCourses = pairedPayload.snapshotCourses.ifEmpty { state.todayCourses },
+                            homeworks = pairedPayload.snapshotHomeworks.ifEmpty { state.homeworks },
+                            messages = pairedPayload.snapshotMessages.ifEmpty { state.messages },
+                            grades = pairedPayload.snapshotGrades.ifEmpty { state.grades },
+                            weightedAverage = snapAvg ?: state.weightedAverage,
+                            statusBanner = "Connecté à ${pairedPayload.studentName}"
                         )
                     }
-                    refreshFromSmartschool()
+                    if (sessionManager.hasValidLiveSession) {
+                        refreshFromSmartschool()
+                    }
                     break
                 }
             }

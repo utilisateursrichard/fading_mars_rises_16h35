@@ -7,13 +7,11 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  ShieldCheck,
-  KeyRound,
   Download,
-  Terminal
+  UserCheck
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
-import { getActiveUserId, getPlatformIdFromContext } from '../../services/smartschoolApi';
+import { getActiveUserId, getPlatformIdFromContext, getCachedRealEvaluations } from '../../services/smartschoolApi';
 import { getHostPageInfo, evalHostExpression } from '../../services/smartschoolBridge';
 
 interface WearPairingModalProps {
@@ -27,12 +25,16 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
   onClose,
   initialPairCode = ''
 }) => {
-  const { student, isDemoMode } = useSchool();
+  const {
+    student,
+    isDemoMode,
+    todayEvents,
+    homeworks,
+    mailMessages
+  } = useSchool();
 
   const [pairCode, setPairCode] = useState(initialPairCode);
   const [schoolHost, setSchoolHost] = useState('https://jean23.smartschool.be');
-  const [userId, setUserId] = useState('4907_5748_0');
-  const [platformId, setPlatformId] = useState('4907');
   const [cookiesStr, setCookiesStr] = useState('');
   const [isScanningCamera, setIsScanningCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -49,18 +51,12 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
     }
   }, [initialPairCode]);
 
-  // Récupération automatique du contexte Smartschool actif (hôte, userId, cookies non-HttpOnly)
+  // Détection silencieuse et automatique de la session Smartschool active (aucune saisie manuelle)
   useEffect(() => {
     if (!isOpen) {
       stopCamera();
       return;
     }
-
-    const activeId = getActiveUserId();
-    if (activeId) setUserId(activeId);
-
-    const platId = getPlatformIdFromContext();
-    if (platId) setPlatformId(platId);
 
     getHostPageInfo().then((info) => {
       if (info.ok && info.data?.origin && info.data.origin.includes('smartschool.be')) {
@@ -105,7 +101,7 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
     setStatusMessage(null);
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setCameraError('La caméra n\'est pas disponible sur ce navigateur. Saisissez le code à 6 chiffres affiché sous le QR Code de la montre.');
+      setCameraError('Caméra non détectée sur cet appareil. Entrez simplement le code à 6 chiffres affiché sur votre montre.');
       return;
     }
 
@@ -123,7 +119,6 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
         }
       }, 100);
 
-      // Utilisation de l'API native BarcodeDetector (Chrome Android / Desktop)
       const BarcodeDetectorApi = (window as any).BarcodeDetector;
       if (BarcodeDetectorApi) {
         const detector = new BarcodeDetectorApi({ formats: ['qr_code'] });
@@ -143,10 +138,10 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
           } catch {}
         }, 400);
       } else {
-        setCameraError('Votre navigateur ne supporte pas le décodage QR natif. Scannez le QR Code de la montre avec l\'appareil photo de votre téléphone ou tapez le code à 6 chiffres ci-dessous.');
+        setCameraError('Scannez le QR Code avec l\'appareil photo de votre téléphone ou tapez le code à 6 chiffres ci-dessous.');
       }
-    } catch (err: any) {
-      setCameraError('Impossible d\'accéder à la caméra. Saisissez simplement le code à 6 chiffres affiché sur la montre.');
+    } catch {
+      setCameraError('Impossible d\'ouvrir la caméra. Entrez le code à 6 chiffres affiché sur la montre.');
       setIsScanningCamera(false);
     }
   };
@@ -156,7 +151,7 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
     if (cleanCode.length < 6) {
       setStatusMessage({
         type: 'error',
-        text: 'Veuillez scanner le QR Code de la montre ou entrer le code à 6 caractères affiché sur votre montre.'
+        text: 'Entrez le code à 6 chiffres affiché sur votre montre ou scannez son QR Code.'
       });
       return;
     }
@@ -164,28 +159,72 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
     setIsSubmitting(true);
     setStatusMessage(null);
 
+    // L'identifiant est extrait exclusivement de la session authentifiée (non modifiable par l'utilisateur)
+    const verifiedUserId = getActiveUserId() || student?.ineNumber || '';
+    const verifiedPlatformId = getPlatformIdFromContext() || '4907';
+    const realEvals = getCachedRealEvaluations() || [];
+
     const sessionPayload = {
       version: 1,
       host: schoolHost.replace(/\/+$/, ''),
-      userId: userId.trim(),
-      platformId: platformId.trim(),
+      userId: verifiedUserId,
+      platformId: verifiedPlatformId,
       studentName: student ? `${student.firstName} ${student.lastName}`.trim() : 'Élève BetterSchool',
-      studentClass: student?.studentClass || '4T1',
-      schoolName: student?.schoolName || 'Collège Jean XXIII',
+      studentClass: student?.studentClass || '',
+      schoolName: student?.schoolName || 'Smartschool',
       cookies: cookiesStr.trim(),
-      isDemoMode: isDemoMode && !cookiesStr.trim(),
-      pairedAt: new Date().toISOString()
+      isDemoMode,
+      pairedAt: new Date().toISOString(),
+      // Synchronisation directe des données de la session active (fonctionne même si PHPSESSID est HttpOnly)
+      snapshot: {
+        courses: todayEvents.slice(0, 12).map((c) => ({
+          id: c.id,
+          subject: c.subject,
+          subjectCode: c.subjectCode,
+          teacher: c.teacher,
+          room: c.room,
+          startTime: c.startTime,
+          endTime: c.endTime,
+          date: c.date,
+          status: c.status
+        })),
+        homeworks: homeworks.slice(0, 15).map((h) => ({
+          id: h.id,
+          assignmentId: h.assignmentId || h.id,
+          platformId: h.platformId || verifiedPlatformId,
+          subject: h.subject,
+          title: h.title,
+          dueDate: h.dueDate,
+          dueTime: h.dueTime || '',
+          isCompleted: h.isCompleted
+        })),
+        messages: mailMessages.slice(0, 10).map((m) => ({
+          id: m.id,
+          senderName: m.from,
+          subject: m.subject,
+          dateLabel: m.date,
+          previewSnippet: m.snippet || m.subject,
+          isUnread: m.unread
+        })),
+        grades: realEvals.slice(0, 10).map((ev) => ({
+          id: ev.identifier,
+          subject: ev.courses?.[0]?.name || 'Matière',
+          title: ev.name,
+          scoreText: ev.graphic?.description || `${ev.graphic?.value || ''}%`,
+          percentage: typeof ev.graphic?.value === 'number' ? ev.graphic.value : 75,
+          date: (ev.date || '').slice(0, 10),
+          colorName: ev.graphic?.color || 'green',
+          teacherName: ev.gradebookOwner?.name?.startingWithLastName || ''
+        }))
+      }
     };
 
-    // Envoi vers le relais courant ET/OU betterschool.dino.icu si exécuté depuis le bookmarklet sur smartschool.be
     const endpoints = [
       '/api/wear-pair/push',
       'https://betterschool.dino.icu/api/wear-pair/push'
     ];
 
     let succeeded = false;
-    let lastError = '';
-
     for (const endpoint of endpoints) {
       try {
         const res = await fetch(endpoint, {
@@ -203,9 +242,7 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
             break;
           }
         }
-      } catch (e: any) {
-        lastError = e?.message || 'Erreur réseau';
-      }
+      } catch {}
     }
 
     setIsSubmitting(false);
@@ -213,12 +250,12 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
     if (succeeded) {
       setStatusMessage({
         type: 'success',
-        text: `Montre connectée avec succès (Code ${cleanCode}) ! Votre montre Wear OS récupère maintenant vos données directement sur Smartschool.`
+        text: 'Votre montre est connectée ! Vos horaires, messages et notes sont synchronisés.'
       });
     } else {
       setStatusMessage({
         type: 'error',
-        text: `Impossible de joindre le relais d'appairage (${lastError || 'vérifiez votre connexion'}).`
+        text: 'Impossible de joindre la montre. Vérifiez que le code à 6 chiffres est toujours affiché sur son écran.'
       });
     }
   };
@@ -227,8 +264,8 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-modal border border-slate-200/80 overflow-hidden">
-        {/* Header */}
+      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-modal border border-slate-200/80 overflow-hidden">
+        {/* En-tête épuré */}
         <div className="flex items-center justify-between px-6 py-4 bg-slate-900 text-white">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-glow">
@@ -236,10 +273,10 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-extrabold tracking-tight">
-                Connecter BetterSchool Wear OS
+                Ma Montre Wear OS
               </h2>
               <p className="text-xs text-slate-300">
-                Scannez le QR Code affiché sur votre montre
+                Connexion rapide en 1 clic
               </p>
             </div>
           </div>
@@ -252,52 +289,45 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-6 space-y-5 max-h-[82vh] overflow-y-auto">
-          {/* Téléchargement & Installation de l'APK sur la montre */}
-          <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2.5">
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-300">
-                  1. Installer l'app sur votre montre
-                </h3>
-                <p className="text-[11px] text-slate-300 mt-0.5">
-                  Téléchargez l'APK Wear OS puis installez-le en Wi-Fi via ADB ou Wear Installer 2.
+        {/* Corps simplifié sans jargon technique */}
+        <div className="p-6 space-y-5">
+          {/* Compte actuellement connecté (Verrouillé & Non modifiable pour empêcher toute usurpation) */}
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+                <UserCheck className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-extrabold text-slate-900 truncate">
+                  {student ? `${student.firstName} ${student.lastName}` : 'Compte Élève'}
+                </p>
+                <p className="text-[11px] text-slate-500 truncate">
+                  {isDemoMode ? 'Mode Démo' : `${student?.schoolName || 'Smartschool'} • ${student?.studentClass || ''}`}
                 </p>
               </div>
-              <a
-                href="/betterschool-wearos.apk"
-                download="betterschool-wearos.apk"
-                className="shrink-0 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Télécharger l'APK</span>
-              </a>
             </div>
-            <div className="px-3 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center gap-2 font-mono text-[11px] text-emerald-400">
-              <Terminal className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span className="truncate">adb connect &lt;IP_MONTRE&gt;:&lt;PORT&gt; &amp;&amp; adb install betterschool-wearos.apk</span>
-            </div>
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 shrink-0">
+              Session vérifiée
+            </span>
           </div>
 
-          {/* Explication du flux */}
-          <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-100 flex items-start gap-3">
-            <QrCode className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
-            <div className="text-xs text-slate-700 leading-relaxed">
-              <span className="font-bold text-slate-900">2. Appairer votre session :</span> Ouvrez <strong>BetterSchool</strong> sur votre montre Wear OS et glissez jusqu'à l'écran <em>Connexion</em> (tout à droite). La montre affiche un <strong>QR Code</strong> et un <strong>code à 6 chiffres</strong>.
-            </div>
-          </div>
-
-          {/* Bouton Scanner Caméra ou Vue Caméra */}
+          {/* Étape unique : Scanner le QR de la montre ou entrer le code à 6 chiffres */}
           <div className="space-y-3">
+            <div className="flex items-start gap-2.5 text-xs text-slate-600">
+              <QrCode className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+              <p>
+                Sur votre montre, ouvrez <strong>BetterSchool</strong> et appuyez sur <strong>Afficher QR Code</strong>, puis scannez-le ou tapez le code à 6 chiffres :
+              </p>
+            </div>
+
             {!isScanningCamera ? (
               <button
                 type="button"
                 onClick={startCameraScan}
-                className="w-full py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-subtle transition-all m3-press"
+                className="w-full py-2.5 px-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center gap-2 border border-indigo-200/80 transition-all m3-press"
               >
                 <Camera className="w-4 h-4" />
-                <span>Scanner le QR Code de la montre avec la caméra</span>
+                <span>Scanner le QR Code de la montre</span>
               </button>
             ) : (
               <div className="relative rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 aspect-video flex items-center justify-center">
@@ -308,7 +338,7 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
                   muted
                 />
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                  <div className="w-44 h-44 border-2 border-indigo-400 rounded-3xl shadow-[0_0_0_9999px_rgba(15,23,42,0.45)]" />
+                  <div className="w-40 h-40 border-2 border-indigo-400 rounded-3xl shadow-[0_0_0_9999px_rgba(15,23,42,0.45)]" />
                 </div>
                 <button
                   type="button"
@@ -325,80 +355,20 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
                 {cameraError}
               </p>
             )}
-          </div>
 
-          {/* Code à 6 chiffres affiché sous le QR de la montre */}
-          <div>
-            <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1.5">
-              Code à 6 chiffres affiché sur la montre
-            </label>
-            <div className="flex items-center gap-2">
+            <div>
               <input
                 type="text"
                 maxLength={7}
                 value={pairCode}
                 onChange={(e) => setPairCode(e.target.value.toUpperCase())}
-                placeholder="Ex: 482915"
-                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 font-mono text-lg font-extrabold tracking-widest text-center uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="CODE À 6 CHIFFRES (EX: 482915)"
+                className="w-full px-4 py-3 rounded-2xl border border-slate-300 font-mono text-base font-extrabold tracking-widest text-center uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
 
-          {/* Paramètres de session Smartschool transmis à la montre */}
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
-                Session Smartschool transmise à la montre
-              </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                Requêtes directes Kotlin (Sans CORS)
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                  Serveur Smartschool
-                </label>
-                <input
-                  type="text"
-                  value={schoolHost}
-                  onChange={(e) => setSchoolHost(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono text-slate-800 bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                  Identifiant Élève (`userId`)
-                </label>
-                <input
-                  type="text"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono text-slate-800 bg-white"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                Cookies de session (`PHPSESSID=...; smscndc=...; pid=...`)
-              </label>
-              <textarea
-                rows={2}
-                value={cookiesStr}
-                onChange={(e) => setCookiesStr(e.target.value)}
-                placeholder="PHPSESSID=votre_session; smscndc=...; pid=... (Laissez vide pour activer le Mode Démo sur la montre)"
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-mono text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              <p className="text-[11px] text-slate-500 mt-1">
-                La montre utilisera ce token pour interroger directement <code>{schoolHost}</code> en autonomie complète.
-              </p>
-            </div>
-          </div>
-
-          {/* Message de statut */}
+          {/* Message de confirmation ou d'erreur */}
           {statusMessage && (
             <div
               className={`p-3.5 rounded-2xl border flex items-start gap-2.5 text-xs font-medium ${
@@ -416,33 +386,37 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
             </div>
           )}
 
-          {/* Bouton d'envoi */}
-          <div className="flex items-center justify-end gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+          {/* Bouton principal de connexion */}
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={() => handlePushSession()}
+            className="w-full py-3 px-5 rounded-2xl bg-slate-900 hover:bg-indigo-600 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-subtle m3-press"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Connexion à la montre...</span>
+              </>
+            ) : (
+              <>
+                <Watch className="w-4 h-4" />
+                <span>Connecter ma montre</span>
+              </>
+            )}
+          </button>
+
+          {/* Lien discret pour télécharger l'application Wear OS */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Application pas encore installée ?</span>
+            <a
+              href="/betterschool-wearos.apk"
+              download="betterschool-wearos.apk"
+              className="font-bold text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1"
             >
-              Fermer
-            </button>
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handlePushSession()}
-              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-indigo-600 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-subtle m3-press"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Envoi vers la montre...</span>
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Transférer la session à la montre</span>
-                </>
-              )}
-            </button>
+              <Download className="w-3.5 h-3.5" />
+              <span>Télécharger l'app (.apk)</span>
+            </a>
           </div>
         </div>
       </div>

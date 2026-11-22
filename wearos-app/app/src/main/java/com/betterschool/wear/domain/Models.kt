@@ -9,14 +9,18 @@ enum class TileDisplayMode(val label: String) {
 data class WearPairingSessionPayload(
     val version: Int = 1,
     val host: String = "https://jean23.smartschool.be",
-    val userId: String = "4907_5748_0",
+    val userId: String = "",
     val platformId: String = "4907",
     val studentName: String = "Richard De Gandt",
     val studentClass: String = "4T1",
     val schoolName: String = "Collège Jean XXIII",
     val cookies: String = "",
     val isDemoMode: Boolean = false,
-    val pairedAt: String = ""
+    val pairedAt: String = "",
+    val snapshotCourses: List<WearCourseEvent> = emptyList(),
+    val snapshotHomeworks: List<WearHomework> = emptyList(),
+    val snapshotMessages: List<WearMessage> = emptyList(),
+    val snapshotGrades: List<WearGrade> = emptyList()
 )
 
 data class WearStudentProfile(
