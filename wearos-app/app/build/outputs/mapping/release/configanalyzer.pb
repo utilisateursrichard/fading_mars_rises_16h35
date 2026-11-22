@@ -355,4 +355,4 @@ BQÍBR BSãäJ"	DJ
 }"<*"ÛÜÂÃÄÅÆÇÈÉjLD7-keepnames class * extends androidx.startup.Initializer"
 * jmEV-keepnames class androidx.compose.ui.input.pointer.PointerInputEventHandler {
     *;
-}"4*/"ÝjVFC-keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase"=*0zˆeÀ–àñ ·%(©I0åÕ
+}"4*/"ÝjVFC-keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase"=*0zˆeÀ–ãñ ·%(©I0íÕ

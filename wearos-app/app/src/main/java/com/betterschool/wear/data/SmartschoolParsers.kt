@@ -413,15 +413,25 @@ object SmartschoolParsers {
             val obj = currentObj ?: arr.optJSONObject(0) ?: return null
 
             val userIdNum = obj.optInt("userID", -1)
+            val accountIdNum = obj.optInt("accountID", 0)
             val fullNameBin = obj.optString("fullNameBIN").takeIf { it.isNotEmpty() }
                 ?: obj.optString("fullName").takeIf { it.isNotEmpty() }
                 ?: "Élève"
             val studentClass = obj.optString("class").trim()
             val photoUrl = obj.optString("photoUrl").takeIf { it.isNotEmpty() }
 
+            // Extraire le platformId depuis photoUrl (ex: /hash/4907_...) comme dans smartschoolApi.ts:155
+            val photoPlatformId = photoUrl?.let {
+                Regex("/hash/([0-9]+)_").find(it)?.groupValues?.getOrNull(1)
+            }
+            val effectivePlatformId = photoPlatformId
+                ?: fallbackPlatformId.takeIf { it.isNotBlank() }
+                ?: fallbackUserId.substringBefore('_', "").takeIf { it.isNotBlank() }
+                ?: "4907"
+
             WearStudentProfile(
-                userId = if (userIdNum > 0) "${fallbackPlatformId}_${userIdNum}_0" else fallbackUserId,
-                platformId = fallbackPlatformId,
+                userId = if (userIdNum > 0) "${effectivePlatformId}_${userIdNum}_$accountIdNum" else fallbackUserId,
+                platformId = effectivePlatformId,
                 fullName = fullNameBin,
                 studentClass = studentClass,
                 schoolName = "Smartschool",

@@ -158,23 +158,32 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update { it.copy(isLoading = true, statusBanner = "Connexion directe à Smartschool...") }
 
             try {
-                // 0. Si la montre a des identifiants mais pas encore de PHPSESSID, elle se connecte elle-même à /login
-                if (!sessionManager.cookies.contains("PHPSESSID") && sessionManager.hasCredentials) {
+                // 0. Connexion directe à Smartschool (/login + /account-verification avec date de naissance)
+                if (sessionManager.hasCredentials) {
+                    _uiState.update { it.copy(statusBanner = "1/4 Login Smartschool...") }
                     apiClient.loginToSmartschool()
                 }
 
                 // 1. Découverte et certification du profil réel sur Smartschool (/Studentcard/Student/getStudents)
+                _uiState.update { it.copy(statusBanner = "2/4 Profil Studentcard...") }
                 val certifiedProfile = apiClient.fetchDirectStudentProfile()
                 if (certifiedProfile != null) {
                     sessionManager.userId = certifiedProfile.userId
+                    sessionManager.platformId = certifiedProfile.platformId
                     sessionManager.studentName = certifiedProfile.fullName
                     sessionManager.studentClass = certifiedProfile.studentClass
                 }
 
-                // 2. Requêtes directes vers Smartschool : Horaire & Devoirs, Notes Skore, Messages Dispatcher
-                val (courses, homeworks) = apiClient.fetchDirectScheduleAndHomeworks()
+                // 2. Notes Skore (déduit aussi le userId 4907_XXXX_0 depuis identifier si Studentcard n'a pas suffi)
+                _uiState.update { it.copy(statusBanner = "3/4 Notes & Messages...") }
                 val grades = runCatching { apiClient.fetchDirectGrades() }.getOrDefault(emptyList())
                 val messages = runCatching { apiClient.fetchDirectMessages() }.getOrDefault(emptyList())
+
+                // 3. Horaire & Devoirs (/planner/api/v1/planned-elements/user/{userId})
+                _uiState.update { it.copy(statusBanner = "4/4 Horaire & Devoirs...") }
+                val (courses, homeworks) = runCatching {
+                    apiClient.fetchDirectScheduleAndHomeworks()
+                }.getOrDefault(Pair(emptyList(), emptyList()))
 
                 // 3. Moyenne générale (SQLite ou calcul direct sur les évaluations Skore récupérées par la montre)
                 val sqliteAvg = runCatching {

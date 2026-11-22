@@ -21527,8 +21527,6 @@ com.betterschool.wear.data.SessionManager:
     public final void setBirthDate(java.lang.String)
     public final void setPaired(boolean)
     public final void setPassword(java.lang.String)
-    public final void setPlatformId(java.lang.String)
-    public final void setSchoolHost(java.lang.String)
     public final void setSchoolName(java.lang.String)
     public final void setTileDisplayMode(com.betterschool.wear.domain.TileDisplayMode)
     public final void setUsername(java.lang.String)
@@ -21736,9 +21734,6 @@ kotlin.SynchronizedLazyImpl:
     private final java.lang.Object writeReplace()
 kotlin.ThrowsKt
 kotlin.Triple:
-    public final java.lang.Object component1()
-    public final java.lang.Object component2()
-    public final java.lang.Object component3()
     public final kotlin.Triple copy(java.lang.Object,java.lang.Object,java.lang.Object)
     public static synthetic kotlin.Triple copy$default(kotlin.Triple,java.lang.Object,java.lang.Object,java.lang.Object,int,java.lang.Object)
 kotlin.TuplesKt:
@@ -37671,14 +37666,13 @@ com.betterschool.wear.data.SessionManager:
     public static final com.betterschool.wear.data.SessionManager$Companion Companion
     static void <clinit>()
     public static void clearSession()
-    public final java.lang.String getBirthDate()
+    public static java.lang.String getBirthDate()
     public final java.lang.String getPassword()
     public final java.lang.String getPlatformId()
     public static java.lang.String getSchoolName()
     public static java.lang.String getStudentClass()
     public static java.lang.String getStudentName()
     public static com.betterschool.wear.domain.TileDisplayMode getTileDisplayMode()
-    public final java.lang.String getUserId()
     public final java.lang.String getUsername()
     public final boolean isDemoMode()
     public final boolean isPaired()
@@ -37686,9 +37680,11 @@ com.betterschool.wear.data.SessionManager:
     public static void setCachedAveragePct()
     public static void setCookies()
     public static void setDemoMode()
+    public final void setPlatformId(java.lang.String)
+    public static void setSchoolHost()
     public static void setStudentClass()
     public static void setStudentName()
-    public static void setUserId()
+    public final void setUserId(java.lang.String)
 com.betterschool.wear.data.SmartschoolApiClient$Companion
 com.betterschool.wear.data.SmartschoolApiClient$createPairingTicket$2:
     public final java.lang.Object invoke$3()
@@ -38130,7 +38126,7 @@ kotlin.text.Regex$findAll$2:
 kotlin.text.Regex:
     public static final kotlin.text.Regex$Companion Companion
     static void <clinit>()
-    public final kotlin.text.MatcherMatchResult find(java.lang.String)
+    public final kotlin.text.MatcherMatchResult find(java.lang.CharSequence)
     public static kotlin.sequences.Sequence findAll()
     public final boolean matches(java.lang.CharSequence)
     public static java.lang.String replace()
@@ -38155,7 +38151,7 @@ kotlin.text.StringsKt__StringsJVMKt:
     public static synthetic boolean startsWith$default(java.lang.String,java.lang.String,int)
 kotlin.text.StringsKt__StringsKt$$InternalSyntheticLambda$3$4732cf1072db78dbb5452db37a054ef6089859b432242fd75ccd4b77b2979264$0:
     public final synthetic boolean f$1
-kotlin.text.StringsKt__StringsKt$$InternalSyntheticLambda$4$502501cddd73bb162d6ca9a92ded4c57d40d4ff33ca2ed3e06965905455a52cd$0:
+kotlin.text.StringsKt__StringsKt$$InternalSyntheticLambda$3$502501cddd73bb162d6ca9a92ded4c57d40d4ff33ca2ed3e06965905455a52cd$0:
     public final synthetic boolean f$1
 kotlin.text.StringsKt__StringsKt$lineSequence$$inlined$Sequence$1
 kotlin.text.StringsKt__StringsKt:
@@ -38164,7 +38160,6 @@ kotlin.text.StringsKt__StringsKt:
     public static int indexOf$StringsKt__StringsKt$default(java.lang.CharSequence,java.lang.String,int,int,boolean)
     public static final void requireNonNegativeLimit()
     public static final java.lang.String substring(java.lang.String,kotlin.ranges.IntRange)
-    public static java.lang.String substringBefore(java.lang.String,char,java.lang.String)
 kotlin.text.StringsKt___StringsKt
 kotlin.time.Duration$Companion
 kotlin.time.Duration:
@@ -38783,7 +38778,9 @@ okhttp3.EventListener$Companion$NONE$1
 okhttp3.EventListener$Companion
 okhttp3.EventListener$Factory
 okhttp3.EventListener
-okhttp3.FormBody$Builder
+okhttp3.FormBody$Builder:
+    public final java.nio.charset.Charset charset
+    public final okhttp3.FormBody build()
 okhttp3.FormBody$Companion
 okhttp3.Handshake$Companion:
     public static java.util.List toImmutableList(java.security.cert.Certificate[])

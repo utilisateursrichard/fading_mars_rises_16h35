@@ -195,13 +195,16 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
       return;
     }
 
-    const hasCreds = smartschoolUsername.trim().length > 0 && smartschoolPassword.length > 0;
+    const hasCreds =
+      smartschoolUsername.trim().length > 0 &&
+      smartschoolPassword.length > 0 &&
+      smartschoolBirthDate.trim().length > 0;
     const hasPhpSessId = cookiesStr.includes('PHPSESSID=');
 
     if (!hasCreds && !hasPhpSessId) {
       setStatusMessage({
         type: 'error',
-        text: 'Renseignez vos identifiants Smartschool (ou votre cookie PHPSESSID en mode avancé) pour que la montre puisse interroger Smartschool toute seule sans ré-appairer.'
+        text: 'Veuillez renseigner votre identifiant, votre mot de passe ET votre date de naissance Smartschool (nécessaire pour /account-verification).'
       });
       return;
     }
@@ -394,7 +397,7 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
                     type="text"
                     value={smartschoolUsername}
                     onChange={(e) => setSmartschoolUsername(e.target.value)}
-                    placeholder="Ex: prenom.nom"
+                    placeholder="Ex: e9139"
                     className="w-full bg-white border border-slate-200/90 rounded-xl px-3 py-2 font-sans text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                   />
                 </div>
@@ -412,41 +415,40 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
                 </div>
               </div>
 
+              <div>
+                <label className="block font-sans text-[11px] font-bold text-slate-600 mb-1">
+                  Date de naissance (vérification Smartschool)
+                </label>
+                <input
+                  type="date"
+                  value={smartschoolBirthDate}
+                  onChange={(e) => setSmartschoolBirthDate(e.target.value)}
+                  className="w-full bg-white border border-slate-200/90 rounded-xl px-3 py-2 font-sans text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                />
+              </div>
+
               <button
                 type="button"
                 onClick={() => setShowAdvancedSession(!showAdvancedSession)}
                 className="font-sans text-[11px] font-bold text-slate-500 hover:text-indigo-600 inline-flex items-center gap-1 transition-colors"
               >
                 {showAdvancedSession ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                <span>Options avancées (Date de naissance / Cookie PHPSESSID / École)</span>
+                <span>Options avancées (École / Cookie PHPSESSID)</span>
               </button>
 
               {showAdvancedSession && (
                 <div className="space-y-2.5 pt-1 border-t border-slate-200/60">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="block font-sans text-[11px] font-bold text-slate-600 mb-1">
-                        École Smartschool
-                      </label>
-                      <input
-                        type="text"
-                        value={schoolHost}
-                        onChange={(e) => setSchoolHost(e.target.value)}
-                        placeholder="https://ecole.smartschool.be"
-                        className="w-full bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 font-mono text-[11px] text-slate-800"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-sans text-[11px] font-bold text-slate-600 mb-1">
-                        Date de naissance (si demandée)
-                      </label>
-                      <input
-                        type="date"
-                        value={smartschoolBirthDate}
-                        onChange={(e) => setSmartschoolBirthDate(e.target.value)}
-                        className="w-full bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 font-sans text-xs text-slate-800"
-                      />
-                    </div>
+                  <div>
+                    <label className="block font-sans text-[11px] font-bold text-slate-600 mb-1">
+                      École Smartschool
+                    </label>
+                    <input
+                      type="text"
+                      value={schoolHost}
+                      onChange={(e) => setSchoolHost(e.target.value)}
+                      placeholder="https://jean23.smartschool.be"
+                      className="w-full bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 font-mono text-[11px] text-slate-800"
+                    />
                   </div>
                   <div>
                     <label className="block font-sans text-[11px] font-bold text-slate-600 mb-1">

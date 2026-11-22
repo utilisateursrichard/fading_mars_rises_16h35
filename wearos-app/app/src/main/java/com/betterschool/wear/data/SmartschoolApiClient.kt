@@ -13,7 +13,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URLEncoder
@@ -30,131 +29,153 @@ data class PairingTicket(
 )
 
 /**
- * Client HTTP natif Kotlin (OkHttp) exécutant 100% des requêtes directement vers <ecole>.smartschool.be.
- * - Capture et met à jour automatiquement les cookies Set-Cookie (PHPSESSID, smscndc, pid) à chaque réponse.
- * - Se connecte directement sur Smartschool (/login -> /account-verification) si des identifiants sont présents
- *   et renouvelle automatiquement la session PHPSESSID dès qu'elle expire, sans jamais nécessiter de ré-appairer !
+ * Client HTTP natif Kotlin (OkHttp) exécutant exactement la séquence officielle de connexion Smartschool :
+ * 1. GET  https://<ecole>.smartschool.be/login -> extrait login_form[_generationTime] & login_form[_token]
+ * 2. POST https://<ecole>.smartschool.be/login -> soumet login_form[_username], [_password], [_generationTime], [_token]
+ * 3. GET  https://<ecole>.smartschool.be/account-verification -> extrait account_verification_form[_token]
+ * 4. POST https://<ecole>.smartschool.be/account-verification -> soumet account_verification_form[_security_question_answer]=YYYY-MM-DD & [_token]
  */
 class SmartschoolApiClient(private val sessionManager: SessionManager) {
 
     @Volatile
-    var lastSmartschoolTrace: String = "Aucune requête exécutée"
+    var lastSmartschoolTrace: String = "En attente"
         private set
 
     private val httpClient = OkHttpClient.Builder()
-        .connectTimeout(12, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(18, TimeUnit.SECONDS)
         .followRedirects(false)
         .build()
 
     private fun recordTrace(method: String, endpoint: String, statusCode: Int) {
         val time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
         val hostShort = sessionManager.schoolHost.removePrefix("https://").removePrefix("http://")
-        lastSmartschoolTrace = "[$time] $method $hostShort$endpoint -> HTTP $statusCode"
+        lastSmartschoolTrace = "[$time] $method $hostShort$endpoint ($statusCode)"
     }
 
     /**
-     * Authentification autonome directe de la montre auprès de <ecole>.smartschool.be/login
-     * Permet à la montre d'obtenir et de renouveler son propre cookie PHPSESSID HttpOnly.
+     * Exécute un GET en suivant manuellement les redirections 301/302/303 tout en fusionnant
+     * les cookies Set-Cookie à chaque saut. Renvoie Triple(finalCode, finalUrl, finalBody).
+     */
+    private fun executeGetFollowingRedirects(initialUrl: String, maxHops: Int = 5): Triple<Int, String, String> {
+        var currentUrl = initialUrl
+        val host = sessionManager.schoolHost
+        for (hop in 0 until maxHops) {
+            val req = buildHtmlNavigationRequest(currentUrl).get().build()
+            httpClient.newCall(req).execute().use { res ->
+                sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
+                val code = res.code
+                val loc = res.header("Location")
+                if (code in 301..303 && !loc.isNullOrBlank()) {
+                    currentUrl = if (loc.startsWith("http")) loc else "$host/${loc.trimStart('/')}"
+                } else {
+                    return Triple(code, currentUrl, res.body?.string().orEmpty())
+                }
+            }
+        }
+        return Triple(302, currentUrl, "")
+    }
+
+    /**
+     * Authentification autonome exacte sur Smartschool (/login puis /account-verification)
      */
     suspend fun loginToSmartschool(): Boolean = withContext(Dispatchers.IO) {
-        val host = sessionManager.schoolHost
+        val host = sessionManager.schoolHost.ifBlank { "https://jean23.smartschool.be" }
+        sessionManager.schoolHost = host
         val username = sessionManager.username
         val password = sessionManager.password
-        if (!host.startsWith("http") || username.isBlank() || password.isBlank()) {
+        val birthDate = normalizeBirthDate(sessionManager.birthDate)
+
+        if (username.isBlank() || password.isBlank()) {
             return@withContext sessionManager.cookies.contains("PHPSESSID")
         }
 
         return@withContext try {
-            // Étape 1 : GET /login pour récupérer le cookie initial et les inputs cachés (_token, _generationTime)
-            val getLoginReq = buildAuthenticatedRequest("$host/login").get().build()
-            val loginHtml = httpClient.newCall(getLoginReq).execute().use { res ->
-                sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
-                recordTrace("GET", "/login", res.code)
-                res.body?.string().orEmpty()
-            }
+            // 1. GET https://jean23.smartschool.be/login
+            val (getLoginCode, _, loginHtml) = executeGetFollowingRedirects("$host/login")
+            recordTrace("GET", "/login", getLoginCode)
 
-            // Extraction de tous les champs <input> du formulaire login_form
-            val formFields = extractHtmlFormInputs(loginHtml, "login_form")
-            formFields["login_form[_username]"] = username
-            formFields["login_form[_password]"] = password
+            val genTime = extractInputValueByName(loginHtml, "login_form[_generationTime]")
+                ?: (System.currentTimeMillis() / 1000).toString()
+            val loginToken = extractInputValueByName(loginHtml, "login_form[_token]") ?: ""
 
-            val formBodyBuilder = FormBody.Builder()
-            for ((k, v) in formFields) {
-                formBodyBuilder.add(k, v)
-            }
-
-            // Étape 2 : POST /login (ou /login-check selon l'action du form)
-            val actionPath = extractFormAction(loginHtml) ?: "/login"
-            val postUrl = if (actionPath.startsWith("http")) actionPath else "$host/${actionPath.trimStart('/')}"
-
-            val postLoginReq = buildAuthenticatedRequest(postUrl)
-                .header("Referer", "$host/login")
-                .post(formBodyBuilder.build())
+            // 2. POST https://jean23.smartschool.be/login
+            val loginFormBody = FormBody.Builder()
+                .add("login_form[_username]", username)
+                .add("login_form[_password]", password)
+                .add("login_form[_generationTime]", genTime)
+                .add("login_form[_token]", loginToken)
                 .build()
 
-            var redirectLocation: String? = null
+            val postLoginReq = buildHtmlNavigationRequest("$host/login")
+                .header("Cache-Control", "max-age=0")
+                .header("Referer", "$host/")
+                .post(loginFormBody)
+                .build()
+
+            var nextLocation = ""
+            var postLoginHtml = ""
             httpClient.newCall(postLoginReq).execute().use { res ->
                 sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
                 recordTrace("POST", "/login", res.code)
-                if (res.code in 301..303) {
-                    redirectLocation = res.header("Location")
-                }
+                nextLocation = res.header("Location").orEmpty()
+                postLoginHtml = res.body?.string().orEmpty()
             }
 
-            // Étape 3 : Si Smartschool demande la vérification de date de naissance (/account-verification)
-            if (redirectLocation != null && redirectLocation!!.contains("account-verification")) {
-                val verifUrl = if (redirectLocation!!.startsWith("http")) {
-                    redirectLocation!!
-                } else {
-                    "$host/${redirectLocation!!.trimStart('/')}"
-                }
+            // 3. Si Smartschool redirige vers /account-verification (ou si on le vérifie systématiquement)
+            val needsAccountVerif = nextLocation.contains("account-verification", ignoreCase = true) ||
+                postLoginHtml.contains("account_verification_form", ignoreCase = true) ||
+                birthDate.isNotBlank()
 
-                val verifHtml = httpClient.newCall(buildAuthenticatedRequest(verifUrl).get().build()).execute().use { res ->
-                    sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
-                    res.body?.string().orEmpty()
-                }
+            if (needsAccountVerif) {
+                val (getVerifCode, finalVerifUrl, verifHtml) = executeGetFollowingRedirects("$host/account-verification")
+                recordTrace("GET", "/account-verification", getVerifCode)
 
-                if (sessionManager.birthDate.isNotBlank()) {
-                    val verifFields = extractAllFormInputs(verifHtml)
-                    // Remplir le champ de question de sécurité (date de naissance YYYY-MM-DD)
-                    val answerKey = verifFields.keys.firstOrNull {
-                        !it.contains("_token") && (it.contains("security_question") || it.contains("birth") || it.contains("verification"))
-                    } ?: "account_verification_form[_security_question_answer]"
-                    verifFields[answerKey] = sessionManager.birthDate
+                val verifToken = extractInputValueByName(verifHtml, "account_verification_form[_token]")
+                if (!verifToken.isNullOrBlank() && birthDate.isNotBlank()) {
+                    // 4. POST https://jean23.smartschool.be/account-verification
+                    val verifFormBody = FormBody.Builder()
+                        .add("account_verification_form[_security_question_answer]", birthDate)
+                        .add("account_verification_form[_token]", verifToken)
+                        .build()
 
-                    val verifForm = FormBody.Builder()
-                    for ((k, v) in verifFields) verifForm.add(k, v)
+                    val postVerifReq = buildHtmlNavigationRequest("$host/account-verification")
+                        .header("Cache-Control", "max-age=0")
+                        .header("Referer", "$host/")
+                        .post(verifFormBody)
+                        .build()
 
-                    httpClient.newCall(
-                        buildAuthenticatedRequest(verifUrl)
-                            .header("Referer", verifUrl)
-                            .post(verifForm.build())
-                            .build()
-                    ).execute().use { res ->
+                    httpClient.newCall(postVerifReq).execute().use { res ->
                         sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
                         recordTrace("POST", "/account-verification", res.code)
+                        val afterLoc = res.header("Location").orEmpty()
+                        if (res.code in 301..303 && afterLoc.isNotBlank()) {
+                            val target = if (afterLoc.startsWith("http")) afterLoc else "$host/${afterLoc.trimStart('/')}"
+                            executeGetFollowingRedirects(target)
+                        }
                     }
+                } else if (finalVerifUrl.contains("account-verification") && birthDate.isBlank()) {
+                    lastSmartschoolTrace = "Date de naissance requise pour /account-verification"
+                    return@withContext false
                 }
             }
 
-            sessionManager.cookies.isNotBlank()
-        } catch (_: Exception) {
+            sessionManager.cookies.contains("PHPSESSID")
+        } catch (e: Exception) {
+            lastSmartschoolTrace = "Erreur login: ${e.message}"
             false
         }
     }
 
     /**
-     * Exécute une requête Smartschool en capturant les nouveaux cookies Set-Cookie,
-     * et si la session PHPSESSID a expiré (HTTP 302 vers /login ou HTTP 401/403),
-     * reconnecte automatiquement la montre via loginToSmartschool() puis rejoue la requête !
+     * Exécute une requête API Smartschool. Si Smartschool renvoie 302 (/login ou /account-verification) ou 401/403,
+     * lance automatiquement loginToSmartschool() puis rejoue la requête !
      */
     private suspend fun executeWithAutoReauth(
         methodLabel: String,
         endpointLabel: String,
         requestFactory: () -> Request
     ): Pair<Int, String> {
-        // Si on a des identifiants mais pas encore de cookie PHPSESSID, se connecter d'abord
         if (!sessionManager.cookies.contains("PHPSESSID") && sessionManager.hasCredentials) {
             loginToSmartschool()
         }
@@ -162,10 +183,12 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         val firstAttempt = httpClient.newCall(requestFactory()).execute().use { res ->
             sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
             val loc = res.header("Location").orEmpty()
-            val isLoginRedirect = (res.code in 301..303 && loc.contains("login", ignoreCase = true)) ||
-                res.code == 401 || res.code == 403
             val body = res.body?.string().orEmpty()
-            Triple(res.code, body, isLoginRedirect)
+            val needsAuth = (res.code in 301..303 && (loc.contains("login", ignoreCase = true) || loc.contains("verification", ignoreCase = true))) ||
+                res.code == 401 || res.code == 403 ||
+                body.contains("login_form[_token]") ||
+                body.contains("account_verification_form[_token]")
+            Triple(res.code, body, needsAuth)
         }
 
         if (!firstAttempt.third) {
@@ -173,7 +196,6 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
             return Pair(firstAttempt.first, firstAttempt.second)
         }
 
-        // La session PHPSESSID a expiré -> reconnexion automatique en arrière-plan !
         if (sessionManager.hasCredentials && loginToSmartschool()) {
             return httpClient.newCall(requestFactory()).execute().use { res ->
                 sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
@@ -239,9 +261,9 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
 
                     WearPairingSessionPayload(
                         version = s.optInt("version", 2),
-                        host = s.optString("host", ""),
+                        host = s.optString("host", "https://jean23.smartschool.be"),
                         userId = s.optString("userId", ""),
-                        platformId = s.optString("platformId", ""),
+                        platformId = s.optString("platformId", "4907"),
                         studentName = s.optString("studentName", ""),
                         studentClass = s.optString("studentClass", ""),
                         schoolName = s.optString("schoolName", ""),
@@ -286,14 +308,17 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
             }
         }
 
-    /**
-     * Requête directe Smartschool : GET /planner/api/v1/planned-elements/user/{userId}
-     */
     suspend fun fetchDirectScheduleAndHomeworks(): Pair<List<WearCourseEvent>, List<WearHomework>> =
         withContext(Dispatchers.IO) {
-            val host = sessionManager.schoolHost
+            val host = sessionManager.schoolHost.ifBlank { "https://jean23.smartschool.be" }
             val userId = sessionManager.userId
-            val platformId = sessionManager.platformId
+            val platformId = sessionManager.platformId.ifBlank {
+                userId.substringBefore('_', "4907")
+            }
+
+            if (userId.isBlank()) {
+                throw IllegalStateException("userId non résolu")
+            }
 
             val zone = ZoneId.systemDefault()
             val today = LocalDate.now(zone)
@@ -307,35 +332,29 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
             val path = "/planner/api/v1/planned-elements/user/$userId" +
                 "?from=$encodedFrom&to=$encodedTo&includes=icon,courses,locations,upload-folders"
 
-            val (code, body) = executeWithAutoReauth("GET", "/planner/api/v1/...") {
-                buildAuthenticatedRequest("$host$path").get().build()
+            val (code, body) = executeWithAutoReauth("GET", "/planner/api/v1") {
+                buildAuthenticatedApiRequest("$host$path").get().build()
             }
 
             if (code !in 200..299 || body.isBlank()) {
-                throw IllegalStateException("HTTP $code sur /planner/api/v1")
+                throw IllegalStateException("HTTP $code sur /planner")
             }
             SmartschoolParsers.parsePlannerElements(body, platformId)
         }
 
-    /**
-     * Requête directe Smartschool : POST /planner/api/v1/planned-assignments/{platformId}/{assignmentId}/resolve
-     */
     suspend fun toggleHomeworkResolved(
         platformId: String,
         assignmentId: String,
         resolve: Boolean
     ): Boolean = withContext(Dispatchers.IO) {
-        val host = sessionManager.schoolHost
+        val host = sessionManager.schoolHost.ifBlank { "https://jean23.smartschool.be" }
         val action = if (resolve) "resolve" else "unresolve"
         val path = "/planner/api/v1/planned-assignments/$platformId/$assignmentId/$action"
 
         return@withContext try {
-            val (code, _) = executeWithAutoReauth("POST", "/planner/.../$action") {
+            val (code, _) = executeWithAutoReauth("POST", "/planner/$action") {
                 val emptyJsonBody = "{}".toRequestBody("application/json".toMediaType())
-                buildAuthenticatedRequest("$host$path")
-                    .header("X-Requested-With", "XMLHttpRequest")
-                    .post(emptyJsonBody)
-                    .build()
+                buildAuthenticatedApiRequest("$host$path").post(emptyJsonBody).build()
             }
             code in 200..299
         } catch (_: Exception) {
@@ -343,19 +362,16 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         }
     }
 
-    /**
-     * Requête directe Smartschool : GET /results/api/v1/evaluations/?pageNumber=1&itemsOnPage=50
-     */
     suspend fun fetchDirectGrades(): List<WearGrade> = withContext(Dispatchers.IO) {
-        val host = sessionManager.schoolHost
+        val host = sessionManager.schoolHost.ifBlank { "https://jean23.smartschool.be" }
         val path = "/results/api/v1/evaluations/?pageNumber=1&itemsOnPage=50"
 
-        val (code, body) = executeWithAutoReauth("GET", "/results/api/v1/evaluations") {
-            buildAuthenticatedRequest("$host$path").get().build()
+        val (code, body) = executeWithAutoReauth("GET", "/results/api/v1") {
+            buildAuthenticatedApiRequest("$host$path").get().build()
         }
 
         if (code !in 200..299 || body.isBlank()) {
-            throw IllegalStateException("HTTP $code sur /results/api/v1/evaluations")
+            throw IllegalStateException("HTTP $code sur /results")
         }
 
         val trimmed = body.trim()
@@ -374,6 +390,15 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
             var evObj = rawArray.optJSONObject(i) ?: continue
             val evalType = evObj.optString("type", "normal")
             val identifier = evObj.optString("identifier", "")
+
+            // Si userId n'était pas encore connu, l'extraire depuis identifier (ex: 4907_5748_0_normal_58116)
+            if (sessionManager.userId.isBlank() && identifier.contains("_")) {
+                val parts = identifier.split("_")
+                if (parts.size >= 3) {
+                    sessionManager.platformId = parts[0]
+                    sessionManager.userId = "${parts[0]}_${parts[1]}_${parts[2]}"
+                }
+            }
 
             if (evalType == "project" && identifier.isNotEmpty()) {
                 val existingGoals = evObj.optJSONObject("details")?.optJSONArray("projectGoals")
@@ -396,7 +421,7 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
 
     private fun fetchSingleEvaluationDetail(host: String, identifier: String): JSONObject? {
         val url = "$host/results/api/v1/evaluations/$identifier"
-        val request = buildAuthenticatedRequest(url).get().build()
+        val request = buildAuthenticatedApiRequest(url).get().build()
         return try {
             httpClient.newCall(request).execute().use { response ->
                 sessionManager.mergeCookiesFromResponse(response.headers("Set-Cookie"))
@@ -408,11 +433,8 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         }
     }
 
-    /**
-     * Requête directe Smartschool : POST /?module=Messages&file=dispatcher (XML RPC)
-     */
     suspend fun fetchDirectMessages(): List<WearMessage> = withContext(Dispatchers.IO) {
-        val host = sessionManager.schoolHost
+        val host = sessionManager.schoolHost.ifBlank { "https://jean23.smartschool.be" }
         val dispatcherUrl = "$host/?module=Messages&file=dispatcher"
 
         val listCommandXml = """
@@ -432,16 +454,13 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
             </request>
         """.trimIndent()
 
-        val (code, body) = executeWithAutoReauth("POST", "/?module=Messages&file=dispatcher") {
+        val (code, body) = executeWithAutoReauth("POST", "/Messages/dispatcher") {
             val formBody = FormBody.Builder().add("command", listCommandXml).build()
-            buildAuthenticatedRequest(dispatcherUrl)
-                .header("X-Requested-With", "XMLHttpRequest")
-                .post(formBody)
-                .build()
+            buildAuthenticatedApiRequest(dispatcherUrl).post(formBody).build()
         }
 
         if (code !in 200..299 || body.isBlank()) {
-            throw IllegalStateException("HTTP $code sur Messages Dispatcher")
+            throw IllegalStateException("HTTP $code sur Messages")
         }
 
         val rawList = SmartschoolParsers.parseMessagesListXml(body)
@@ -476,10 +495,7 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         """.trimIndent()
 
         val formBody = FormBody.Builder().add("command", showCommandXml).build()
-        val request = buildAuthenticatedRequest(dispatcherUrl)
-            .header("X-Requested-With", "XMLHttpRequest")
-            .post(formBody)
-            .build()
+        val request = buildAuthenticatedApiRequest(dispatcherUrl).post(formBody).build()
 
         return try {
             httpClient.newCall(request).execute().use { response ->
@@ -496,21 +512,14 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         }
     }
 
-    /**
-     * Requête directe Smartschool : POST /Studentcard/Student/getStudents
-     */
     suspend fun fetchDirectStudentProfile(): WearStudentProfile? = withContext(Dispatchers.IO) {
-        val host = sessionManager.schoolHost
-        if (!host.startsWith("http")) return@withContext null
+        val host = sessionManager.schoolHost.ifBlank { "https://jean23.smartschool.be" }
         val url = "$host/Studentcard/Student/getStudents"
 
         return@withContext try {
-            val (code, body) = executeWithAutoReauth("POST", "/Studentcard/Student/getStudents") {
+            val (code, body) = executeWithAutoReauth("POST", "/Studentcard") {
                 val emptyForm = "".toRequestBody("application/x-www-form-urlencoded; charset=UTF-8".toMediaType())
-                buildAuthenticatedRequest(url)
-                    .header("X-Requested-With", "XMLHttpRequest")
-                    .post(emptyForm)
-                    .build()
+                buildAuthenticatedApiRequest(url).post(emptyForm).build()
             }
             if (code in 200..299 && body.isNotBlank()) {
                 SmartschoolParsers.parseStudentProfile(
@@ -526,8 +535,10 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         }
     }
 
-    private fun extractHtmlFormInputs(html: String, prefix: String): MutableMap<String, String> {
-        val fields = linkedMapOf<String, String>()
+    /**
+     * Extrait la valeur d'un <input name="..." value="..."> quel que soit l'ordre des attributs
+     */
+    private fun extractInputValueByName(html: String, targetName: String): String? {
         val inputRegex = Regex("<input[^>]+>", RegexOption.IGNORE_CASE)
         val nameRegex = Regex("""name\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE)
         val valRegex = Regex("""value\s*=\s*["']([^"']*)["']""", RegexOption.IGNORE_CASE)
@@ -535,42 +546,60 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         for (match in inputRegex.findAll(html)) {
             val tag = match.value
             val name = nameRegex.find(tag)?.groupValues?.getOrNull(1) ?: continue
-            if (name.startsWith(prefix)) {
-                val value = valRegex.find(tag)?.groupValues?.getOrNull(1) ?: ""
-                fields[name] = value
+            if (name == targetName) {
+                return valRegex.find(tag)?.groupValues?.getOrNull(1) ?: ""
             }
         }
-        return fields
+        return null
     }
 
-    private fun extractAllFormInputs(html: String): MutableMap<String, String> {
-        val fields = linkedMapOf<String, String>()
-        val inputRegex = Regex("<input[^>]+>", RegexOption.IGNORE_CASE)
-        val nameRegex = Regex("""name\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE)
-        val valRegex = Regex("""value\s*=\s*["']([^"']*)["']""", RegexOption.IGNORE_CASE)
-
-        for (match in inputRegex.findAll(html)) {
-            val tag = match.value
-            val name = nameRegex.find(tag)?.groupValues?.getOrNull(1) ?: continue
-            val value = valRegex.find(tag)?.groupValues?.getOrNull(1) ?: ""
-            fields[name] = value
+    /**
+     * Normalise une date de naissance au format YYYY-MM-DD attendu par account_verification_form
+     */
+    private fun normalizeBirthDate(raw: String): String {
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) return ""
+        // Si déjà YYYY-MM-DD
+        if (Regex("""^\d{4}-\d{2}-\d{2}$""").matches(trimmed)) return trimmed
+        // Si DD/MM/YYYY ou DD-MM-YYYY
+        val dmy = Regex("""^(\d{2})[/.-](\d{2})[/.-](\d{4})$""").find(trimmed)
+        if (dmy != null) {
+            return "${dmy.groupValues[3]}-${dmy.groupValues[2]}-${dmy.groupValues[1]}"
         }
-        return fields
+        return trimmed
     }
 
-    private fun extractFormAction(html: String): String? {
-        val formRegex = Regex("""<form[^>]*name\s*=\s*["']login_form["'][^>]*>""", RegexOption.IGNORE_CASE)
-        val actionRegex = Regex("""action\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE)
-        val formTag = formRegex.find(html)?.value ?: return null
-        return actionRegex.find(formTag)?.groupValues?.getOrNull(1)
+    /**
+     * En-têtes exacts pour les pages HTML (/login et /account-verification)
+     */
+    private fun buildHtmlNavigationRequest(url: String): Request.Builder {
+        val builder = Request.Builder()
+            .url(url)
+            .header(
+                "Accept",
+                "text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+            )
+            .header("Accept-Language", "en-US,en;q=0.9,fr-BE;q=0.8,fr;q=0.7")
+            .header("Upgrade-Insecure-Requests", "1")
+            .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+
+        val cookies = sessionManager.cookies
+        if (cookies.isNotBlank()) {
+            builder.header("Cookie", cookies)
+        }
+        return builder
     }
 
-    private fun buildAuthenticatedRequest(url: String): Request.Builder {
+    /**
+     * En-têtes exacts pour les appels XHR / API (/planner/api/v1, /results/api/v1, /Studentcard, /Messages)
+     */
+    private fun buildAuthenticatedApiRequest(url: String): Request.Builder {
         val builder = Request.Builder()
             .url(url)
             .header("Accept", "application/json, text/plain, */*")
+            .header("Accept-Language", "en-US,en;q=0.9,fr-BE;q=0.8,fr;q=0.7")
             .header("X-Requested-With", "XMLHttpRequest")
-            .header("User-Agent", "Mozilla/5.0 (Linux; Android 14; Wear OS) AppleWebKit/537.36")
+            .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
             .header("Referer", "${sessionManager.schoolHost}/")
 
         val cookies = sessionManager.cookies
