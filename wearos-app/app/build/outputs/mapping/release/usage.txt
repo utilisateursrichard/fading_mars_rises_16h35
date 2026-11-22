@@ -21509,40 +21509,36 @@ com.betterschool.wear.data.PairingTicket:
     public final java.lang.String getQrUrl()
 com.betterschool.wear.data.SessionManager:
     public static final int $stable
-    public static final com.betterschool.wear.data.SessionManager$Companion Companion
+    private static final java.lang.String KEY_BIRTHDATE
     private static final java.lang.String KEY_CACHED_AVG_PCT
     private static final java.lang.String KEY_COOKIES
     private static final java.lang.String KEY_DEMO_MODE
     private static final java.lang.String KEY_HOST
     private static final java.lang.String KEY_IS_PAIRED
+    private static final java.lang.String KEY_PASSWORD
     private static final java.lang.String KEY_PLATFORM_ID
     private static final java.lang.String KEY_SCHOOL_NAME
     private static final java.lang.String KEY_STUDENT_CLASS
     private static final java.lang.String KEY_STUDENT_NAME
     private static final java.lang.String KEY_TILE_MODE
+    private static final java.lang.String KEY_USERNAME
     private static final java.lang.String KEY_USER_ID
     private static final java.lang.String PREFS_FILE_NAME
-    public final void setCookies(java.lang.String)
+    public final void setBirthDate(java.lang.String)
     public final void setPaired(boolean)
+    public final void setPassword(java.lang.String)
     public final void setPlatformId(java.lang.String)
     public final void setSchoolHost(java.lang.String)
     public final void setSchoolName(java.lang.String)
     public final void setTileDisplayMode(com.betterschool.wear.domain.TileDisplayMode)
+    public final void setUsername(java.lang.String)
 com.betterschool.wear.data.SmartschoolApiClient$createPairingTicket$2:
-    int label
-com.betterschool.wear.data.SmartschoolApiClient$fetchDirectGrades$2:
-    int label
-com.betterschool.wear.data.SmartschoolApiClient$fetchDirectMessages$2:
-    int label
-com.betterschool.wear.data.SmartschoolApiClient$fetchDirectScheduleAndHomeworks$2:
-    int label
-com.betterschool.wear.data.SmartschoolApiClient$fetchDirectStudentProfile$2:
     int label
 com.betterschool.wear.data.SmartschoolApiClient$fetchSqliteUserAverage$2:
     int label
-com.betterschool.wear.data.SmartschoolApiClient$pollPairingSession$2:
+com.betterschool.wear.data.SmartschoolApiClient$loginToSmartschool$2:
     int label
-com.betterschool.wear.data.SmartschoolApiClient$toggleHomeworkResolved$2:
+com.betterschool.wear.data.SmartschoolApiClient$pollPairingSession$2:
     int label
 com.betterschool.wear.data.SmartschoolApiClient:
     public static final int $stable
@@ -21739,7 +21735,12 @@ kotlin.SuspendKt
 kotlin.SynchronizedLazyImpl:
     private final java.lang.Object writeReplace()
 kotlin.ThrowsKt
-kotlin.Triple
+kotlin.Triple:
+    public final java.lang.Object component1()
+    public final java.lang.Object component2()
+    public final java.lang.Object component3()
+    public final kotlin.Triple copy(java.lang.Object,java.lang.Object,java.lang.Object)
+    public static synthetic kotlin.Triple copy$default(kotlin.Triple,java.lang.Object,java.lang.Object,java.lang.Object,int,java.lang.Object)
 kotlin.TuplesKt:
     public static final java.util.List toList(kotlin.Pair)
     public static final java.util.List toList(kotlin.Triple)
@@ -24162,9 +24163,7 @@ kotlin.collections.CollectionsKt___CollectionsKt:
     public static final java.util.List scan(java.lang.Iterable,java.lang.Object,kotlin.jvm.functions.Function2)
     public static final java.util.List scanIndexed(java.lang.Iterable,java.lang.Object,kotlin.jvm.functions.Function3)
     public static final void shuffle(java.util.List,kotlin.random.Random)
-    public static final java.lang.Object single(java.lang.Iterable)
     public static final java.lang.Object single(java.lang.Iterable,kotlin.jvm.functions.Function1)
-    public static final java.lang.Object single(java.util.List)
     public static final java.lang.Object singleOrNull(java.lang.Iterable)
     public static final java.lang.Object singleOrNull(java.lang.Iterable,kotlin.jvm.functions.Function1)
     public static final java.lang.Object singleOrNull(java.util.List)
@@ -25736,7 +25735,6 @@ kotlin.sequences.SequencesKt__SequencesKt:
     private static final java.lang.Object flatten$lambda$4$SequencesKt__SequencesKt(java.lang.Object)
     public static final kotlin.sequences.Sequence flattenSequenceOfIterable(kotlin.sequences.Sequence)
     public static final kotlin.sequences.Sequence generateSequence(kotlin.jvm.functions.Function0)
-    public static final kotlin.sequences.Sequence generateSequence(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1)
     private static final java.lang.Object generateSequence$lambda$5$SequencesKt__SequencesKt(kotlin.jvm.functions.Function0,java.lang.Object)
     public static final kotlin.sequences.Sequence ifEmpty(kotlin.sequences.Sequence,kotlin.jvm.functions.Function0)
     private static final kotlin.sequences.Sequence orEmpty(kotlin.sequences.Sequence)
@@ -26093,25 +26091,19 @@ kotlin.text.MatchResult:
     public abstract kotlin.text.MatchResult$Destructured getDestructured()
     public abstract kotlin.text.MatchGroupCollection getGroups()
     public abstract kotlin.ranges.IntRange getRange()
-    public abstract java.lang.String getValue()
-    public abstract kotlin.text.MatchResult next()
 kotlin.text.MatcherMatchResult$groups$1:
     public kotlin.text.MatchGroup get(java.lang.String)
 kotlin.text.MatcherMatchResult:
     private final kotlin.text.MatchGroupCollection groups
-    private final java.lang.CharSequence input
     public kotlin.text.MatchResult$Destructured getDestructured()
     public kotlin.text.MatchGroupCollection getGroups()
     public kotlin.ranges.IntRange getRange()
-    public java.lang.String getValue()
-    public kotlin.text.MatchResult next()
 kotlin.text.Regex$Companion:
     public final java.lang.String escape(java.lang.String)
     public final java.lang.String escapeReplacement(java.lang.String)
     public final kotlin.text.Regex fromLiteral(java.lang.String)
 kotlin.text.Regex$Serialized$Companion
 kotlin.text.Regex$Serialized
-kotlin.text.Regex$findAll$2
 kotlin.text.Regex$special$$inlined$fromInt$1
 kotlin.text.Regex$splitToSequence$1
 kotlin.text.Regex:
@@ -26119,9 +26111,6 @@ kotlin.text.Regex:
     public void <init>(java.lang.String,java.util.Set)
     public static final synthetic java.util.regex.Pattern access$getNativePattern$p(kotlin.text.Regex)
     public final boolean containsMatchIn(java.lang.CharSequence)
-    public final kotlin.sequences.Sequence findAll(java.lang.CharSequence,int)
-    public static synthetic kotlin.sequences.Sequence findAll$default(kotlin.text.Regex,java.lang.CharSequence,int,int,java.lang.Object)
-    private static final kotlin.text.MatchResult findAll$lambda$1(kotlin.text.Regex,java.lang.CharSequence,int)
     public final java.util.Set getOptions()
     public final java.lang.String getPattern()
     public final kotlin.text.MatchResult matchAt(java.lang.CharSequence,int)
@@ -26356,7 +26345,6 @@ kotlin.text.StringsKt__StringsKt:
     public static final boolean endsWith(java.lang.CharSequence,char,boolean)
     public static synthetic boolean endsWith$default(java.lang.CharSequence,char,boolean,int,java.lang.Object)
     public static final kotlin.Pair findAnyOf(java.lang.CharSequence,java.util.Collection,int,boolean)
-    private static final kotlin.Pair findAnyOf$StringsKt__StringsKt(java.lang.CharSequence,java.util.Collection,int,boolean,boolean)
     public static synthetic kotlin.Pair findAnyOf$default(java.lang.CharSequence,java.util.Collection,int,boolean,int,java.lang.Object)
     public static final kotlin.Pair findLastAnyOf(java.lang.CharSequence,java.util.Collection,int,boolean)
     public static synthetic kotlin.Pair findLastAnyOf$default(java.lang.CharSequence,java.util.Collection,int,boolean,int,java.lang.Object)
@@ -26373,8 +26361,6 @@ kotlin.text.StringsKt__StringsKt:
     private static final boolean isNullOrBlank(java.lang.CharSequence)
     private static final boolean isNullOrEmpty(java.lang.CharSequence)
     public static final kotlin.collections.CharIterator iterator(java.lang.CharSequence)
-    public static final int lastIndexOf(java.lang.CharSequence,java.lang.String,int,boolean)
-    public static synthetic int lastIndexOf$default(java.lang.CharSequence,java.lang.String,int,boolean,int,java.lang.Object)
     public static final int lastIndexOfAny(java.lang.CharSequence,java.util.Collection,int,boolean)
     public static synthetic int lastIndexOfAny$default(java.lang.CharSequence,java.util.Collection,int,boolean,int,java.lang.Object)
     public static synthetic int lastIndexOfAny$default(java.lang.CharSequence,char[],int,boolean,int,java.lang.Object)
@@ -26388,9 +26374,6 @@ kotlin.text.StringsKt__StringsKt:
     public static final java.lang.String padStart(java.lang.String,int,char)
     public static synthetic java.lang.CharSequence padStart$default(java.lang.CharSequence,int,char,int,java.lang.Object)
     public static synthetic java.lang.String padStart$default(java.lang.String,int,char,int,java.lang.Object)
-    private static final kotlin.sequences.Sequence rangesDelimitedBy$StringsKt__StringsKt(java.lang.CharSequence,java.lang.String[],int,boolean,int)
-    static synthetic kotlin.sequences.Sequence rangesDelimitedBy$StringsKt__StringsKt$default(java.lang.CharSequence,java.lang.String[],int,boolean,int,int,java.lang.Object)
-    private static final kotlin.Pair rangesDelimitedBy$lambda$16$StringsKt__StringsKt(java.util.List,boolean,java.lang.CharSequence,int)
     public static final java.lang.CharSequence removePrefix(java.lang.CharSequence,java.lang.CharSequence)
     public static final java.lang.CharSequence removeRange(java.lang.CharSequence,int,int)
     public static final java.lang.CharSequence removeRange(java.lang.CharSequence,kotlin.ranges.IntRange)
@@ -26426,9 +26409,7 @@ kotlin.text.StringsKt__StringsKt:
     private static final java.lang.String replaceRange(java.lang.String,int,int,java.lang.CharSequence)
     private static final java.lang.String replaceRange(java.lang.String,kotlin.ranges.IntRange,java.lang.CharSequence)
     private static final java.util.List split(java.lang.CharSequence,kotlin.text.Regex,int)
-    public static final java.util.List split(java.lang.CharSequence,java.lang.String[],boolean,int)
     static synthetic java.util.List split$default(java.lang.CharSequence,kotlin.text.Regex,int,int,java.lang.Object)
-    public static synthetic java.util.List split$default(java.lang.CharSequence,java.lang.String[],boolean,int,int,java.lang.Object)
     private static final kotlin.sequences.Sequence splitToSequence(java.lang.CharSequence,kotlin.text.Regex,int)
     public static final kotlin.sequences.Sequence splitToSequence(java.lang.CharSequence,char[],boolean,int)
     public static final kotlin.sequences.Sequence splitToSequence(java.lang.CharSequence,java.lang.String[],boolean,int)
@@ -26450,9 +26431,7 @@ kotlin.text.StringsKt__StringsKt:
     public static final java.lang.String substringAfterLast(java.lang.String,java.lang.String,java.lang.String)
     public static synthetic java.lang.String substringAfterLast$default(java.lang.String,char,java.lang.String,int,java.lang.Object)
     public static synthetic java.lang.String substringAfterLast$default(java.lang.String,java.lang.String,java.lang.String,int,java.lang.Object)
-    public static final java.lang.String substringBefore(java.lang.String,char,java.lang.String)
     public static final java.lang.String substringBefore(java.lang.String,java.lang.String,java.lang.String)
-    public static synthetic java.lang.String substringBefore$default(java.lang.String,char,java.lang.String,int,java.lang.Object)
     public static synthetic java.lang.String substringBefore$default(java.lang.String,java.lang.String,java.lang.String,int,java.lang.Object)
     public static final java.lang.String substringBeforeLast(java.lang.String,char,java.lang.String)
     public static final java.lang.String substringBeforeLast(java.lang.String,java.lang.String,java.lang.String)
@@ -26475,7 +26454,6 @@ kotlin.text.StringsKt__StringsKt:
     public static final varargs java.lang.CharSequence trimStart(java.lang.CharSequence,char[])
     private static final java.lang.String trimStart(java.lang.String)
     public static final java.lang.String trimStart(java.lang.String,kotlin.jvm.functions.Function1)
-    public static final varargs java.lang.String trimStart(java.lang.String,char[])
 kotlin.text.StringsKt___StringsJvmKt:
     public void <init>()
     private static final char elementAt(java.lang.CharSequence,int)
@@ -29634,7 +29612,6 @@ okhttp3.Response:
     public final okhttp3.Request -deprecated_request()
     public final long -deprecated_sentRequestAtMillis()
     public final java.lang.String header(java.lang.String)
-    public final java.util.List headers(java.lang.String)
     public final boolean isRedirect()
     public final okhttp3.ResponseBody peekBody(long)
     public final okhttp3.Headers trailers()
@@ -37087,8 +37064,6 @@ androidx.core.view.ViewCompat$AccessibilityViewProperty
 androidx.core.view.ViewCompat$Api29Impl
 androidx.core.view.ViewConfigurationCompat$Api26Impl
 androidx.core.view.ViewConfigurationCompat
-androidx.core.view.ViewKt$ancestors$1:
-    public static final androidx.core.view.ViewKt$ancestors$1 INSTANCE
 androidx.core.view.ViewKt
 androidx.core.view.WindowInsetsAnimationCompat$BoundsCompat
 androidx.core.view.WindowInsetsAnimationCompat$Callback
@@ -37693,17 +37668,23 @@ com.betterschool.wear.data.PairingTicket:
     static void <clinit>()
 com.betterschool.wear.data.SessionManager$Companion
 com.betterschool.wear.data.SessionManager:
+    public static final com.betterschool.wear.data.SessionManager$Companion Companion
     static void <clinit>()
     public static void clearSession()
-    public final java.lang.String getCookies()
+    public final java.lang.String getBirthDate()
+    public final java.lang.String getPassword()
     public final java.lang.String getPlatformId()
     public static java.lang.String getSchoolName()
     public static java.lang.String getStudentClass()
     public static java.lang.String getStudentName()
     public static com.betterschool.wear.domain.TileDisplayMode getTileDisplayMode()
+    public final java.lang.String getUserId()
+    public final java.lang.String getUsername()
     public final boolean isDemoMode()
     public final boolean isPaired()
     public static void savePairedSession()
+    public static void setCachedAveragePct()
+    public static void setCookies()
     public static void setDemoMode()
     public static void setStudentClass()
     public static void setStudentName()
@@ -37711,19 +37692,42 @@ com.betterschool.wear.data.SessionManager:
 com.betterschool.wear.data.SmartschoolApiClient$Companion
 com.betterschool.wear.data.SmartschoolApiClient$createPairingTicket$2:
     public final java.lang.Object invoke$3()
+com.betterschool.wear.data.SmartschoolApiClient$fetchDirectGrades$2$$InternalSyntheticLambda$2$bf44673cabaf6a043a11f74c445a6564650554db5ac1ab9b8c2cc00449b2b7bc$0:
+    public final synthetic java.lang.String f$2
 com.betterschool.wear.data.SmartschoolApiClient$fetchDirectGrades$2:
+    public java.lang.Object L$1
     public final java.lang.Object invoke$3()
+com.betterschool.wear.data.SmartschoolApiClient$fetchDirectMessages$2$$InternalSyntheticLambda$2$be117e2028b2dccbf4583a42c2df096a149e7a7cf3ef1eb8576e8c21cc5435ba$0:
+    public final synthetic java.lang.String f$0
 com.betterschool.wear.data.SmartschoolApiClient$fetchDirectMessages$2:
+    public java.lang.Object L$0
+    public java.lang.Object L$2
     public final java.lang.Object invoke$3()
 com.betterschool.wear.data.SmartschoolApiClient$fetchDirectScheduleAndHomeworks$2:
+    public java.lang.Object L$0
+    public java.lang.Object L$1
+    public java.lang.Object L$3
+    public java.lang.Object L$4
+    public java.lang.Object L$5
+    public java.lang.Object L$6
+    public java.lang.Object L$7
+    public java.lang.Object L$8
+    public java.lang.Object L$9
     public final java.lang.Object invoke$3()
 com.betterschool.wear.data.SmartschoolApiClient$fetchDirectStudentProfile$2:
+    public java.lang.Object L$0
+    public java.lang.Object L$1
     public final java.lang.Object invoke$3()
 com.betterschool.wear.data.SmartschoolApiClient$fetchSqliteUserAverage$2:
+    public final java.lang.Object invoke$3()
+com.betterschool.wear.data.SmartschoolApiClient$loginToSmartschool$2:
     public final java.lang.Object invoke$3()
 com.betterschool.wear.data.SmartschoolApiClient$pollPairingSession$2:
     public final java.lang.Object invoke$3()
 com.betterschool.wear.data.SmartschoolApiClient$toggleHomeworkResolved$2:
+    public java.lang.Object L$0
+    public java.lang.Object L$1
+    public java.lang.Object L$2
     public final java.lang.Object invoke$3()
 com.betterschool.wear.data.SmartschoolApiClient:
     static void <clinit>()
@@ -37732,11 +37736,15 @@ com.betterschool.wear.data.SmartschoolApiClient:
     public static java.lang.Object fetchDirectMessages()
     public static java.lang.Object fetchDirectScheduleAndHomeworks()
     public static java.lang.Object fetchDirectStudentProfile()
+    public static java.lang.Object fetchSqliteUserAverage()
+    public final java.lang.Object loginToSmartschool(kotlin.coroutines.jvm.internal.ContinuationImpl)
     public static java.lang.Object pollPairingSession()
     public static java.lang.Object toggleHomeworkResolved()
 com.betterschool.wear.data.SmartschoolParsers:
     public static final com.betterschool.wear.data.SmartschoolParsers INSTANCE
     public static java.time.LocalTime parseLocalTimeOrNull(java.lang.String)
+    public static java.util.List parseMessagesListXml()
+    public static kotlin.Pair parsePlannerElements()
     public static com.betterschool.wear.domain.WearGrade parseSingleSkoreEvaluation()
 com.betterschool.wear.domain.WearCourseEvent:
     static void <clinit>()
@@ -37759,17 +37767,12 @@ com.betterschool.wear.ui.WearMainScreenKt$$InternalSyntheticLambda$3$926c911fa69
 com.betterschool.wear.ui.WearUiState:
     static void <clinit>()
     public static com.betterschool.wear.ui.WearUiState copy()
-com.betterschool.wear.ui.WearViewModel$refreshFromSmartschool$1:
-    public final java.lang.Object invoke$3()
 com.betterschool.wear.ui.WearViewModel$refreshFromSmartschool$2:
     public int I$0
     public java.lang.Object L$6
-    public java.lang.Object L$8
     public final java.lang.Object invoke$3()
 com.betterschool.wear.ui.WearViewModel$startQrPairingOnWatch$1:
-    public int I$0
     public java.lang.Object L$1
-    public java.lang.Object L$4
     public final java.lang.Object invoke$3()
 com.betterschool.wear.ui.WearViewModel$toggleHomework$2:
     public final java.lang.Object invoke$3()
@@ -37851,6 +37854,7 @@ kotlin.collections.ArrayDeque:
     public static java.lang.Object lastOrNull()
     public final java.lang.Object removeFirstOrNull()
 kotlin.collections.ArraysKt:
+    public static boolean contains(char[],char)
     public static boolean contains(java.lang.Object[],java.lang.Object)
     public static java.lang.Object first(java.lang.Object[])
     public static java.lang.Object firstOrNull(java.lang.Object[])
@@ -38078,8 +38082,6 @@ kotlin.reflect.KProperty1$Getter
 kotlin.reflect.KProperty1
 kotlin.sequences.DropSequence$iterator$1:
     public final void drop()
-kotlin.sequences.GeneratorSequence:
-    public final kotlin.jvm.functions.Function1 getNextValue
 kotlin.sequences.SequenceBuilderIterator:
     public java.util.Iterator nextIterator
 kotlin.sequences.SequenceScope
@@ -38106,7 +38108,10 @@ kotlin.text.LinesIterator:
     public static java.lang.String next()
 kotlin.text.MatchGroup
 kotlin.text.MatchGroupCollection
-kotlin.text.MatchResult
+kotlin.text.MatchResult:
+    public abstract java.util.List getGroupValues()
+    public abstract java.lang.String getValue()
+    public abstract kotlin.text.MatchResult next()
 kotlin.text.MatcherMatchResult$groupValues$1:
     public static bridge boolean contains$7()
     public static java.lang.String get()
@@ -38114,17 +38119,30 @@ kotlin.text.MatcherMatchResult$groupValues$1:
     public static bridge int lastIndexOf$4()
 kotlin.text.MatcherMatchResult$groups$1
 kotlin.text.MatcherMatchResult:
-    public final java.util.List getGroupValues()
     public static java.util.regex.MatchResult getMatchResult()
+    public final java.lang.String getValue()
+    public final kotlin.text.MatchResult next()
+kotlin.text.Regex$$InternalSyntheticLambda$3$1a88607e43e2a605dd25ef4eff409978dd7b4128ad2709345fcb2de7faea0079$0:
+    public final synthetic int f$2
 kotlin.text.Regex$Companion
+kotlin.text.Regex$findAll$2:
+    public static kotlin.text.MatchResult invoke()
 kotlin.text.Regex:
     public static final kotlin.text.Regex$Companion Companion
     static void <clinit>()
-    public static kotlin.text.MatchResult find()
+    public final kotlin.text.MatcherMatchResult find(java.lang.String)
+    public static kotlin.sequences.Sequence findAll()
     public final boolean matches(java.lang.CharSequence)
     public static java.lang.String replace()
-kotlin.text.RegexKt
-kotlin.text.RegexOption
+kotlin.text.RegexOption:
+    public static final enum kotlin.text.RegexOption CANON_EQ
+    public static final enum kotlin.text.RegexOption COMMENTS
+    public static final enum kotlin.text.RegexOption DOT_MATCHES_ALL
+    public static final enum kotlin.text.RegexOption IGNORE_CASE
+    public static final enum kotlin.text.RegexOption LITERAL
+    public static final enum kotlin.text.RegexOption MULTILINE
+    public static final enum kotlin.text.RegexOption UNIX_LINES
+    public final int value
 kotlin.text.StringsKt:
     public static char last(java.lang.CharSequence)
 kotlin.text.StringsKt__IndentKt:
@@ -38133,16 +38151,20 @@ kotlin.text.StringsKt__StringNumberConversionsJVMKt:
     public static java.lang.Double toDoubleOrNull(java.lang.String)
 kotlin.text.StringsKt__StringNumberConversionsKt
 kotlin.text.StringsKt__StringsJVMKt:
-    public static final boolean regionMatches(java.lang.String,int,java.lang.String,int,int,boolean)
     public static synthetic boolean startsWith$default(java.lang.String,java.lang.String)
     public static synthetic boolean startsWith$default(java.lang.String,java.lang.String,int)
-kotlin.text.StringsKt__StringsKt$$InternalSyntheticLambda$2$4732cf1072db78dbb5452db37a054ef6089859b432242fd75ccd4b77b2979264$0:
+kotlin.text.StringsKt__StringsKt$$InternalSyntheticLambda$3$4732cf1072db78dbb5452db37a054ef6089859b432242fd75ccd4b77b2979264$0:
+    public final synthetic boolean f$1
+kotlin.text.StringsKt__StringsKt$$InternalSyntheticLambda$4$502501cddd73bb162d6ca9a92ded4c57d40d4ff33ca2ed3e06965905455a52cd$0:
     public final synthetic boolean f$1
 kotlin.text.StringsKt__StringsKt$lineSequence$$inlined$Sequence$1
 kotlin.text.StringsKt__StringsKt:
     public static synthetic boolean contains$default(java.lang.CharSequence,java.lang.String)
     public static final int getLastIndex(java.lang.CharSequence)
+    public static int indexOf$StringsKt__StringsKt$default(java.lang.CharSequence,java.lang.String,int,int,boolean)
     public static final void requireNonNegativeLimit()
+    public static final java.lang.String substring(java.lang.String,kotlin.ranges.IntRange)
+    public static java.lang.String substringBefore(java.lang.String,char,java.lang.String)
 kotlin.text.StringsKt___StringsKt
 kotlin.time.Duration$Companion
 kotlin.time.Duration:
@@ -38778,7 +38800,6 @@ okhttp3.Headers$Builder:
 okhttp3.Headers:
     public static final okhttp3.Headers$Companion Companion
     static void <clinit>()
-    public static java.util.List values()
 okhttp3.HttpUrl$Builder$Companion
 okhttp3.HttpUrl$Builder:
     public static final okhttp3.HttpUrl$Builder$Companion Companion
@@ -38827,12 +38848,11 @@ okhttp3.OkHttpClient:
     public final int pingIntervalMillis
     public final java.net.Proxy proxy
     public final javax.net.ssl.X509TrustManager x509TrustManager
-    public static okhttp3.internal.connection.RealCall newCall()
+    public final okhttp3.internal.connection.RealCall newCall(okhttp3.Request)
     public static javax.net.ssl.SSLSocketFactory sslSocketFactory()
 okhttp3.Protocol:
     public static final okhttp3.Protocol$Companion Companion
 okhttp3.Request$Builder:
-    public final void get()
     public static okhttp3.Request$Builder headers()
     public static okhttp3.Request$Builder post()
     public static okhttp3.Request$Builder removeHeader()
@@ -38867,6 +38887,7 @@ okhttp3.Response:
     public final okhttp3.CacheControl cacheControl()
     public static java.util.List challenges()
     public static java.lang.String header()
+    public static java.util.List headers()
 okhttp3.ResponseBody$Companion$asResponseBody$1:
     public final synthetic okhttp3.MediaType $contentType
 okhttp3.ResponseBody$Companion

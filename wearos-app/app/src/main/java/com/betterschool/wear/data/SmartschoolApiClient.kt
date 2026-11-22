@@ -13,6 +13,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URLEncoder
@@ -29,8 +30,10 @@ data class PairingTicket(
 )
 
 /**
- * Client HTTP natif Kotlin (OkHttp) exécutant directement les requêtes vers <ecole>.smartschool.be.
- * Enregistre chaque requête exécutée dans [lastSmartschoolTrace] pour permettre une vérification transparente.
+ * Client HTTP natif Kotlin (OkHttp) exécutant 100% des requêtes directement vers <ecole>.smartschool.be.
+ * - Capture et met à jour automatiquement les cookies Set-Cookie (PHPSESSID, smscndc, pid) à chaque réponse.
+ * - Se connecte directement sur Smartschool (/login -> /account-verification) si des identifiants sont présents
+ *   et renouvelle automatiquement la session PHPSESSID dès qu'elle expire, sans jamais nécessiter de ré-appairer !
  */
 class SmartschoolApiClient(private val sessionManager: SessionManager) {
 
@@ -41,13 +44,146 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(12, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
-        .followRedirects(false) // Permet de détecter immédiatement un 302 vers /login
+        .followRedirects(false)
         .build()
 
     private fun recordTrace(method: String, endpoint: String, statusCode: Int) {
         val time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
         val hostShort = sessionManager.schoolHost.removePrefix("https://").removePrefix("http://")
         lastSmartschoolTrace = "[$time] $method $hostShort$endpoint -> HTTP $statusCode"
+    }
+
+    /**
+     * Authentification autonome directe de la montre auprès de <ecole>.smartschool.be/login
+     * Permet à la montre d'obtenir et de renouveler son propre cookie PHPSESSID HttpOnly.
+     */
+    suspend fun loginToSmartschool(): Boolean = withContext(Dispatchers.IO) {
+        val host = sessionManager.schoolHost
+        val username = sessionManager.username
+        val password = sessionManager.password
+        if (!host.startsWith("http") || username.isBlank() || password.isBlank()) {
+            return@withContext sessionManager.cookies.contains("PHPSESSID")
+        }
+
+        return@withContext try {
+            // Étape 1 : GET /login pour récupérer le cookie initial et les inputs cachés (_token, _generationTime)
+            val getLoginReq = buildAuthenticatedRequest("$host/login").get().build()
+            val loginHtml = httpClient.newCall(getLoginReq).execute().use { res ->
+                sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
+                recordTrace("GET", "/login", res.code)
+                res.body?.string().orEmpty()
+            }
+
+            // Extraction de tous les champs <input> du formulaire login_form
+            val formFields = extractHtmlFormInputs(loginHtml, "login_form")
+            formFields["login_form[_username]"] = username
+            formFields["login_form[_password]"] = password
+
+            val formBodyBuilder = FormBody.Builder()
+            for ((k, v) in formFields) {
+                formBodyBuilder.add(k, v)
+            }
+
+            // Étape 2 : POST /login (ou /login-check selon l'action du form)
+            val actionPath = extractFormAction(loginHtml) ?: "/login"
+            val postUrl = if (actionPath.startsWith("http")) actionPath else "$host/${actionPath.trimStart('/')}"
+
+            val postLoginReq = buildAuthenticatedRequest(postUrl)
+                .header("Referer", "$host/login")
+                .post(formBodyBuilder.build())
+                .build()
+
+            var redirectLocation: String? = null
+            httpClient.newCall(postLoginReq).execute().use { res ->
+                sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
+                recordTrace("POST", "/login", res.code)
+                if (res.code in 301..303) {
+                    redirectLocation = res.header("Location")
+                }
+            }
+
+            // Étape 3 : Si Smartschool demande la vérification de date de naissance (/account-verification)
+            if (redirectLocation != null && redirectLocation!!.contains("account-verification")) {
+                val verifUrl = if (redirectLocation!!.startsWith("http")) {
+                    redirectLocation!!
+                } else {
+                    "$host/${redirectLocation!!.trimStart('/')}"
+                }
+
+                val verifHtml = httpClient.newCall(buildAuthenticatedRequest(verifUrl).get().build()).execute().use { res ->
+                    sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
+                    res.body?.string().orEmpty()
+                }
+
+                if (sessionManager.birthDate.isNotBlank()) {
+                    val verifFields = extractAllFormInputs(verifHtml)
+                    // Remplir le champ de question de sécurité (date de naissance YYYY-MM-DD)
+                    val answerKey = verifFields.keys.firstOrNull {
+                        !it.contains("_token") && (it.contains("security_question") || it.contains("birth") || it.contains("verification"))
+                    } ?: "account_verification_form[_security_question_answer]"
+                    verifFields[answerKey] = sessionManager.birthDate
+
+                    val verifForm = FormBody.Builder()
+                    for ((k, v) in verifFields) verifForm.add(k, v)
+
+                    httpClient.newCall(
+                        buildAuthenticatedRequest(verifUrl)
+                            .header("Referer", verifUrl)
+                            .post(verifForm.build())
+                            .build()
+                    ).execute().use { res ->
+                        sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
+                        recordTrace("POST", "/account-verification", res.code)
+                    }
+                }
+            }
+
+            sessionManager.cookies.isNotBlank()
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Exécute une requête Smartschool en capturant les nouveaux cookies Set-Cookie,
+     * et si la session PHPSESSID a expiré (HTTP 302 vers /login ou HTTP 401/403),
+     * reconnecte automatiquement la montre via loginToSmartschool() puis rejoue la requête !
+     */
+    private suspend fun executeWithAutoReauth(
+        methodLabel: String,
+        endpointLabel: String,
+        requestFactory: () -> Request
+    ): Pair<Int, String> {
+        // Si on a des identifiants mais pas encore de cookie PHPSESSID, se connecter d'abord
+        if (!sessionManager.cookies.contains("PHPSESSID") && sessionManager.hasCredentials) {
+            loginToSmartschool()
+        }
+
+        val firstAttempt = httpClient.newCall(requestFactory()).execute().use { res ->
+            sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
+            val loc = res.header("Location").orEmpty()
+            val isLoginRedirect = (res.code in 301..303 && loc.contains("login", ignoreCase = true)) ||
+                res.code == 401 || res.code == 403
+            val body = res.body?.string().orEmpty()
+            Triple(res.code, body, isLoginRedirect)
+        }
+
+        if (!firstAttempt.third) {
+            recordTrace(methodLabel, endpointLabel, firstAttempt.first)
+            return Pair(firstAttempt.first, firstAttempt.second)
+        }
+
+        // La session PHPSESSID a expiré -> reconnexion automatique en arrière-plan !
+        if (sessionManager.hasCredentials && loginToSmartschool()) {
+            return httpClient.newCall(requestFactory()).execute().use { res ->
+                sessionManager.mergeCookiesFromResponse(res.headers("Set-Cookie"))
+                recordTrace(methodLabel, endpointLabel, res.code)
+                Pair(res.code, res.body?.string().orEmpty())
+            }
+        }
+
+        recordTrace(methodLabel, endpointLabel, firstAttempt.first)
+        return Pair(firstAttempt.first, firstAttempt.second)
     }
 
     suspend fun createPairingTicket(): PairingTicket = withContext(Dispatchers.IO) {
@@ -97,110 +233,25 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
                 val status = obj.optString("status")
                 val s = obj.optJSONObject("session")
                 if (status == "paired" && s != null) {
-                    val snap = s.optJSONObject("snapshot")
-                    val snapCourses = mutableListOf<WearCourseEvent>()
-                    val snapHomeworks = mutableListOf<WearHomework>()
-                    val snapMessages = mutableListOf<WearMessage>()
-                    val snapGrades = mutableListOf<WearGrade>()
-
-                    snap?.optJSONArray("courses")?.let { arr ->
-                        for (i in 0 until arr.length()) {
-                            val c = arr.optJSONObject(i) ?: continue
-                            snapCourses.add(
-                                WearCourseEvent(
-                                    id = c.optString("id", "c$i"),
-                                    subject = c.optString("subject", "Cours"),
-                                    subjectCode = c.optString("subjectCode", "CRS"),
-                                    teacher = c.optString("teacher", ""),
-                                    room = c.optString("room", "—"),
-                                    startTime = c.optString("startTime", ""),
-                                    endTime = c.optString("endTime", ""),
-                                    date = c.optString("date", ""),
-                                    colorHex = 0xFF4F46E5,
-                                    isCurrent = c.optString("status") == "in_progress",
-                                    isUpcoming = c.optString("status") == "scheduled"
-                                )
-                            )
-                        }
-                    }
-
-                    snap?.optJSONArray("homeworks")?.let { arr ->
-                        for (i in 0 until arr.length()) {
-                            val h = arr.optJSONObject(i) ?: continue
-                            snapHomeworks.add(
-                                WearHomework(
-                                    id = h.optString("id", "h$i"),
-                                    assignmentId = h.optString("assignmentId", ""),
-                                    platformId = h.optString("platformId", ""),
-                                    subject = h.optString("subject", "Matière"),
-                                    title = h.optString("title", "Devoir"),
-                                    dueDate = h.optString("dueDate", ""),
-                                    dueTime = h.optString("dueTime", "").ifEmpty { null },
-                                    isCompleted = h.optBoolean("isCompleted", false)
-                                )
-                            )
-                        }
-                    }
-
-                    snap?.optJSONArray("messages")?.let { arr ->
-                        for (i in 0 until arr.length()) {
-                            val m = arr.optJSONObject(i) ?: continue
-                            val preview = m.optString("previewSnippet", "")
-                            snapMessages.add(
-                                WearMessage(
-                                    id = m.optString("id", "m$i"),
-                                    senderName = m.optString("senderName", "Smartschool"),
-                                    subject = m.optString("subject", ""),
-                                    dateLabel = m.optString("dateLabel", ""),
-                                    previewSnippet = preview,
-                                    fullBodyText = preview,
-                                    isUnread = m.optBoolean("isUnread", false)
-                                )
-                            )
-                        }
-                    }
-
-                    snap?.optJSONArray("grades")?.let { arr ->
-                        for (i in 0 until arr.length()) {
-                            val g = arr.optJSONObject(i) ?: continue
-                            val subj = g.optString("subject", "Matière")
-                            snapGrades.add(
-                                WearGrade(
-                                    id = g.optString("id", "g$i"),
-                                    subject = subj,
-                                    title = g.optString("title", "Évaluation"),
-                                    scoreText = g.optString("scoreText", ""),
-                                    percentage = g.optDouble("percentage", 0.0),
-                                    date = g.optString("date", ""),
-                                    colorName = g.optString("colorName", "green"),
-                                    teacherName = g.optString("teacherName", ""),
-                                    isSommatif = g.optBoolean("isSommatif", true),
-                                    hoursPerWeek = SmartschoolParsers.extractHoursFromCourseName(subj)
-                                )
-                            )
-                        }
-                    }
-
                     val overallAvg = if (!s.isNull("overallAveragePct")) {
                         s.optDouble("overallAveragePct", Double.NaN).takeIf { !it.isNaN() && it > 0.0 }
                     } else null
 
                     WearPairingSessionPayload(
-                        version = s.optInt("version", 1),
+                        version = s.optInt("version", 2),
                         host = s.optString("host", ""),
                         userId = s.optString("userId", ""),
                         platformId = s.optString("platformId", ""),
-                        studentName = s.optString("studentName", "Élève"),
+                        studentName = s.optString("studentName", ""),
                         studentClass = s.optString("studentClass", ""),
-                        schoolName = s.optString("schoolName", "Smartschool"),
+                        schoolName = s.optString("schoolName", ""),
+                        username = s.optString("username", ""),
+                        password = s.optString("password", ""),
+                        birthDate = s.optString("birthDate", ""),
                         cookies = s.optString("cookies", ""),
                         isDemoMode = s.optBoolean("isDemoMode", false),
                         pairedAt = s.optString("pairedAt", ""),
-                        overallAveragePct = overallAvg,
-                        snapshotCourses = snapCourses,
-                        snapshotHomeworks = snapHomeworks,
-                        snapshotMessages = snapMessages,
-                        snapshotGrades = snapGrades
+                        overallAveragePct = overallAvg
                     )
                 } else {
                     null
@@ -211,10 +262,6 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         }
     }
 
-    /**
-     * Interroge la base de données SQLite du serveur BetterSchool (GET /api/user-average?userId=...)
-     * pour récupérer la moyenne générale exacte synchronisée chaque fois que l'élève va sur le Web.
-     */
     suspend fun fetchSqliteUserAverage(userId: String = sessionManager.userId): Double? =
         withContext(Dispatchers.IO) {
             val cleanId = userId.trim()
@@ -260,16 +307,14 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
             val path = "/planner/api/v1/planned-elements/user/$userId" +
                 "?from=$encodedFrom&to=$encodedTo&includes=icon,courses,locations,upload-folders"
 
-            val request = buildAuthenticatedRequest("$host$path").get().build()
-
-            httpClient.newCall(request).execute().use { response ->
-                recordTrace("GET", "/planner/api/v1/...", response.code)
-                val body = response.body?.string().orEmpty()
-                if (!response.isSuccessful || body.isBlank()) {
-                    throw IllegalStateException("HTTP ${response.code} sur /planner/api/v1")
-                }
-                SmartschoolParsers.parsePlannerElements(body, platformId)
+            val (code, body) = executeWithAutoReauth("GET", "/planner/api/v1/...") {
+                buildAuthenticatedRequest("$host$path").get().build()
             }
+
+            if (code !in 200..299 || body.isBlank()) {
+                throw IllegalStateException("HTTP $code sur /planner/api/v1")
+            }
+            SmartschoolParsers.parsePlannerElements(body, platformId)
         }
 
     /**
@@ -284,17 +329,15 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         val action = if (resolve) "resolve" else "unresolve"
         val path = "/planner/api/v1/planned-assignments/$platformId/$assignmentId/$action"
 
-        val emptyJsonBody = "{}".toRequestBody("application/json".toMediaType())
-        val request = buildAuthenticatedRequest("$host$path")
-            .header("X-Requested-With", "XMLHttpRequest")
-            .post(emptyJsonBody)
-            .build()
-
         return@withContext try {
-            httpClient.newCall(request).execute().use { response ->
-                recordTrace("POST", "/planner/.../$action", response.code)
-                response.isSuccessful
+            val (code, _) = executeWithAutoReauth("POST", "/planner/.../$action") {
+                val emptyJsonBody = "{}".toRequestBody("application/json".toMediaType())
+                buildAuthenticatedRequest("$host$path")
+                    .header("X-Requested-With", "XMLHttpRequest")
+                    .post(emptyJsonBody)
+                    .build()
             }
+            code in 200..299
         } catch (_: Exception) {
             false
         }
@@ -302,31 +345,28 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
 
     /**
      * Requête directe Smartschool : GET /results/api/v1/evaluations/?pageNumber=1&itemsOnPage=50
-     * + Enrichissement automatique des évaluations de type "project" via GET /results/api/v1/evaluations/{id}
-     * (exactement comme fetchRealEvaluations() dans src/services/smartschoolApi.ts:730)
      */
     suspend fun fetchDirectGrades(): List<WearGrade> = withContext(Dispatchers.IO) {
         val host = sessionManager.schoolHost
         val path = "/results/api/v1/evaluations/?pageNumber=1&itemsOnPage=50"
 
-        val request = buildAuthenticatedRequest("$host$path").get().build()
+        val (code, body) = executeWithAutoReauth("GET", "/results/api/v1/evaluations") {
+            buildAuthenticatedRequest("$host$path").get().build()
+        }
 
-        val rawArray = httpClient.newCall(request).execute().use { response ->
-            recordTrace("GET", "/results/api/v1/evaluations", response.code)
-            val body = response.body?.string().orEmpty()
-            if (!response.isSuccessful || body.isBlank()) {
-                throw IllegalStateException("HTTP ${response.code} sur /results/api/v1/evaluations")
-            }
-            val trimmed = body.trim()
-            if (trimmed.startsWith("[")) {
-                JSONArray(trimmed)
-            } else {
-                val root = JSONObject(trimmed)
-                root.optJSONArray("evaluations")
-                    ?: root.optJSONArray("items")
-                    ?: root.optJSONArray("results")
-                    ?: JSONArray()
-            }
+        if (code !in 200..299 || body.isBlank()) {
+            throw IllegalStateException("HTTP $code sur /results/api/v1/evaluations")
+        }
+
+        val trimmed = body.trim()
+        val rawArray = if (trimmed.startsWith("[")) {
+            JSONArray(trimmed)
+        } else {
+            val root = JSONObject(trimmed)
+            root.optJSONArray("evaluations")
+                ?: root.optJSONArray("items")
+                ?: root.optJSONArray("results")
+                ?: JSONArray()
         }
 
         val grades = mutableListOf<WearGrade>()
@@ -335,7 +375,6 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
             val evalType = evObj.optString("type", "normal")
             val identifier = evObj.optString("identifier", "")
 
-            // Si c'est un projet LPD sans projectGoals dans la liste, appeler l'endpoint de détail Smartschool
             if (evalType == "project" && identifier.isNotEmpty()) {
                 val existingGoals = evObj.optJSONObject("details")?.optJSONArray("projectGoals")
                 if (existingGoals == null || existingGoals.length() == 0) {
@@ -360,6 +399,7 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         val request = buildAuthenticatedRequest(url).get().build()
         return try {
             httpClient.newCall(request).execute().use { response ->
+                sessionManager.mergeCookiesFromResponse(response.headers("Set-Cookie"))
                 val body = response.body?.string().orEmpty()
                 if (response.isSuccessful && body.isNotBlank()) JSONObject(body) else null
             }
@@ -392,22 +432,19 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
             </request>
         """.trimIndent()
 
-        val formBody = FormBody.Builder().add("command", listCommandXml).build()
-
-        val request = buildAuthenticatedRequest(dispatcherUrl)
-            .header("X-Requested-With", "XMLHttpRequest")
-            .post(formBody)
-            .build()
-
-        val rawList = httpClient.newCall(request).execute().use { response ->
-            recordTrace("POST", "/?module=Messages&file=dispatcher", response.code)
-            val body = response.body?.string().orEmpty()
-            if (!response.isSuccessful || body.isBlank()) {
-                throw IllegalStateException("HTTP ${response.code} sur Messages Dispatcher")
-            }
-            SmartschoolParsers.parseMessagesListXml(body)
+        val (code, body) = executeWithAutoReauth("POST", "/?module=Messages&file=dispatcher") {
+            val formBody = FormBody.Builder().add("command", listCommandXml).build()
+            buildAuthenticatedRequest(dispatcherUrl)
+                .header("X-Requested-With", "XMLHttpRequest")
+                .post(formBody)
+                .build()
         }
 
+        if (code !in 200..299 || body.isBlank()) {
+            throw IllegalStateException("HTTP $code sur Messages Dispatcher")
+        }
+
+        val rawList = SmartschoolParsers.parseMessagesListXml(body)
         if (rawList.isEmpty()) return@withContext emptyList()
 
         val latest = rawList.first()
@@ -439,7 +476,6 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         """.trimIndent()
 
         val formBody = FormBody.Builder().add("command", showCommandXml).build()
-
         val request = buildAuthenticatedRequest(dispatcherUrl)
             .header("X-Requested-With", "XMLHttpRequest")
             .post(formBody)
@@ -447,6 +483,7 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
 
         return try {
             httpClient.newCall(request).execute().use { response ->
+                sessionManager.mergeCookiesFromResponse(response.headers("Set-Cookie"))
                 val xml = response.body?.string().orEmpty()
                 if (response.isSuccessful && xml.isNotBlank()) {
                     SmartschoolParsers.parseMessageDetailBodyXml(xml)
@@ -466,30 +503,66 @@ class SmartschoolApiClient(private val sessionManager: SessionManager) {
         val host = sessionManager.schoolHost
         if (!host.startsWith("http")) return@withContext null
         val url = "$host/Studentcard/Student/getStudents"
-        val emptyForm = "".toRequestBody("application/x-www-form-urlencoded; charset=UTF-8".toMediaType())
-
-        val request = buildAuthenticatedRequest(url)
-            .header("X-Requested-With", "XMLHttpRequest")
-            .post(emptyForm)
-            .build()
 
         return@withContext try {
-            httpClient.newCall(request).execute().use { response ->
-                recordTrace("POST", "/Studentcard/Student/getStudents", response.code)
-                val body = response.body?.string().orEmpty()
-                if (response.isSuccessful && body.isNotBlank()) {
-                    SmartschoolParsers.parseStudentProfile(
-                        rawJson = body,
-                        fallbackUserId = sessionManager.userId,
-                        fallbackPlatformId = sessionManager.platformId
-                    )
-                } else {
-                    null
-                }
+            val (code, body) = executeWithAutoReauth("POST", "/Studentcard/Student/getStudents") {
+                val emptyForm = "".toRequestBody("application/x-www-form-urlencoded; charset=UTF-8".toMediaType())
+                buildAuthenticatedRequest(url)
+                    .header("X-Requested-With", "XMLHttpRequest")
+                    .post(emptyForm)
+                    .build()
+            }
+            if (code in 200..299 && body.isNotBlank()) {
+                SmartschoolParsers.parseStudentProfile(
+                    rawJson = body,
+                    fallbackUserId = sessionManager.userId,
+                    fallbackPlatformId = sessionManager.platformId
+                )
+            } else {
+                null
             }
         } catch (_: Exception) {
             null
         }
+    }
+
+    private fun extractHtmlFormInputs(html: String, prefix: String): MutableMap<String, String> {
+        val fields = linkedMapOf<String, String>()
+        val inputRegex = Regex("<input[^>]+>", RegexOption.IGNORE_CASE)
+        val nameRegex = Regex("""name\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+        val valRegex = Regex("""value\s*=\s*["']([^"']*)["']""", RegexOption.IGNORE_CASE)
+
+        for (match in inputRegex.findAll(html)) {
+            val tag = match.value
+            val name = nameRegex.find(tag)?.groupValues?.getOrNull(1) ?: continue
+            if (name.startsWith(prefix)) {
+                val value = valRegex.find(tag)?.groupValues?.getOrNull(1) ?: ""
+                fields[name] = value
+            }
+        }
+        return fields
+    }
+
+    private fun extractAllFormInputs(html: String): MutableMap<String, String> {
+        val fields = linkedMapOf<String, String>()
+        val inputRegex = Regex("<input[^>]+>", RegexOption.IGNORE_CASE)
+        val nameRegex = Regex("""name\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+        val valRegex = Regex("""value\s*=\s*["']([^"']*)["']""", RegexOption.IGNORE_CASE)
+
+        for (match in inputRegex.findAll(html)) {
+            val tag = match.value
+            val name = nameRegex.find(tag)?.groupValues?.getOrNull(1) ?: continue
+            val value = valRegex.find(tag)?.groupValues?.getOrNull(1) ?: ""
+            fields[name] = value
+        }
+        return fields
+    }
+
+    private fun extractFormAction(html: String): String? {
+        val formRegex = Regex("""<form[^>]*name\s*=\s*["']login_form["'][^>]*>""", RegexOption.IGNORE_CASE)
+        val actionRegex = Regex("""action\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+        val formTag = formRegex.find(html)?.value ?: return null
+        return actionRegex.find(formTag)?.groupValues?.getOrNull(1)
     }
 
     private fun buildAuthenticatedRequest(url: String): Request.Builder {

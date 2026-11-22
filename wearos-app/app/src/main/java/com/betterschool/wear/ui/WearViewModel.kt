@@ -84,7 +84,6 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                 applyDemoData()
             }
             else -> {
-                // Non connecté : aucune fausse donnée, démarrage automatique du code d'appairage !
                 _uiState.update {
                     it.copy(
                         isPaired = false,
@@ -136,36 +135,35 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         startQrPairingOnWatch()
     }
 
+    /**
+     * Interroge directement <ecole>.smartschool.be depuis la montre via OkHttp.
+     * Aucune donnée ne provient d'un snapshot d'appairage.
+     */
     fun refreshFromSmartschool() {
         if (sessionManager.isDemoMode && !sessionManager.isPaired) {
             applyDemoData()
             return
         }
         if (!sessionManager.hasValidLiveSession) {
-            // Même sans cookie direct (ex: PHPSESSID HttpOnly), rafraîchir la moyenne générale depuis SQLite !
-            if (sessionManager.userId.isNotBlank()) {
-                viewModelScope.launch {
-                    val sqliteAvg = apiClient.fetchSqliteUserAverage(sessionManager.userId)
-                    if (sqliteAvg != null) {
-                        sessionManager.cachedAveragePct = sqliteAvg
-                        _uiState.update { it.copy(weightedAverage = sqliteAvg) }
-                    }
-                }
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    statusBanner = "Session manquante (ré-associez la montre)"
+                )
             }
             return
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, statusBanner = "Synchronisation...") }
-
-            // 1. Récupérer en priorité la moyenne générale exacte stockée dans la base SQLite du serveur
-            val sqliteAvg = runCatching { apiClient.fetchSqliteUserAverage(sessionManager.userId) }.getOrNull()
-            if (sqliteAvg != null) {
-                sessionManager.cachedAveragePct = sqliteAvg
-                _uiState.update { it.copy(weightedAverage = sqliteAvg) }
-            }
+            _uiState.update { it.copy(isLoading = true, statusBanner = "Connexion directe à Smartschool...") }
 
             try {
+                // 0. Si la montre a des identifiants mais pas encore de PHPSESSID, elle se connecte elle-même à /login
+                if (!sessionManager.cookies.contains("PHPSESSID") && sessionManager.hasCredentials) {
+                    apiClient.loginToSmartschool()
+                }
+
+                // 1. Découverte et certification du profil réel sur Smartschool (/Studentcard/Student/getStudents)
                 val certifiedProfile = apiClient.fetchDirectStudentProfile()
                 if (certifiedProfile != null) {
                     sessionManager.userId = certifiedProfile.userId
@@ -173,18 +171,21 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                     sessionManager.studentClass = certifiedProfile.studentClass
                 }
 
+                // 2. Requêtes directes vers Smartschool : Horaire & Devoirs, Notes Skore, Messages Dispatcher
                 val (courses, homeworks) = apiClient.fetchDirectScheduleAndHomeworks()
                 val grades = runCatching { apiClient.fetchDirectGrades() }.getOrDefault(emptyList())
-                val freshSqliteAvg = sqliteAvg ?: runCatching {
+                val messages = runCatching { apiClient.fetchDirectMessages() }.getOrDefault(emptyList())
+
+                // 3. Moyenne générale (SQLite ou calcul direct sur les évaluations Skore récupérées par la montre)
+                val sqliteAvg = runCatching {
                     apiClient.fetchSqliteUserAverage(sessionManager.userId)
                 }.getOrNull()
-                val effectiveAvg = freshSqliteAvg
+                val effectiveAvg = sqliteAvg
                     ?: SmartschoolParsers.computeWeightedGeneralAverage(grades)
                     ?: sessionManager.cachedAveragePct
                 if (effectiveAvg != null) {
                     sessionManager.cachedAveragePct = effectiveAvg
                 }
-                val messages = runCatching { apiClient.fetchDirectMessages() }.getOrDefault(emptyList())
 
                 _uiState.update { state ->
                     state.copy(
@@ -192,11 +193,11 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                         isDemoMode = false,
                         isPaired = true,
                         profile = certifiedProfile ?: state.profile,
-                        todayCourses = courses.ifEmpty { state.todayCourses },
-                        homeworks = homeworks.ifEmpty { state.homeworks },
-                        grades = grades.ifEmpty { state.grades },
-                        weightedAverage = effectiveAvg ?: state.weightedAverage,
-                        messages = messages.ifEmpty { state.messages },
+                        todayCourses = courses,
+                        homeworks = homeworks,
+                        grades = grades,
+                        weightedAverage = effectiveAvg,
+                        messages = messages,
                         statusBanner = apiClient.lastSmartschoolTrace
                     )
                 }
@@ -204,7 +205,7 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.update { state ->
                     state.copy(
                         isLoading = false,
-                        statusBanner = apiClient.lastSmartschoolTrace
+                        statusBanner = "${apiClient.lastSmartschoolTrace} (${e.message ?: "Erreur"})"
                     )
                 }
             }
@@ -233,6 +234,10 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Lors de l'appairage, la montre reçoit UNIQUEMENT ses paramètres d'authentification
+     * (aucun snapshot de cours/messages/notes) et lance immédiatement refreshFromSmartschool() !
+     */
     fun startQrPairingOnWatch() {
         pairingPollJob?.cancel()
         pairingPollJob = viewModelScope.launch {
@@ -262,40 +267,31 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                 val pairedPayload = apiClient.pollPairingSession(ticket.code)
                 if (pairedPayload != null) {
                     sessionManager.savePairedSession(pairedPayload)
-                    val sqliteAvg = runCatching {
-                        apiClient.fetchSqliteUserAverage(pairedPayload.userId)
-                    }.getOrNull()
-                    val exactAvg = sqliteAvg
-                        ?: pairedPayload.overallAveragePct
-                        ?: SmartschoolParsers.computeWeightedGeneralAverage(pairedPayload.snapshotGrades)
-                    if (exactAvg != null) {
-                        sessionManager.cachedAveragePct = exactAvg
-                    }
                     _uiState.update { state ->
                         state.copy(
                             isPollingPairing = false,
                             pairingTicket = null,
                             isDemoMode = false,
                             isPaired = true,
+                            isLoading = true,
                             schoolHost = sessionManager.schoolHost,
                             profile = WearStudentProfile(
                                 userId = pairedPayload.userId,
                                 platformId = pairedPayload.platformId,
-                                fullName = pairedPayload.studentName.ifEmpty { "Élève connecté" },
+                                fullName = pairedPayload.studentName.ifEmpty { "Connexion Smartschool..." },
                                 studentClass = pairedPayload.studentClass,
                                 schoolName = pairedPayload.schoolName.ifEmpty { "Smartschool" }
                             ),
-                            todayCourses = pairedPayload.snapshotCourses,
-                            homeworks = pairedPayload.snapshotHomeworks,
-                            messages = pairedPayload.snapshotMessages,
-                            grades = pairedPayload.snapshotGrades,
-                            weightedAverage = exactAvg,
-                            statusBanner = "Connecté"
+                            todayCourses = emptyList(),
+                            homeworks = emptyList(),
+                            messages = emptyList(),
+                            grades = emptyList(),
+                            weightedAverage = pairedPayload.overallAveragePct,
+                            statusBanner = "Authentification directe Smartschool..."
                         )
                     }
-                    if (sessionManager.hasValidLiveSession) {
-                        refreshFromSmartschool()
-                    }
+                    // La montre interroge immédiatement Smartschool par elle-même !
+                    refreshFromSmartschool()
                     break
                 }
             }

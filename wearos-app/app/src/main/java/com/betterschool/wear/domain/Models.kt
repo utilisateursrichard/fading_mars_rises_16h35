@@ -8,23 +8,27 @@ enum class TileDisplayMode(val label: String) {
     LATEST_MESSAGE("Dernier Message")
 }
 
+/**
+ * Payload d'appairage initial (transmis une seule fois à la montre).
+ * Ne contient AUCUN snapshot statique de cours/messages/notes : la montre utilise
+ * ces paramètres d'authentification pour interroger elle-même Smartschool en direct.
+ */
 @Immutable
 data class WearPairingSessionPayload(
-    val version: Int = 1,
+    val version: Int = 2,
     val host: String = "",
     val userId: String = "",
     val platformId: String = "",
     val studentName: String = "",
     val studentClass: String = "",
     val schoolName: String = "",
+    val username: String = "",
+    val password: String = "",
+    val birthDate: String = "",
     val cookies: String = "",
     val isDemoMode: Boolean = false,
     val pairedAt: String = "",
-    val overallAveragePct: Double? = null,
-    val snapshotCourses: List<WearCourseEvent> = emptyList(),
-    val snapshotHomeworks: List<WearHomework> = emptyList(),
-    val snapshotMessages: List<WearMessage> = emptyList(),
-    val snapshotGrades: List<WearGrade> = emptyList()
+    val overallAveragePct: Double? = null
 )
 
 @Immutable
@@ -95,10 +99,6 @@ data class WearMessage(
     val hasAttachment: Boolean = false
 )
 
-/**
- * Données neutres uniquement utilisées si l'utilisateur active manuellement le Mode Démo.
- * Aucune donnée personnelle n'est présente.
- */
 object WearMockData {
     val profile = WearStudentProfile(
         userId = "demo_01",

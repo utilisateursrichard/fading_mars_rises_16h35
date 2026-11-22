@@ -16,10 +16,13 @@ import {
   Terminal,
   Smartphone,
   Settings,
-  Wifi
+  Wifi,
+  Lock,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
-import { getActiveUserId, getPlatformIdFromContext, getCachedRealEvaluations } from '../../services/smartschoolApi';
+import { getActiveUserId, getPlatformIdFromContext } from '../../services/smartschoolApi';
 import { getHostPageInfo, evalHostExpression } from '../../services/smartschoolBridge';
 
 interface WearPairingModalProps {
@@ -36,16 +39,18 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
   const {
     student,
     isDemoMode,
-    todayEvents,
-    homeworks,
-    mailMessages,
     overallStats,
     activePeriodName
   } = useSchool();
 
   const [pairCode, setPairCode] = useState(initialPairCode);
-  const [schoolHost, setSchoolHost] = useState('');
+  const [schoolHost, setSchoolHost] = useState('https://jean23.smartschool.be');
+  const [smartschoolUsername, setSmartschoolUsername] = useState('');
+  const [smartschoolPassword, setSmartschoolPassword] = useState('');
+  const [smartschoolBirthDate, setSmartschoolBirthDate] = useState('');
   const [cookiesStr, setCookiesStr] = useState('');
+  const [showAdvancedSession, setShowAdvancedSession] = useState(false);
+
   const [isScanningCamera, setIsScanningCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,7 +68,6 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
     }
   }, [initialPairCode]);
 
-  // Fermeture au clavier (Échap) conformément à la section 7.3 de M3E Pro
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -79,7 +83,6 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, isTutorialOpen, onClose]);
 
-  // Détection silencieuse et automatique de la session Smartschool active
   useEffect(() => {
     if (!isOpen) {
       stopCamera();
@@ -169,7 +172,6 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
               if (extracted) {
                 setPairCode(extracted);
                 stopCamera();
-                handlePushSession(extracted);
               }
             }
           } catch {}
@@ -193,108 +195,42 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
       return;
     }
 
+    const hasCreds = smartschoolUsername.trim().length > 0 && smartschoolPassword.length > 0;
+    const hasPhpSessId = cookiesStr.includes('PHPSESSID=');
+
+    if (!hasCreds && !hasPhpSessId) {
+      setStatusMessage({
+        type: 'error',
+        text: 'Renseignez vos identifiants Smartschool (ou votre cookie PHPSESSID en mode avancé) pour que la montre puisse interroger Smartschool toute seule sans ré-appairer.'
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setStatusMessage(null);
 
     const verifiedUserId = getActiveUserId() || student?.ineNumber || '';
     const verifiedPlatformId = getPlatformIdFromContext() || '4907';
-    const realEvals = getCachedRealEvaluations() || [];
     const exactWebAveragePct = overallStats?.currentPct ?? overallStats?.current ?? undefined;
 
+    // AUCUN snapshot statique n'est envoyé : la montre reçoit uniquement sa session
+    // et exécute elle-même 100% des requêtes HTTP vers Smartschool.
     const sessionPayload = {
-      version: 1,
-      host: schoolHost.replace(/\/+$/, ''),
+      version: 2,
+      host: schoolHost.trim().replace(/\/+$/, ''),
       userId: verifiedUserId,
       platformId: verifiedPlatformId,
-      studentName: student ? `${student.firstName} ${student.lastName}`.trim() : 'Élève BetterSchool',
+      studentName: student ? `${student.firstName} ${student.lastName}`.trim() : '',
       studentClass: student?.studentClass || '',
       schoolName: student?.schoolName || 'Smartschool',
+      username: smartschoolUsername.trim(),
+      password: smartschoolPassword,
+      birthDate: smartschoolBirthDate.trim(),
       cookies: cookiesStr.trim(),
-      isDemoMode,
+      isDemoMode: false,
       activePeriod: activePeriodName || '',
       overallAveragePct: exactWebAveragePct,
-      pairedAt: new Date().toISOString(),
-      snapshot: {
-        courses: todayEvents.slice(0, 12).map((c) => ({
-          id: c.id,
-          subject: c.subject,
-          subjectCode: c.subjectCode,
-          teacher: c.teacher,
-          room: c.room,
-          startTime: c.startTime,
-          endTime: c.endTime,
-          date: c.date,
-          status: c.status
-        })),
-        homeworks: homeworks.slice(0, 15).map((h) => ({
-          id: h.id,
-          assignmentId: h.assignmentId || h.id,
-          platformId: h.platformId || verifiedPlatformId,
-          subject: h.subject,
-          title: h.title,
-          dueDate: h.dueDate,
-          dueTime: h.dueTime || '',
-          isCompleted: h.isCompleted
-        })),
-        messages: mailMessages.slice(0, 10).map((m) => ({
-          id: m.id,
-          senderName: m.from,
-          subject: m.subject,
-          dateLabel: m.date,
-          previewSnippet: m.snippet || m.subject,
-          isUnread: m.unread
-        })),
-        grades: realEvals.map((ev) => {
-          const isFormative =
-            ev.component?.abbreviation?.toUpperCase() === 'F' ||
-            /formatif|formatief/i.test(ev.component?.name || '') ||
-            ev.doesCount === false;
-
-          let scoreText = ev.graphic?.description || '';
-          let percentage = typeof ev.graphic?.value === 'number' ? ev.graphic.value : 0;
-
-          if (ev.type === 'project' && ev.details?.projectGoals && ev.details.projectGoals.length > 0) {
-            let sumObt = 0;
-            let sumTot = 0;
-            for (const g of ev.details.projectGoals) {
-              const m = (g.graphic?.description || '').trim().match(/^([\d,.]+)\s*\/\s*([\d,.]+)$/);
-              if (m) {
-                const o = parseFloat(m[1].replace(',', '.'));
-                const t = parseFloat(m[2].replace(',', '.'));
-                if (!isNaN(o) && !isNaN(t) && t > 0) {
-                  sumObt += o;
-                  sumTot += t;
-                }
-              }
-            }
-            if (sumTot > 0) {
-              scoreText = `${sumObt}/${sumTot}`;
-              percentage = Math.round((sumObt / sumTot) * 100);
-            }
-          } else if (scoreText) {
-            const m = scoreText.trim().match(/^([\d,.]+)\s*\/\s*([\d,.]+)$/);
-            if (m && typeof ev.graphic?.value !== 'number') {
-              const o = parseFloat(m[1].replace(',', '.'));
-              const t = parseFloat(m[2].replace(',', '.'));
-              if (!isNaN(o) && !isNaN(t) && t > 0) {
-                percentage = Math.round((o / t) * 100);
-              }
-            }
-          }
-
-          return {
-            id: ev.identifier,
-            subject: ev.courses?.[0]?.name || 'Matière',
-            title: ev.name,
-            scoreText: scoreText || `${percentage}%`,
-            percentage,
-            date: (ev.date || '').slice(0, 10),
-            colorName: ev.graphic?.color || 'green',
-            teacherName: ev.gradebookOwner?.name?.startingWithLastName || '',
-            isSommatif: !isFormative && ev.isPublished !== false
-          };
-        })
-      }
+      pairedAt: new Date().toISOString()
     };
 
     const endpoints = [
@@ -326,9 +262,10 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
     setIsSubmitting(false);
 
     if (succeeded) {
+      setSmartschoolPassword('');
       setStatusMessage({
         type: 'success',
-        text: 'Votre montre est connectée ! Vos horaires, messages et notes sont synchronisés.'
+        text: 'Montre associée ! Elle se connecte maintenant directement à Smartschool en totale autonomie.'
       });
     } else {
       setStatusMessage({
@@ -363,7 +300,6 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
 
   return createPortal(
     <>
-      {/* Modale Principale M3E Pro : Appairage & Téléchargement */}
       <div
         onClick={onClose}
         className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-150"
@@ -372,7 +308,7 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
           onClick={(e) => e.stopPropagation()}
           className="wear-modal-slide-bounce relative w-full max-w-md my-auto bg-white rounded-[28px] shadow-modal border border-slate-200/80 overflow-hidden"
         >
-          {/* En-tête M3E Pro (fond blanc calme, micro-bordure slate-100, icône tonale) */}
+          {/* En-tête M3E Pro */}
           <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200/60 flex items-center justify-center shrink-0">
@@ -383,12 +319,11 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
                   Montre Wear OS
                 </h3>
                 <p className="font-sans text-xs leading-4 font-medium text-slate-500 truncate">
-                  Installation & synchronisation rapide
+                  Connexion autonome directe à Smartschool
                 </p>
               </div>
             </div>
 
-            {/* Actions d'en-tête : Point d'interrogation (Tuto) + Croix (Fermer) */}
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
@@ -412,8 +347,8 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
           </div>
 
           {/* Corps M3E Pro */}
-          <div className="p-5 sm:p-6 space-y-4">
-            {/* Carte Téléchargement APK — Executive Calm (surface slate-50/80 + bouton sobre) */}
+          <div className="p-5 sm:p-6 space-y-4 max-h-[78vh] overflow-y-auto">
+            {/* Carte Téléchargement APK */}
             <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -438,31 +373,102 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
               </a>
             </div>
 
-            {/* Profil vérifié (lecture seule, anti-usurpation) */}
-            <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200/80 text-slate-700 flex items-center justify-center shrink-0 shadow-subtle">
-                  <UserCheck className="w-4 h-4 text-indigo-600" />
+            {/* Identifiants Smartschool stockés uniquement sur la montre pour requêtes 100% autonomes */}
+            <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/70 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-display text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Identifiants Smartschool (sur la montre)</span>
+                </span>
+                <span className="font-sans text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  Auto-login direct
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block font-sans text-[11px] font-bold text-slate-600 mb-1">
+                    Identifiant Smartschool
+                  </label>
+                  <input
+                    type="text"
+                    value={smartschoolUsername}
+                    onChange={(e) => setSmartschoolUsername(e.target.value)}
+                    placeholder="Ex: prenom.nom"
+                    className="w-full bg-white border border-slate-200/90 rounded-xl px-3 py-2 font-sans text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                  />
                 </div>
-                <div className="min-w-0">
-                  <p className="font-sans text-xs leading-4 font-bold text-slate-900 truncate">
-                    {student ? `${student.firstName} ${student.lastName}` : 'Compte Élève'}
-                  </p>
-                  <p className="font-sans text-xs leading-4 font-medium text-slate-500 truncate mt-0.5">
-                    {isDemoMode ? 'Mode Démo actif' : `${student?.schoolName || 'Smartschool'} • ${student?.studentClass || ''}`}
-                  </p>
+                <div>
+                  <label className="block font-sans text-[11px] font-bold text-slate-600 mb-1">
+                    Mot de passe
+                  </label>
+                  <input
+                    type="password"
+                    value={smartschoolPassword}
+                    onChange={(e) => setSmartschoolPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-white border border-slate-200/90 rounded-xl px-3 py-2 font-sans text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                  />
                 </div>
               </div>
-              <span className="font-sans text-[11px] leading-[14px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
-                Vérifié
-              </span>
+
+              <button
+                type="button"
+                onClick={() => setShowAdvancedSession(!showAdvancedSession)}
+                className="font-sans text-[11px] font-bold text-slate-500 hover:text-indigo-600 inline-flex items-center gap-1 transition-colors"
+              >
+                {showAdvancedSession ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                <span>Options avancées (Date de naissance / Cookie PHPSESSID / École)</span>
+              </button>
+
+              {showAdvancedSession && (
+                <div className="space-y-2.5 pt-1 border-t border-slate-200/60">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block font-sans text-[11px] font-bold text-slate-600 mb-1">
+                        École Smartschool
+                      </label>
+                      <input
+                        type="text"
+                        value={schoolHost}
+                        onChange={(e) => setSchoolHost(e.target.value)}
+                        placeholder="https://ecole.smartschool.be"
+                        className="w-full bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 font-mono text-[11px] text-slate-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-sans text-[11px] font-bold text-slate-600 mb-1">
+                        Date de naissance (si demandée)
+                      </label>
+                      <input
+                        type="date"
+                        value={smartschoolBirthDate}
+                        onChange={(e) => setSmartschoolBirthDate(e.target.value)}
+                        className="w-full bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 font-sans text-xs text-slate-800"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block font-sans text-[11px] font-bold text-slate-600 mb-1">
+                      Ou Cookie de session direct (si connexion SSO Google/Microsoft)
+                    </label>
+                    <input
+                      type="text"
+                      value={cookiesStr}
+                      onChange={(e) => setCookiesStr(e.target.value)}
+                      placeholder="PHPSESSID=...; smscndc=...; pid=..."
+                      className="w-full bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 font-mono text-[11px] text-slate-800"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Section Appairage QR / Code 6 chiffres */}
-            <div className="space-y-3 pt-1">
+            {/* Section Code à 6 chiffres / Scan QR de la montre */}
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <label className="font-sans text-[11px] leading-[14px] font-bold uppercase tracking-wider text-slate-500">
-                  Associer la montre
+                  Code affiché sur la montre
                 </label>
                 {!isScanningCamera && (
                   <button
@@ -508,7 +514,7 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
                 maxLength={7}
                 value={pairCode}
                 onChange={(e) => setPairCode(e.target.value.toUpperCase())}
-                placeholder="Code à 6 chiffres affiché sur la montre"
+                placeholder="Code à 6 chiffres (ex: 482 915)"
                 className="w-full bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 font-mono text-sm font-semibold tracking-wider text-center uppercase text-slate-800 placeholder:font-sans placeholder:font-medium placeholder:tracking-normal placeholder:normal-case placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
               />
             </div>
@@ -562,7 +568,7 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
         </div>
       </div>
 
-      {/* Seconde Pop-up M3E Pro : Tutoriel Complet d'Installation Wear OS (ouverte au clic sur ?) */}
+      {/* Seconde Pop-up M3E Pro : Tutoriel Complet d'Installation Wear OS */}
       {isTutorialOpen && (
         <div
           onClick={() => setIsTutorialOpen(false)}
@@ -572,7 +578,6 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
             onClick={(e) => e.stopPropagation()}
             className="wear-modal-slide-bounce relative w-full max-w-lg my-auto bg-white rounded-[28px] shadow-modal border border-slate-200/80 overflow-hidden"
           >
-            {/* En-tête du Tutoriel */}
             <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200/60 flex items-center justify-center shrink-0">
@@ -597,9 +602,7 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
               </button>
             </div>
 
-            {/* Contenu défilable du Tutoriel */}
             <div className="p-5 sm:p-6 space-y-4 max-h-[72vh] overflow-y-auto">
-              {/* Étape 1 : Télécharger l'APK */}
               <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/70 space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
@@ -624,7 +627,6 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
                 </p>
               </div>
 
-              {/* Étape 2 : Activer le Débogage sans fil sur la montre */}
               <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/70 space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-800 border border-indigo-200/70 font-sans text-xs font-bold flex items-center justify-center">
@@ -656,7 +658,6 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
                 </ul>
               </div>
 
-              {/* Étape 3 : Commandes ADB depuis un PC */}
               <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/70 space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-800 border border-indigo-200/70 font-sans text-xs font-bold flex items-center justify-center">
@@ -703,7 +704,6 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
                 </div>
               </div>
 
-              {/* Alternative sans PC : depuis un smartphone Android */}
               <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/70 space-y-1.5">
                 <div className="flex items-center gap-2">
                   <Smartphone className="w-4 h-4 text-indigo-600" />
@@ -717,7 +717,6 @@ export const WearPairingModal: React.FC<WearPairingModalProps> = ({
               </div>
             </div>
 
-            {/* Pied du Tutoriel */}
             <div className="p-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-end">
               <button
                 type="button"
