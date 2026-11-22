@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">BetterSchool</string>
+    <string name="tile_label">BetterSchool Direct</string>
+    <string name="tile_description">Affiche votre prochain cours, votre dernière note ou votre dernier message Smartschool.</string>
+</resources>

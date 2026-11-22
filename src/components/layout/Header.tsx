@@ -7,9 +7,11 @@ import {
   MessageSquare, 
   ExternalLink, 
   PanelLeft,
-  User
+  User,
+  Watch
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
+import { WearPairingModal } from '../modals/WearPairingModal';
 
 interface HeaderProps {
   onOpenMobileMenu: () => void;
@@ -32,7 +34,21 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   } = useSchool();
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isWearModalOpen, setIsWearModalOpen] = useState(false);
+  const [initialWearCode, setInitialWearCode] = useState('');
   const notifRef = useRef<HTMLDivElement>(null);
+
+  // Ouvrir automatiquement la modale Wear OS si l'utilisateur a scanné le QR Code de sa montre (?wearPair=XXXXXX)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const wearPair = params.get('wearPair');
+      if (wearPair) {
+        setInitialWearCode(wearPair);
+        setIsWearModalOpen(true);
+      }
+    }
+  }, []);
 
   // Close notifications popover on click outside
   useEffect(() => {
@@ -116,6 +132,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
         >
           <span className={`w-2 h-2 rounded-full ${isDemoMode ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
           <span>{isDemoMode ? 'Mode Démo' : 'Mode Réel'}</span>
+        </button>
+
+        {/* Wear OS Pairing Button */}
+        <button
+          onClick={() => setIsWearModalOpen(true)}
+          className="relative p-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+          title="Connecter une montre Wear OS"
+          aria-label="Connecter une montre Wear OS"
+        >
+          <Watch className="w-4 h-4" />
         </button>
 
         {/* Direct Messages Shortcut */}
@@ -227,6 +253,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
         </div>
 
       </div>
+
+      <WearPairingModal
+        isOpen={isWearModalOpen}
+        onClose={() => setIsWearModalOpen(false)}
+        initialPairCode={initialWearCode}
+      />
 
     </header>
   );

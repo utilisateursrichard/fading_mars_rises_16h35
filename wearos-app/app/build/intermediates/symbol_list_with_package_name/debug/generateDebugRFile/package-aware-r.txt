@@ -1,0 +1,4 @@
+com.betterschool.wear
+string app_name
+string tile_description
+string tile_label
