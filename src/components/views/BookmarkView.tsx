@@ -254,8 +254,7 @@ export const BookmarkView: React.FC = () => {
             </p>
 
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2 text-slate-600">
-              <p>🎯 <strong>Raccourci de fermeture :</strong> Touche <kbd className="font-bold bg-white px-1.5 py-0.5 rounded border border-slate-200">Échap</kbd></p>
-              <p>🔘 <strong>Bouton flottant :</strong> Présent en bas à droite pour quitter d'un clic</p>
+              <p>🎯 <strong>Raccourci de fermeture :</strong> Touche <kbd className="font-bold bg-white px-1.5 py-0.5 rounded border border-slate-200">Échap</kbd> ou reclic sur le favori</p>
               <p>🎨 <strong>Favicon & Titre :</strong> L'icône et le titre de l'onglet Chrome passent automatiquement en BetterSchool et se restaurent à la fermeture.</p>
             </div>
 
