@@ -11,7 +11,6 @@ import {
 import { useSchool } from '../../context/SchoolContext';
 import { SmartschoolContact } from '../../types/school';
 import { searchSmartschoolRecipients } from '../../services/smartschoolMessages';
-import { mockContacts } from '../../data/mockMessages';
 
 export const ComposeMessageModal: React.FC = () => {
   const { 
@@ -85,15 +84,16 @@ export const ComposeMessageModal: React.FC = () => {
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        if (!isDemoMode) {
-          const results = await searchSmartschoolRecipients(recipientQuery.trim());
-          setRecipientResults(results);
-        } else {
+        if (import.meta.env.DEV && isDemoMode) {
+          const fixtures = await import('../../dev/demoFixtures');
           const q = recipientQuery.toLowerCase().trim();
-          const filtered = mockContacts.filter(c => 
+          const filtered = fixtures.demoContacts.filter(c => 
             c.name.toLowerCase().includes(q) || c.className.toLowerCase().includes(q)
           );
           setRecipientResults(filtered);
+        } else {
+          const results = await searchSmartschoolRecipients(recipientQuery.trim());
+          setRecipientResults(results);
         }
       } catch {
         setRecipientResults([]);

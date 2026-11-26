@@ -19,6 +19,8 @@ import {
   Check
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
+import { useUITheme } from '../../context/UIThemeContext';
+import { getThemeTokens } from '../../utils/themeTokens';
 import { getSubjectTheme } from '../../utils/theme';
 import { Grade } from '../../types/school';
 import { isSubjectFormativeOnly, isGradeFormative } from '../../utils/grades';
@@ -37,6 +39,8 @@ export const ResultsView: React.FC = () => {
     globalSearch,
     isDemoMode
   } = useSchool();
+  const { uiTheme } = useUITheme();
+  const tk = getThemeTokens(uiTheme);
 
   // Mode d'affichage : 'bulletin' (vue par matière) ou 'feed' (flux chronologique)
   const [viewMode, setViewMode] = useState<'bulletin' | 'feed'>('bulletin');
@@ -186,28 +190,26 @@ export const ResultsView: React.FC = () => {
     <div className="space-y-6 pb-12 max-w-6xl mx-auto">
       
       {/* Header avec Navigation de Vue & Période */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/70 shadow-subtle">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 ${tk.card}`}>
         <div>
           <div className="flex items-center gap-2.5">
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Résultats & Notes</h2>
-            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-indigo-50 text-indigo-700">
+            <h2 className={`text-xl font-extrabold tracking-tight ${tk.textPrimary}`}>Résultats & Notes</h2>
+            <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full ${tk.subSurface} ${tk.textSecondary}`}>
               Module Skore
             </span>
           </div>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
+          <p className={`text-xs font-medium mt-0.5 ${tk.textMuted}`}>
             Pondération par points bruts cumulés et volume horaire hebdomadaire
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           {/* Segmented Control : Bulletin vs Flux chronologique */}
-          <div className="flex items-center p-1 bg-slate-100 rounded-2xl text-xs font-bold">
+          <div className={`flex items-center p-1 text-xs font-bold ${tk.subSurface}`}>
             <button
               onClick={() => setViewMode('bulletin')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl transition-all ${
-                viewMode === 'bulletin'
-                  ? 'bg-white text-slate-900 shadow-subtle'
-                  : 'text-slate-500 hover:text-slate-900'
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 transition-all ${
+                viewMode === 'bulletin' ? tk.primaryBtn : tk.textMuted
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -215,10 +217,8 @@ export const ResultsView: React.FC = () => {
             </button>
             <button
               onClick={() => setViewMode('feed')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl transition-all ${
-                viewMode === 'feed'
-                  ? 'bg-white text-slate-900 shadow-subtle'
-                  : 'text-slate-500 hover:text-slate-900'
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 transition-all ${
+                viewMode === 'feed' ? tk.primaryBtn : tk.textMuted
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
@@ -228,15 +228,13 @@ export const ResultsView: React.FC = () => {
 
           {/* Sélecteur de Période (Dynamique en Réel ou T1/T2/T3 en Démo) */}
           {availablePeriods.length > 0 ? (
-            <div className="flex items-center p-1 bg-slate-100 rounded-2xl text-xs font-bold">
+            <div className={`flex items-center p-1 text-xs font-bold ${tk.subSurface}`}>
               {availablePeriods.map(p => (
                 <button
                   key={p}
                   onClick={() => setActivePeriodName(p)}
-                  className={`px-3 py-1.5 rounded-xl transition-all ${
-                    activePeriodName === p
-                      ? 'bg-white text-slate-900 shadow-subtle'
-                      : 'text-slate-500 hover:text-slate-900'
+                  className={`px-3 py-1.5 transition-all ${
+                    activePeriodName === p ? tk.primaryBtn : tk.textMuted
                   }`}
                 >
                   {p}
@@ -244,15 +242,13 @@ export const ResultsView: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="flex items-center p-1 bg-slate-100 rounded-2xl text-xs font-bold">
+            <div className={`flex items-center p-1 text-xs font-bold ${tk.subSurface}`}>
               {(['T1', 'T2', 'T3'] as const).map(period => (
                 <button
                   key={period}
                   onClick={() => setActivePeriod(period)}
-                  className={`px-3.5 py-1.5 rounded-xl transition-all ${
-                    activePeriod === period
-                      ? 'bg-white text-slate-900 shadow-subtle'
-                      : 'text-slate-500 hover:text-slate-900'
+                  className={`px-3.5 py-1.5 transition-all ${
+                    activePeriod === period ? tk.primaryBtn : tk.textMuted
                   }`}
                 >
                   {period === 'T1' ? '1er Trimestre' : period === 'T2' ? '2ème Trimestre' : '3ème Trimestre'}
@@ -266,62 +262,185 @@ export const ResultsView: React.FC = () => {
       {/* Grille Synthèse Globale & Simulateur */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* KPI Moyenne Générale M3E Pro */}
-        <div className="lg:col-span-2 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/70 shadow-subtle flex flex-col justify-between">
+        {/* KPI Moyenne Générale adapté au thème actif */}
+        <div
+          className={`lg:col-span-2 p-6 sm:p-7 flex flex-col justify-between transition-all ${
+            uiTheme === 'pulse'
+              ? 'bg-[#121318] text-white rounded-[24px] shadow-lg'
+              : uiTheme === 'google_m3e'
+                ? 'bg-[#D3E4FF] text-[#001C38] rounded-[32px]'
+                : uiTheme === 'nova'
+                  ? 'bg-gradient-to-br from-[#191D2A] to-[#12151F] text-white rounded-3xl border border-white/10'
+                  : uiTheme === 'horizon'
+                    ? 'bg-gradient-to-br from-[#0F172A] to-[#1E3A8A] text-white rounded-3xl shadow-md'
+                    : uiTheme === 'obsidian'
+                      ? 'bg-[#151822] text-slate-100 rounded-xl border border-white/[0.08]'
+                      : 'bg-white text-[#1D1D1F] rounded-[20px] border border-black/[0.06] shadow-xs'
+          }`}
+        >
           <div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="flex items-center justify-between gap-2">
+              <span
+                className={`text-xs font-bold uppercase tracking-wider ${
+                  uiTheme === 'pulse' || uiTheme === 'nova' || uiTheme === 'horizon'
+                    ? 'text-white/60'
+                    : uiTheme === 'google_m3e'
+                      ? 'text-[#001C38]/70'
+                      : 'text-slate-400'
+                }`}
+              >
                 Moyenne Générale Pondérée • {activePeriodName || activePeriod}
               </span>
               {overallStats && (
-                <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700">
-                  {overallStats.current >= 80 ? 'Mention Très Bien' : overallStats.current >= 70 ? 'Mention Bien' : overallStats.current >= 60 ? 'Mention Assez Bien' : 'En bonne voie'}
+                <span
+                  className={`px-2.5 py-1 text-xs font-bold rounded-full ${
+                    uiTheme === 'google_m3e'
+                      ? 'bg-[#C6E7CE] text-[#0B3B1E]'
+                      : uiTheme === 'pulse' || uiTheme === 'nova' || uiTheme === 'horizon'
+                        ? 'bg-white/15 text-white'
+                        : 'bg-emerald-50 text-emerald-700'
+                  }`}
+                >
+                  {overallStats.current >= 80
+                    ? 'Mention Très Bien'
+                    : overallStats.current >= 70
+                      ? 'Mention Bien'
+                      : overallStats.current >= 60
+                        ? 'Mention Assez Bien'
+                        : 'En bonne voie'}
                 </span>
               )}
             </div>
 
             {overallStats ? (
-              <div className="mt-4 flex flex-col sm:flex-row sm:items-baseline gap-6">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900">
-                    {overallStats.current}
-                  </span>
-                  <span className="text-slate-400 text-lg font-bold">
-                    / 100
-                  </span>
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                <div className="space-y-3">
+                  <div className="flex items-baseline gap-2">
+                    <span
+                      className={`text-4xl sm:text-5xl font-black tracking-tight ${
+                        uiTheme === 'pulse' || uiTheme === 'nova' || uiTheme === 'horizon'
+                          ? 'text-white'
+                          : uiTheme === 'google_m3e'
+                            ? 'text-[#001C38]'
+                            : 'text-slate-900'
+                      }`}
+                    >
+                      {overallStats.current}
+                    </span>
+                    <span
+                      className={`text-lg font-bold ${
+                        uiTheme === 'pulse' || uiTheme === 'nova' || uiTheme === 'horizon'
+                          ? 'text-white/50'
+                          : uiTheme === 'google_m3e'
+                            ? 'text-[#001C38]/60'
+                            : 'text-slate-400'
+                      }`}
+                    >
+                      / 100
+                    </span>
+                  </div>
+
+                  {overallStats.totalWeeklyHours ? (
+                    <div
+                      className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full w-fit ${
+                        uiTheme === 'pulse' || uiTheme === 'nova' || uiTheme === 'horizon'
+                          ? 'bg-white/10 text-white/90'
+                          : uiTheme === 'google_m3e'
+                            ? 'bg-white/75 text-[#001C38]'
+                            : 'bg-slate-50 text-slate-600 border border-slate-200/60'
+                      }`}
+                    >
+                      <BookOpen className="w-3.5 h-3.5" />
+                      <span>{overallStats.totalWeeklyHours}h de cours hebdomadaires</span>
+                    </div>
+                  ) : null}
                 </div>
 
-                {overallStats.totalWeeklyHours ? (
-                  <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200/60 w-fit">
-                    <BookOpen className="w-3.5 h-3.5 text-indigo-500" />
-                    <span>{overallStats.totalWeeklyHours}h de cours hebdomadaires</span>
+                {/* Apple Pro Activity Ring OR Pulse/Nova Subject Mini-Bars */}
+                {uiTheme === 'apple_pro' && (
+                  <div className="relative w-24 h-24 flex items-center justify-center shrink-0">
+                    <svg className="w-24 h-24 -rotate-90" viewBox="0 0 96 96">
+                      <circle cx="48" cy="48" r="38" fill="none" stroke="#E5E5EA" strokeWidth="8" />
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="38"
+                        fill="none"
+                        stroke="#34C759"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                        strokeDasharray={2 * Math.PI * 38}
+                        strokeDashoffset={
+                          2 * Math.PI * 38 * (1 - Math.min(100, Math.max(0, overallStats.current)) / 100)
+                        }
+                      />
+                    </svg>
+                    <span className="absolute text-sm font-bold text-[#1D1D1F]">
+                      {Math.round(overallStats.current)}%
+                    </span>
                   </div>
-                ) : null}
+                )}
+
+                {(uiTheme === 'pulse' || uiTheme === 'nova') && filteredReports.length > 0 && (
+                  <div className="w-full sm:w-56 space-y-2">
+                    {filteredReports
+                      .filter((r) => r.studentAverage !== null)
+                      .slice(0, 3)
+                      .map((rep) => {
+                        const avg = rep.studentAverage ?? 0;
+                        const pct = avg > 20 ? avg : (avg / 20) * 100;
+                        return (
+                          <div key={rep.subjectCode} className="space-y-1">
+                            <div className="flex justify-between text-[10px] font-bold">
+                              <span className="text-white/75 truncate max-w-[130px]">
+                                {rep.subject}
+                              </span>
+                              <span className="text-amber-300 font-mono">{pct.toFixed(0)}%</span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-emerald-400"
+                                style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="py-8 text-center text-xs text-slate-400">
+              <div className="py-8 text-center text-xs opacity-60">
                 Aucune note enregistrée pour cette période.
               </div>
             )}
           </div>
 
-          <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+          <div
+            className={`mt-6 pt-5 border-t flex items-center justify-between text-xs ${
+              uiTheme === 'pulse' || uiTheme === 'nova' || uiTheme === 'horizon'
+                ? 'border-white/10 text-white/60'
+                : uiTheme === 'google_m3e'
+                  ? 'border-[#001C38]/10 text-[#001C38]/70'
+                  : 'border-slate-100 text-slate-400'
+            }`}
+          >
             <span>Règle officielle : points bruts sommatifs cumulés</span>
-            <span className="font-semibold text-slate-600">
+            <span className="font-semibold">
               {allChronologicalGrades.filter(g => g.isSommatif && !g.isManuallyExcluded).length} évaluations comptabilisées
             </span>
           </div>
         </div>
 
         {/* Simulateur de Moyenne Interactif */}
-        <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/70 shadow-subtle flex flex-col justify-between">
+        <div className={`${tk.card} p-6 sm:p-7 flex flex-col justify-between`}>
           <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Calculator className="w-4 h-4 text-indigo-600" />
-                <h3 className="font-bold text-sm text-slate-900">Simulateur de note</h3>
+                <Calculator className="w-4 h-4 text-indigo-500" />
+                <h3 className={`font-bold text-sm ${tk.textPrimary}`}>Simulateur de note</h3>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tk.subSurface} ${tk.textSecondary}`}>
                 Impact direct
               </span>
             </div>
@@ -329,14 +448,14 @@ export const ResultsView: React.FC = () => {
             {filteredReports.length > 0 ? (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Matière</label>
+                  <label className={`block text-[11px] font-bold uppercase mb-1 ${tk.textMuted}`}>Matière</label>
                   <select
                     value={activeSimSubject}
                     onChange={(e) => {
                       setSimSubject(e.target.value);
                       setHasSimulated(true);
                     }}
-                    className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    className={`w-full px-3 py-2 text-xs font-bold focus:outline-none ${tk.inputField}`}
                   >
                     {filteredReports.map(rep => (
                       <option key={rep.subjectCode} value={rep.subjectCode}>
@@ -348,8 +467,8 @@ export const ResultsView: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">
-                      Note espérée {simTotal > 0 && <span className="text-indigo-600 font-extrabold ml-1">({Number(((simObtained / simTotal) * 100).toFixed(0))}%)</span>}
+                    <label className={`block text-[11px] font-bold uppercase mb-1 ${tk.textMuted}`}>
+                      Note espérée {simTotal > 0 && <span className="text-indigo-500 font-extrabold ml-1">({Number(((simObtained / simTotal) * 100).toFixed(0))}%)</span>}
                     </label>
                     <input
                       type="number"
@@ -361,11 +480,11 @@ export const ResultsView: React.FC = () => {
                         setSimObtained(Number(e.target.value));
                         setHasSimulated(true);
                       }}
-                      className="w-full px-3 py-2 text-xs font-black text-indigo-600 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      className={`w-full px-3 py-2 text-xs font-black focus:outline-none ${tk.inputField}`}
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Sur total (/)</label>
+                    <label className={`block text-[11px] font-bold uppercase mb-1 ${tk.textMuted}`}>Sur total (/)</label>
                     <input
                       type="number"
                       min="1"
@@ -375,46 +494,46 @@ export const ResultsView: React.FC = () => {
                         setSimTotal(Number(e.target.value));
                         setHasSimulated(true);
                       }}
-                      className="w-full px-3 py-2 text-xs font-black text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      className={`w-full px-3 py-2 text-xs font-black focus:outline-none ${tk.inputField}`}
                     />
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="py-6 text-center text-xs text-slate-400 font-medium">
+              <div className={`py-6 text-center text-xs font-medium ${tk.textMuted}`}>
                 Le simulateur sera disponible dès la publication des premières notes.
               </div>
             )}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-slate-100">
+          <div className={`mt-4 pt-4 border-t ${tk.borderSubtle}`}>
             {hasSimulated && simulatedStats ? (
               <div className="space-y-2.5">
                 {/* 1. Impact sur la matière sélectionnée */}
-                <div className="p-3 rounded-2xl bg-indigo-50/70 border border-indigo-100/80 flex items-center justify-between">
+                <div className={`p-3 ${tk.subSurface} border ${tk.borderSubtle} flex items-center justify-between`}>
                   <div className="min-w-0 pr-2">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-900/80 truncate">
+                    <p className={`text-[10px] font-bold uppercase tracking-wider truncate ${tk.textSecondary}`}>
                       Moyenne en {simulatedStats.targetSubjectName}
                     </p>
                     <div className="flex items-baseline gap-1.5 mt-0.5">
-                      <span className="text-xs text-slate-400 line-through font-semibold">
+                      <span className={`text-xs line-through font-semibold ${tk.textMuted}`}>
                         {simulatedStats.targetSubjectOldPct !== null
                           ? `${simulatedStats.targetSubjectOldPct}%`
                           : 'N/A'}
                       </span>
-                      <span className="text-slate-400 font-bold text-xs">→</span>
-                      <span className="text-base sm:text-lg font-black text-indigo-700">
+                      <span className={`font-bold text-xs ${tk.textMuted}`}>→</span>
+                      <span className={`text-base sm:text-lg font-black ${tk.textPrimary}`}>
                         {simulatedStats.targetSubjectNewPct}%
                       </span>
-                      <span className="text-[10px] text-indigo-500 font-semibold ml-1">({simulatedStats.targetSubjectNew20}/20)</span>
+                      <span className={`text-[10px] font-semibold ml-1 ${tk.textMuted}`}>({simulatedStats.targetSubjectNew20}/20)</span>
                     </div>
                   </div>
                   <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold shrink-0 ${
                     simulatedStats.targetSubjectDiff === null
-                      ? 'bg-indigo-100 text-indigo-700'
+                      ? 'bg-indigo-500/15 text-indigo-500'
                       : simulatedStats.targetSubjectDiff >= 0
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-rose-100 text-rose-700'
+                        ? 'bg-emerald-500/15 text-emerald-500'
+                        : 'bg-rose-500/15 text-rose-500'
                   }`}>
                     {simulatedStats.targetSubjectDiff === null
                       ? '1ère note'
@@ -425,24 +544,24 @@ export const ResultsView: React.FC = () => {
                 </div>
 
                 {/* 2. Impact sur la moyenne générale */}
-                <div className="p-3 rounded-2xl bg-slate-900 text-white flex items-center justify-between shadow-subtle">
+                <div className={`p-3 flex items-center justify-between ${tk.heroBanner}`}>
                   <div className="min-w-0 pr-2">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <p className={`text-[10px] font-bold uppercase tracking-wider ${tk.heroSubtitle}`}>
                       Moyenne Générale
                     </p>
                     <div className="flex items-baseline gap-1.5 mt-0.5">
-                      <span className="text-xs text-slate-400 line-through font-semibold">
+                      <span className={`text-xs line-through font-semibold ${tk.heroSubtitle}`}>
                         {simulatedStats.currentOverallPct}%
                       </span>
-                      <span className="text-slate-500 font-bold text-xs">→</span>
-                      <span className="text-base sm:text-lg font-black text-white">
+                      <span className={`font-bold text-xs ${tk.heroSubtitle}`}>→</span>
+                      <span className={`text-base sm:text-lg font-black ${tk.heroTitle}`}>
                         {simulatedStats.newOverallPct}%
                       </span>
-                      <span className="text-xs text-slate-400 font-medium ml-1">({simulatedStats.newOverall20}/20)</span>
+                      <span className={`text-xs font-medium ml-1 ${tk.heroSubtitle}`}>({simulatedStats.newOverall20}/20)</span>
                     </div>
                   </div>
                   <div className={`px-2.5 py-1 rounded-xl text-xs font-extrabold shrink-0 ${
-                    simulatedStats.diffPct >= 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                    simulatedStats.diffPct >= 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                   }`}>
                     {simulatedStats.diffPct >= 0 ? `+${simulatedStats.diffPct}%` : `${simulatedStats.diffPct}%`}
                   </div>
@@ -450,7 +569,7 @@ export const ResultsView: React.FC = () => {
 
                 <button
                   onClick={() => setHasSimulated(false)}
-                  className="w-full py-1 text-center text-[11px] font-semibold text-slate-400 hover:text-indigo-600 transition-colors"
+                  className={`w-full py-1 text-center text-[11px] font-semibold transition-colors ${tk.textMuted}`}
                 >
                   Réinitialiser la simulation
                 </button>
@@ -459,7 +578,7 @@ export const ResultsView: React.FC = () => {
               <button
                 onClick={() => setHasSimulated(true)}
                 disabled={filteredReports.length === 0}
-                className="w-full py-2 bg-slate-900 hover:bg-indigo-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-subtle"
+                className={`w-full py-2.5 text-xs disabled:opacity-40 ${tk.primaryBtn}`}
               >
                 Calculer l'impact
               </button>
@@ -486,7 +605,8 @@ export const ResultsView: React.FC = () => {
             </div>
           )}
 
-          {filteredReports.map((report) => {
+          <div className={uiTheme === 'google_m3e' ? 'flex flex-col gap-[3px]' : 'space-y-3.5'}>
+          {filteredReports.map((report, reportIndex) => {
             const isExpanded = !!expandedSubjects[report.subjectCode];
             const theme = getSubjectTheme(report.subjectCode);
             const coursePct = report.totalPossible && report.totalPossible > 0
@@ -495,10 +615,27 @@ export const ResultsView: React.FC = () => {
                   ? Math.round(report.studentAverage > 20 ? report.studentAverage : (report.studentAverage / 20) * 100)
                   : 0);
 
+            const isFirst = reportIndex === 0;
+            const isLast = reportIndex === filteredReports.length - 1;
+            const cardRadius =
+              uiTheme === 'google_m3e'
+                ? isFirst && isLast
+                  ? 'rounded-[28px]'
+                  : isFirst
+                    ? 'rounded-t-[28px] rounded-b-[8px]'
+                    : isLast
+                      ? 'rounded-t-[8px] rounded-b-[28px]'
+                      : 'rounded-[8px]'
+                : uiTheme === 'apple_pro'
+                  ? 'rounded-[16px]'
+                  : uiTheme === 'obsidian'
+                    ? 'rounded-xl'
+                    : 'rounded-3xl';
+
             return (
               <div
                 key={report.subjectCode}
-                className="bg-white rounded-3xl border border-slate-200/70 shadow-subtle overflow-hidden transition-all"
+                className={`bg-white ${cardRadius} border border-slate-200/70 shadow-subtle overflow-hidden transition-all`}
               >
                 {/* En-tête de Matière */}
                 <div
@@ -699,6 +836,7 @@ export const ResultsView: React.FC = () => {
               </div>
             );
           })}
+          </div>
         </div>
       ) : (
         /* VUE B : FLUX CHRONOLOGIQUE DES ÉVALUATIONS */
@@ -717,44 +855,54 @@ export const ResultsView: React.FC = () => {
             </div>
           )}
 
-          <div className="space-y-3">
-            {allChronologicalGrades.map((grade) => {
+          <div className={uiTheme === 'google_m3e' ? 'space-y-1.5' : 'space-y-3'}>
+            {allChronologicalGrades.map((grade, index) => {
               const isExcluded = excludedGradeIds.has(grade.id);
               const theme = getSubjectTheme(grade.subjectCode);
               const isSommatif = grade.isSommatif ?? true;
+              const m3eRadius =
+                uiTheme === 'google_m3e'
+                  ? index === 0
+                    ? 'rounded-t-[28px] rounded-b-[10px]'
+                    : index === allChronologicalGrades.length - 1
+                      ? 'rounded-t-[10px] rounded-b-[28px]'
+                      : 'rounded-[10px]'
+                  : '';
 
               return (
                 <div
                   key={grade.id}
-                  className={`bg-white p-5 rounded-3xl border transition-all shadow-subtle ${
-                    isExcluded ? 'border-slate-200/50 opacity-60 bg-slate-50/50' : 'border-slate-200/70'
+                  className={`${tk.card} ${m3eRadius} p-5 transition-all ${
+                    isExcluded ? 'opacity-60' : ''
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     {/* Colonne Gauche : Matière, Enseignant, Titre */}
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5 flex-wrap">
                         <span className={`px-2.5 py-1 rounded-xl text-xs font-black border uppercase tracking-wider ${theme.badgeClass}`}>
                           {grade.subjectCode}
                         </span>
-                        <span className="font-extrabold text-sm text-slate-900">{grade.subject}</span>
+                        <span className={`font-extrabold text-sm ${tk.textPrimary}`}>{grade.subject}</span>
                         <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md uppercase ${
-                          isSommatif ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'
+                          isSommatif
+                            ? tk.isDarkTheme ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-100 text-purple-700'
+                            : `${tk.subSurface} ${tk.textSecondary}`
                         }`}>
                           {isSommatif ? 'Sommatif' : 'Formatif'}
                         </span>
                         {isExcluded && (
-                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-rose-100 text-rose-700">
+                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-rose-500/15 text-rose-500">
                             Exclu
                           </span>
                         )}
                       </div>
 
-                      <h4 className="font-bold text-base text-slate-900">{grade.title}</h4>
+                      <h4 className={`font-bold text-base ${tk.textPrimary}`}>{grade.title}</h4>
 
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                      <div className={`flex flex-wrap items-center gap-4 text-xs ${tk.textMuted}`}>
                         {grade.teacherName && (
-                          <div className="flex items-center gap-1.5 text-slate-600 font-medium">
+                          <div className={`flex items-center gap-1.5 font-medium ${tk.textSecondary}`}>
                             {grade.teacherPhoto ? (
                               <img src={grade.teacherPhoto} alt="" className="w-4 h-4 rounded-full object-cover" />
                             ) : null}
@@ -766,7 +914,7 @@ export const ResultsView: React.FC = () => {
                           {grade.date ? new Date(grade.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Date inconnue'}
                         </span>
                         {grade.availabilityDate && (
-                          <span className="flex items-center gap-1 text-slate-400">
+                          <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" />
                             Publié le {new Date(grade.availabilityDate).toLocaleDateString('fr-FR')}
                           </span>
@@ -775,14 +923,14 @@ export const ResultsView: React.FC = () => {
                     </div>
 
                     {/* Colonne Droite : Note proéminente & Action */}
-                    <div className="flex items-center justify-between sm:justify-end gap-4 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                    <div className={`flex items-center justify-between sm:justify-end gap-4 pt-3 sm:pt-0 border-t sm:border-t-0 ${tk.borderSubtle}`}>
                       <div className="text-right">
-                        <div className="px-4 py-2 rounded-2xl border bg-slate-50 flex items-baseline gap-1.5 shadow-subtle">
-                          <span className="text-2xl font-black text-slate-900">
+                        <div className={`px-4 py-2 border ${tk.borderSubtle} ${tk.subSurface} flex items-baseline gap-1.5`}>
+                          <span className={`text-2xl font-black ${tk.textPrimary}`}>
                             {grade.rawScoreText || `${grade.value}/20`}
                           </span>
                         </div>
-                        <span className="text-[10px] font-medium text-slate-400 block mt-1">
+                        <span className={`text-[10px] font-medium block mt-1 ${tk.textMuted}`}>
                           {isSommatif ? 'Pondération sommatif' : 'Formatif (indicatif)'}
                         </span>
                       </div>
@@ -793,8 +941,8 @@ export const ResultsView: React.FC = () => {
                           title={isExcluded ? 'Réinclure dans la moyenne' : 'Exclure du calcul (simulation)'}
                           className={`px-3 py-1.5 rounded-2xl border transition-all flex items-center gap-1.5 text-xs font-semibold ${
                             isExcluded
-                              ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
-                              : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+                              ? 'bg-rose-500/15 border-rose-500/30 text-rose-500'
+                              : `${tk.subSurface} ${tk.borderSubtle} ${tk.textSecondary}`
                           }`}
                         >
                           {isExcluded ? (
@@ -804,7 +952,7 @@ export const ResultsView: React.FC = () => {
                             </>
                           ) : (
                             <>
-                              <Eye className="w-3.5 h-3.5 text-slate-400" />
+                              <Eye className="w-3.5 h-3.5 opacity-60" />
                               <span className="text-[11px]">Inclus</span>
                             </>
                           )}
@@ -815,17 +963,17 @@ export const ResultsView: React.FC = () => {
 
                   {/* Objectifs LPD si disponibles (filtrer les clés techniques internes comme mini-db-skore) */}
                   {grade.goals && grade.goals.filter(g => g.title && g.title !== 'mini-db-skore' && !g.title.includes('mini-db')).length > 0 && (
-                    <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap gap-2">
+                    <div className={`mt-3.5 pt-3 border-t ${tk.borderSubtle} flex flex-wrap gap-2`}>
                       {grade.goals
                         .filter(g => g.title && g.title !== 'mini-db-skore' && !g.title.includes('mini-db'))
                         .map((goal, idx) => (
                           <div
                             key={idx}
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-50/70 border border-indigo-100 text-xs font-medium text-indigo-900"
+                            className={`flex items-center gap-1.5 px-3 py-1 ${tk.subSurface} border ${tk.borderSubtle} text-xs font-medium ${tk.textSecondary}`}
                           >
                             <Target className="w-3.5 h-3.5 text-indigo-500" />
                             <span>{goal.title} :</span>
-                            <span className="font-black text-indigo-700">{goal.scoreText}</span>
+                            <span className={`font-black ${tk.textPrimary}`}>{goal.scoreText}</span>
                           </div>
                       ))}
                     </div>
@@ -833,9 +981,9 @@ export const ResultsView: React.FC = () => {
 
                   {/* Feedbacks de l'enseignant */}
                   {grade.feedbacks && grade.feedbacks.length > 0 && (
-                    <div className="mt-3.5 pt-3 border-t border-slate-100 space-y-1.5">
+                    <div className={`mt-3.5 pt-3 border-t ${tk.borderSubtle} space-y-1.5`}>
                       {grade.feedbacks.map((fb, idx) => (
-                        <div key={idx} className="p-3 rounded-2xl bg-slate-50 border border-slate-200/60 flex items-start gap-2.5 text-xs text-slate-700">
+                        <div key={idx} className={`p-3 ${tk.subSurface} border ${tk.borderSubtle} flex items-start gap-2.5 text-xs ${tk.textSecondary}`}>
                           <MessageSquare className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
                           <p className="italic">« {fb} »</p>
                         </div>

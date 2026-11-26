@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { 
   Clock, 
   MapPin, 
@@ -8,13 +8,11 @@ import {
   Calendar, 
   ChevronRight, 
   BookOpen, 
-  Plus, 
-  User
+  Plus
 } from 'lucide-react';
-import { useSchool } from '../../context/SchoolContext';
 import { getSubjectTheme } from '../../utils/theme';
-import { calculateHomeworkImportance } from '../../utils/homeworkImportance';
 import { cleanStudentClass } from '../../utils/student';
+import { useDashboardData } from '../../hooks/useDashboardData';
 
 const importanceClasses = [
   'bg-white border-slate-200/70 hover:border-slate-300',
@@ -30,184 +28,27 @@ const importanceClasses = [
   'bg-red-400/80 border-red-500 hover:bg-red-400'
 ];
 
-const parseMinutes = (timeStr: string): number => {
-  if (!timeStr) return 0;
-  const parts = timeStr.split(':');
-  if (parts.length < 2) return 0;
-  const h = parseInt(parts[0], 10) || 0;
-  const m = parseInt(parts[1], 10) || 0;
-  return h * 60 + m;
-};
-
 export const DashboardView: React.FC = () => {
-  const { 
-    student, 
-    todayEvents, 
-    homeworks, 
-    toggleHomework, 
-    overallStats, 
+  const {
+    student,
+    greeting,
+    todayFormatted,
+    filteredHomeworks,
+    homeworkFilter,
+    setHomeworkFilter,
+    sortedTodayEvents,
+    nextClassSpotlight,
+    pendingHomeworksCount,
+    urgentHomeworksCount,
+    overallStats,
+    toggleHomework,
     setActiveTab,
     setSelectedEventModal,
     setIsNewHomeworkModalOpen,
-    globalSearch,
     isDemoMode,
     isInsideSmartschoolPlatform,
     events
-  } = useSchool();
-
-  const [homeworkFilter, setHomeworkFilter] = useState<'pending' | 'all' | 'completed'>('pending');
-
-  // Greeting
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Bonjour';
-    if (hour < 18) return 'Bon après-midi';
-    return 'Bonsoir';
-  }, []);
-
-  const todayFormatted = useMemo(() => {
-    return new Intl.DateTimeFormat('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long'
-    }).format(new Date());
-  }, []);
-
-  // Date d'aujourd'hui (YYYY-MM-DD)
-  const todayDateStr = useMemo(() => {
-    const now = new Date();
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  }, []);
-
-  // Filtered homeworks (les devoirs passés / en retard sont supprimés et invisibles)
-  const filteredHomeworks = useMemo(() => {
-    const visibleHomeworks = homeworks
-      .filter(hw => {
-        // Ignorer tout devoir dans le passé
-        if (hw.dueDate && hw.dueDate < todayDateStr) return false;
-
-        if (globalSearch) {
-          const match = hw.title.toLowerCase().includes(globalSearch.toLowerCase()) ||
-                        hw.subject.toLowerCase().includes(globalSearch.toLowerCase());
-          if (!match) return false;
-        }
-        if (homeworkFilter === 'pending') return !hw.isCompleted;
-        if (homeworkFilter === 'completed') return hw.isCompleted;
-        return true;
-      });
-
-    // Le même score sert au tri et à l'affichage : impossible d'afficher 10/10
-    // derrière un devoir moins important à cause de deux calculs différents.
-    return visibleHomeworks
-      .map(homework => ({
-        homework,
-        importance: calculateHomeworkImportance(
-          homework.dueDate,
-          homework.description,
-          homework.isCompleted
-        )
-      }))
-      .sort((first, second) => {
-        // Les tâches les plus importantes d'abord, puis l'échéance la plus proche.
-        return second.importance - first.importance ||
-          first.homework.dueDate.localeCompare(second.homework.dueDate);
-      });
-  }, [homeworks, homeworkFilter, globalSearch, todayDateStr]);
-
-  // Tri chronologique strict des cours du jour par heure de début
-  const sortedTodayEvents = useMemo(() => {
-    return [...todayEvents].sort((a, b) => a.startTime.localeCompare(b.startTime));
-  }, [todayEvents]);
-
-  // Détermination intelligente du cours en cours ou du prochain cours :
-  // 1. Cours en cours actuellement
-  // 2. Prochain cours plus tard aujourd'hui
-  // 3. Prochain cours du prochain jour de cours (ex: lundi si fin de journée ou week-end)
-  const nextClassSpotlight = useMemo(() => {
-    const now = new Date();
-    const nowMinutes = now.getHours() * 60 + now.getMinutes();
-    const currentJsDay = now.getDay(); // 0=Dimanche, 1=Lundi ... 6=Samedi
-
-    // 1. Cours en cours aujourd'hui
-    const inProgress = sortedTodayEvents.find(e => {
-      const s = parseMinutes(e.startTime);
-      const end = parseMinutes(e.endTime);
-      return (e.status === 'in_progress') || (nowMinutes >= s && nowMinutes <= end);
-    });
-    if (inProgress) {
-      return {
-        event: inProgress,
-        badgeText: '● En cours',
-        badgeClass: 'text-emerald-600 bg-emerald-50 border-emerald-200/60',
-        timeLabel: `En cours (jusqu'à ${inProgress.endTime})`,
-        dayHeader: "Aujourd'hui"
-      };
-    }
-
-    // 2. Prochain cours plus tard aujourd'hui
-    const upcomingToday = sortedTodayEvents.find(e => {
-      const s = parseMinutes(e.startTime);
-      return s > nowMinutes;
-    });
-    if (upcomingToday) {
-      const diffMin = parseMinutes(upcomingToday.startTime) - nowMinutes;
-      const countdown = diffMin < 60 ? `dans ${diffMin} min` : `à ${upcomingToday.startTime}`;
-      return {
-        event: upcomingToday,
-        badgeText: "Aujourd'hui",
-        badgeClass: 'text-indigo-600 bg-indigo-50 border-indigo-200/60',
-        timeLabel: `${upcomingToday.startTime} (${countdown})`,
-        dayHeader: "Aujourd'hui"
-      };
-    }
-
-    // 3. Tous les cours d'aujourd'hui sont terminés ou journée sans cours (ex: samedi après-midi / dimanche) :
-    // On cherche le tout prochain cours sur les jours suivants de la semaine
-    const allEvents = events.length > 0 ? events : sortedTodayEvents;
-    const dayNames: Record<number, string> = {
-      1: 'Lundi',
-      2: 'Mardi',
-      3: 'Mercredi',
-      4: 'Jeudi',
-      5: 'Vendredi',
-      6: 'Samedi',
-      7: 'Dimanche'
-    };
-
-    for (let offset = 1; offset <= 7; offset++) {
-      const nextJsDow = ((currentJsDay + offset) % 7);
-      const nextDow = nextJsDow === 0 ? 7 : nextJsDow;
-      
-      const dayEvts = allEvents
-        .filter(e => e.dayOfWeek === nextDow)
-        .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-      if (dayEvts.length > 0) {
-        const nextEvt = dayEvts[0];
-        const dayName = offset === 1 ? 'Demain' : (dayNames[nextDow] || 'Prochain jour');
-        return {
-          event: nextEvt,
-          badgeText: `Prochain cours • ${dayName}`,
-          badgeClass: 'text-indigo-600 bg-indigo-50 border-indigo-200/60',
-          timeLabel: `${dayName} à ${nextEvt.startTime}`,
-          dayHeader: dayName
-        };
-      }
-    }
-
-    return null;
-  }, [sortedTodayEvents, events]);
-
-  const pendingHomeworksCount = useMemo(() => {
-    return homeworks.filter(h => !h.isCompleted && (!h.dueDate || h.dueDate >= todayDateStr)).length;
-  }, [homeworks, todayDateStr]);
-
-  const urgentHomeworksCount = useMemo(() => {
-    return homeworks.filter(h =>
-      calculateHomeworkImportance(h.dueDate, h.description, h.isCompleted) >= 5
-    ).length;
-  }, [homeworks, todayDateStr]);
+  } = useDashboardData();
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">

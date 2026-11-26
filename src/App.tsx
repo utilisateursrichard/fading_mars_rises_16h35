@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SchoolProvider, useSchool } from './context/SchoolContext';
-import { Sidebar } from './components/layout/Sidebar';
-import { Header } from './components/layout/Header';
-import { MobileNav } from './components/layout/MobileNav';
-import { DashboardView } from './components/views/DashboardView';
+import { UIThemeProvider, useUITheme } from './context/UIThemeContext';
 import { AgendaView } from './components/views/AgendaView';
 import { MessagesView } from './components/views/MessagesView';
 import { ResultsView } from './components/views/ResultsView';
@@ -11,11 +8,23 @@ import { CoursesView } from './components/views/CoursesView';
 import { TeachersView } from './components/views/TeachersView';
 import { TutorView } from './components/views/TutorView';
 import { BookmarkView } from './components/views/BookmarkView';
-import { LiveModeEmptyState } from './components/common/LiveModeEmptyState';
 import { isFeatureReadyInLive } from './utils/featureFlags';
 import { CourseDetailModal } from './components/modals/CourseDetailModal';
 import { NewHomeworkModal } from './components/modals/NewHomeworkModal';
 import { PolytrackOverlay } from './components/common/PolytrackOverlay';
+import { UIThemeSwitcher } from './components/themes/UIThemeSwitcher';
+import { PulseShell } from './components/themes/shells/PulseShell';
+import { GoogleM3EShell } from './components/themes/shells/GoogleM3EShell';
+import { NovaShell } from './components/themes/shells/NovaShell';
+import { AppleProShell } from './components/themes/shells/AppleProShell';
+import { HorizonShell } from './components/themes/shells/HorizonShell';
+import { ObsidianShell } from './components/themes/shells/ObsidianShell';
+import { PulseDashboard } from './components/themes/dashboards/PulseDashboard';
+import { GoogleM3EDashboard } from './components/themes/dashboards/GoogleM3EDashboard';
+import { NovaDashboard } from './components/themes/dashboards/NovaDashboard';
+import { AppleProDashboard } from './components/themes/dashboards/AppleProDashboard';
+import { HorizonDashboard } from './components/themes/dashboards/HorizonDashboard';
+import { ObsidianDashboard } from './components/themes/dashboards/ObsidianDashboard';
 import {
   isEnterPolytrackShortcut,
   isExitPolytrackShortcut,
@@ -23,17 +32,36 @@ import {
 
 const MainLayout: React.FC = () => {
   const { activeTab, isDemoMode } = useSchool();
+  const { uiTheme } = useUITheme();
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
+  const renderDashboard = () => {
+    switch (uiTheme) {
+      case 'pulse':
+        return <PulseDashboard />;
+      case 'google_m3e':
+        return <GoogleM3EDashboard />;
+      case 'nova':
+        return <NovaDashboard />;
+      case 'apple_pro':
+        return <AppleProDashboard />;
+      case 'horizon':
+        return <HorizonDashboard />;
+      case 'obsidian':
+        return <ObsidianDashboard />;
+      default:
+        return <PulseDashboard />;
+    }
+  };
+
   const renderActiveView = () => {
-    // En Mode Réel, si la fonctionnalité n'est pas encore connectée, afficher la vue vide explicite
     if (!isDemoMode && activeTab !== 'book' && !isFeatureReadyInLive(activeTab)) {
-      return <LiveModeEmptyState featureKey={activeTab} />;
+      return renderDashboard();
     }
 
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardView />;
+        return renderDashboard();
       case 'agenda':
         return <AgendaView />;
       case 'messages':
@@ -49,7 +77,7 @@ const MainLayout: React.FC = () => {
       case 'book':
         return <BookmarkView />;
       default:
-        return <DashboardView />;
+        return renderDashboard();
     }
   };
 
@@ -71,43 +99,42 @@ const MainLayout: React.FC = () => {
     };
   }, [isTutor]);
 
+  const activeView = renderActiveView();
+
+  const renderThemedShell = () => {
+    const shellProps = {
+      isTutor,
+      isMobileDrawerOpen,
+      onOpenMobileMenu: () => setIsMobileDrawerOpen(true),
+      onCloseMobileDrawer: () => setIsMobileDrawerOpen(false),
+      children: activeView,
+    };
+
+    switch (uiTheme) {
+      case 'pulse':
+        return <PulseShell {...shellProps} />;
+      case 'google_m3e':
+        return <GoogleM3EShell {...shellProps} />;
+      case 'nova':
+        return <NovaShell {...shellProps} />;
+      case 'apple_pro':
+        return <AppleProShell {...shellProps} />;
+      case 'horizon':
+        return <HorizonShell {...shellProps} />;
+      case 'obsidian':
+        return <ObsidianShell {...shellProps} />;
+      default:
+        return <PulseShell {...shellProps} />;
+    }
+  };
+
   return (
-    <div className={`relative flex ${isTutor ? 'h-screen max-h-screen overflow-hidden' : 'min-h-screen'} bg-[#F8FAFC] text-slate-900 selection:bg-indigo-600 selection:text-white antialiased overflow-x-hidden`}>
-      {/* Ambient background glows for M3E / Apple Glass refraction */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-32 right-1/4 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 -left-20 w-80 h-80 bg-blue-100/35 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-purple-100/25 rounded-full blur-3xl" />
-      </div>
-
-      {/* Desktop Navigation Sidebar */}
-      <Sidebar />
-
-      {/* Main Content Area */}
-      <div className={`relative z-10 flex-1 flex flex-col min-w-0 ${isTutor ? 'h-screen max-h-screen overflow-hidden pb-16 lg:pb-0' : 'pb-16 lg:pb-0'}`}>
-        {/* Top Header */}
-        <Header onOpenMobileMenu={() => setIsMobileDrawerOpen(true)} />
-
-        {/* View Content */}
-        <main className={`flex-1 max-w-7xl w-full mx-auto animate-in fade-in duration-200 ${
-          isTutor 
-            ? 'p-2 sm:p-3 lg:p-4 overflow-hidden flex flex-col min-h-0' 
-            : 'p-4 sm:p-6 lg:p-8'
-        }`}>
-          {renderActiveView()}
-        </main>
-      </div>
-
-      {/* Mobile Bottom Bar & Drawer */}
-      <MobileNav
-        isDrawerOpen={isMobileDrawerOpen}
-        onCloseDrawer={() => setIsMobileDrawerOpen(false)}
-      />
-
-      {/* Global Interactive Modals */}
+    <>
+      {renderThemedShell()}
       <CourseDetailModal />
       <NewHomeworkModal />
-    </div>
+      <UIThemeSwitcher />
+    </>
   );
 };
 
@@ -136,7 +163,7 @@ export function App() {
   }, []);
 
   return (
-    <>
+    <UIThemeProvider>
       <div
         aria-hidden={isPolytrackActive}
         className={isPolytrackActive ? 'pointer-events-none select-none' : undefined}
@@ -151,9 +178,8 @@ export function App() {
           onExit={() => setIsPolytrackActive(false)}
         />
       )}
-    </>
+    </UIThemeProvider>
   );
 }
 
 export default App;
-

@@ -17,17 +17,6 @@ import {
   SmartschoolMailCounters,
   Teacher
 } from '../types/school';
-import { schoolService } from '../services/api';
-import { mockNotifications } from '../data/mockData';
-import { 
-  mockMailCounters, 
-  mockContacts, 
-  mockInboxSummaries, 
-  mockOutboxSummaries, 
-  mockDraftSummaries, 
-  mockTrashSummaries, 
-  mockMessageDetails 
-} from '../data/mockMessages';
 import { isInsideSmartschool } from '../utils/platform';
 import { 
   getActiveUserId,
@@ -63,6 +52,16 @@ import {
 } from '../services/smartschoolMessages';
 import { buildSubjectReportsFromEvaluations } from '../services/smartschoolParsers';
 import { cleanStudentClass } from '../utils/student';
+
+const IS_DEV_RUNTIME = import.meta.env.DEV;
+let demoFixturesPromise: Promise<typeof import('../dev/demoFixtures')> | null = null;
+const loadDemoFixtures = () => {
+  if (!import.meta.env.DEV) return Promise.resolve(null);
+  if (!demoFixturesPromise) {
+    demoFixturesPromise = import('../dev/demoFixtures');
+  }
+  return demoFixturesPromise;
+};
 
 export type TabType = 'dashboard' | 'agenda' | 'messages' | 'results' | 'courses' | 'teachers' | 'tutor' | 'book';
 
@@ -165,6 +164,7 @@ interface SchoolContextType {
   isSidebarCollapsed: boolean;
   toggleSidebar: () => void;
   isInsideSmartschoolPlatform: boolean;
+  isDemoAvailable: boolean;
   isDemoMode: boolean;
   toggleDemoMode: () => void;
   setDemoMode: (enabled: boolean) => void;
@@ -227,8 +227,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [overallStats, setOverallStats] = useState<{ current: number; classAvg: number; previousTerm: number; currentPct?: number; totalWeeklyHours?: number } | null>(null);
   const [activePeriod, setActivePeriod] = useState<'T1' | 'T2' | 'T3'>('T1');
 
-  // État du mode démo : Mode Réel par défaut (isDemoMode = false)
+  // État du mode démo : disponible uniquement en développement (npm run dev)
   const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
+    if (!import.meta.env.DEV) return false;
     try {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
@@ -244,6 +245,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
 
   const toggleDemoMode = () => {
+    if (!import.meta.env.DEV) return;
     setIsDemoMode(prev => {
       const next = !prev;
       try {
@@ -255,6 +257,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const setDemoMode = (enabled: boolean) => {
+    if (!import.meta.env.DEV) return;
     setIsDemoMode(enabled);
     try {
       localStorage.setItem('betterschool_demo_mode_v2', String(enabled));
@@ -372,9 +375,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const refreshCourses = async () => {
     setCoursesLoading(true);
     try {
-      if (isDemoMode) {
-        const crss = await schoolService.getCourses();
-        setCourses(crss);
+      if (import.meta.env.DEV && isDemoMode) {
+        const fixtures = await loadDemoFixtures();
+        setCourses(fixtures ? fixtures.demoCourses : []);
       } else {
         const crss = await fetchRealCourses();
         setCourses(crss);
@@ -393,9 +396,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const refreshTeachers = async () => {
     setTeachersLoading(true);
     try {
-      if (isDemoMode) {
-        const t = await schoolService.getTeachers();
-        setTeachers(t);
+      if (import.meta.env.DEV && isDemoMode) {
+        const fixtures = await loadDemoFixtures();
+        setTeachers(fixtures ? fixtures.demoTeachers : []);
       } else {
         const t = await fetchRealTeachers();
         setTeachers(t);
@@ -409,7 +412,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [globalSearch, setGlobalSearch] = useState('');
 
-  const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
@@ -567,33 +570,24 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
 
-      // En mode Démo : chargement de la maquette avec fausses données
-      const [stu, evts, tEvents, hws, convs, reports, stats, crss, tchrs] = await Promise.all([
-        schoolService.getStudent(),
-        schoolService.getAgendaEvents(),
-        schoolService.getTodayEvents(),
-        schoolService.getHomeworks(),
-        schoolService.getConversations(),
-        schoolService.getSubjectReports(),
-        schoolService.getOverallAverage(),
-        schoolService.getCourses(),
-        schoolService.getTeachers()
-      ]);
+      if (import.meta.env.DEV && isDemoMode) {
+        const fixtures = await loadDemoFixtures();
+        if (!fixtures) return;
 
-      setStudent(stu);
-      setEvents(evts);
-      setTodayEvents(tEvents);
-      setHomeworks(hws);
-      setConversations(convs);
-      setSubjectReports(reports);
-      setOverallStats(stats);
-      setCourses(crss);
-      setTeachers(tchrs);
-      setNotifications(mockNotifications);
+        setStudent(fixtures.demoStudent);
+        setEvents(fixtures.demoEvents);
+        setTodayEvents(fixtures.demoTodayEvents);
+        setHomeworks(fixtures.getDemoHomeworks());
+        setConversations(fixtures.demoConversations);
+        setSubjectReports(fixtures.demoSubjectReports);
+        setOverallStats(fixtures.demoOverallStats);
+        setCourses(fixtures.demoCourses);
+        setTeachers(fixtures.demoTeachers);
+        setNotifications(fixtures.demoNotifications);
 
-      if (convs.length > 0) {
-        const msgs = await schoolService.getMessages(convs[0].id);
-        setActiveMessages(msgs);
+        if (fixtures.demoConversations.length > 0) {
+          setActiveMessages(fixtures.getDemoMessages(fixtures.demoConversations[0].id));
+        }
       }
     };
 
@@ -602,12 +596,14 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Chargement des messages quand la conversation active change
   useEffect(() => {
-    if (activeConversationId) {
-      schoolService.getMessages(activeConversationId).then(msgs => {
-        setActiveMessages(msgs);
+    if (import.meta.env.DEV && isDemoMode && activeConversationId) {
+      loadDemoFixtures().then(fixtures => {
+        if (fixtures) {
+          setActiveMessages(fixtures.getDemoMessages(activeConversationId));
+        }
       });
     }
-  }, [activeConversationId]);
+  }, [activeConversationId, isDemoMode]);
 
   // Actions
   const toggleHomework = async (id: string) => {
@@ -650,56 +646,44 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       };
     }));
 
-    if (!isDemoMode) {
-      // En mode réel, ne jamais appeler schoolService : il lit la liste de démo
-      // et remplacerait les devoirs Smartschool affichés par celle-ci.
+    if (!import.meta.env.DEV || !isDemoMode) {
+      // En mode réel, ne jamais appeler les données de démo
       toggleCachedRealHomework(id);
       return;
     }
 
-    const updated = await schoolService.toggleHomework(id);
-    setHomeworks(updated);
+    const fixtures = await loadDemoFixtures();
+    if (fixtures) {
+      setHomeworks(fixtures.toggleDemoHomework(id));
+    }
   };
 
   const addHomework = async (hw: Omit<Homework, 'id'>) => {
-    const created = await schoolService.addHomework(hw);
+    if (import.meta.env.DEV && isDemoMode) {
+      const fixtures = await loadDemoFixtures();
+      if (fixtures) {
+        const created = fixtures.addDemoHomework(hw);
+        setHomeworks(prev => [created, ...prev]);
+      }
+      return;
+    }
+    const created: Homework = { ...hw, id: `local-hw-${Date.now()}` };
     setHomeworks(prev => [created, ...prev]);
   };
 
   const sendMessage = async (content: string) => {
     if (!content.trim() || !activeConversationId) return;
+    if (!import.meta.env.DEV || !isDemoMode) return;
 
-    const { userMsg } = await schoolService.sendMessage(activeConversationId, content);
+    const fixtures = await loadDemoFixtures();
+    if (!fixtures) return;
+    const userMsg = fixtures.sendDemoMessage(activeConversationId, content);
     setActiveMessages(prev => [...prev, userMsg]);
 
     // Mettre à jour la conversation dans la liste
     setConversations(prev => 
       prev.map(c => c.id === activeConversationId ? { ...c, lastMessage: content, lastMessageTime: 'À l’instant' } : c)
     );
-
-    // Simulation d'une réponse de professeur ou camarade après 1.5 seconde
-    setTimeout(() => {
-      const conv = conversations.find(c => c.id === activeConversationId);
-      const autoReplyText = `message placeholder ${Math.floor(Math.random() * 900 + 100)}`;
-
-      const replyMsg: Message = {
-        id: `reply-${Date.now()}`,
-        conversationId: activeConversationId,
-        senderId: conv?.id || 'other',
-        senderName: conv?.name || 'Interlocuteur',
-        senderRole: conv?.category === 'teachers' ? 'teacher' : 'student',
-        senderAvatar: conv?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
-        content: autoReplyText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        read: true,
-        isSelf: false
-      };
-
-      setActiveMessages(prev => [...prev, replyMsg]);
-      setConversations(prev => 
-        prev.map(c => c.id === activeConversationId ? { ...c, lastMessage: autoReplyText, lastMessageTime: 'À l’instant' } : c)
-      );
-    }, 1500);
   };
 
   // --- Gestion de la Messagerie Smartschool M3E Pro ---
@@ -731,7 +715,22 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const loadMailbox = async (box: SmartschoolBoxType) => {
     setIsMailLoading(true);
-    if (!isDemoMode) {
+    if (import.meta.env.DEV && isDemoMode) {
+      const fixtures = await loadDemoFixtures();
+      let demoList: SmartschoolMessageSummary[] = [];
+      if (fixtures) {
+        switch (box) {
+          case 'inbox': demoList = fixtures.demoInboxSummaries; break;
+          case 'outbox': demoList = fixtures.demoOutboxSummaries; break;
+          case 'draft': demoList = fixtures.demoDraftSummaries; break;
+          case 'trash': demoList = fixtures.demoTrashSummaries; break;
+          default: demoList = []; break;
+        }
+        setMailCounters(fixtures.demoMailCounters);
+      }
+      setMailMessages(demoList);
+      setIsMailLoading(false);
+    } else {
       const cached = getCachedMailMessages(box);
       if (cached && cached.length > 0) {
         setMailMessages(cached);
@@ -749,18 +748,6 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       } finally {
         setIsMailLoading(false);
       }
-    } else {
-      let demoList: SmartschoolMessageSummary[] = [];
-      switch (box) {
-        case 'inbox': demoList = mockInboxSummaries; break;
-        case 'outbox': demoList = mockOutboxSummaries; break;
-        case 'draft': demoList = mockDraftSummaries; break;
-        case 'trash': demoList = mockTrashSummaries; break;
-        default: demoList = []; break;
-      }
-      setMailMessages(demoList);
-      setMailCounters(mockMailCounters);
-      setIsMailLoading(false);
     }
   };
 
@@ -777,7 +764,20 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const loadMailDetail = async (id: string): Promise<SmartschoolMessageDetail | null> => {
     setIsMailDetailLoading(true);
     try {
-      if (!isDemoMode) {
+      if (import.meta.env.DEV && isDemoMode) {
+        const fixtures = await loadDemoFixtures();
+        const detail = fixtures?.demoMessageDetails[id] || null;
+        if (detail) {
+          setSelectedMailDetail(detail);
+          setMailMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'read', unread: false } : m));
+          setMailCounters(prev => ({
+            ...prev,
+            inbox: Math.max(0, prev.inbox - 1)
+          }));
+          return detail;
+        }
+        return null;
+      } else {
         const targetMsg = mailMessages.find(m => m.id === id);
         const wasUnread = targetMsg ? Boolean(targetMsg.unread || targetMsg.status === 'unread') : true;
 
@@ -790,18 +790,6 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             // Synchronisation immédiate avec le compte officiel non-lu de Smartschool
             await syncLiveUnreadMessages();
           }
-          return detail;
-        }
-        return null;
-      } else {
-        const detail = mockMessageDetails[id] || null;
-        if (detail) {
-          setSelectedMailDetail(detail);
-          setMailMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'read', unread: false } : m));
-          setMailCounters(prev => ({
-            ...prev,
-            inbox: Math.max(0, prev.inbox - 1)
-          }));
           return detail;
         }
         return null;
@@ -1009,18 +997,24 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
-  const startDirectMessageWithTeacher = (teacherName: string) => {
-    const contact = mockContacts.find(c => 
-      c.name.toLowerCase().includes(teacherName.toLowerCase()) || 
-      teacherName.toLowerCase().includes(c.name.toLowerCase())
-    ) || {
-      userID: Date.now(),
+  const startDirectMessageWithTeacher = async (teacherName: string) => {
+    let contact: SmartschoolContact | undefined;
+    if (import.meta.env.DEV && isDemoMode) {
+      const fixtures = await loadDemoFixtures();
+      contact = fixtures?.demoContacts.find(c =>
+        c.name.toLowerCase().includes(teacherName.toLowerCase()) ||
+        teacherName.toLowerCase().includes(c.name.toLowerCase())
+      );
+    }
+
+    const resolvedContact: SmartschoolContact = contact || {
+      userID: 0,
       name: teacherName,
       className: 'Professeur',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120'
+      avatar: ''
     };
     
-    openComposeModal(contact, `Question concernant le cours`);
+    openComposeModal(resolvedContact, `Question concernant le cours`);
     setActiveTab('messages');
   };
 
@@ -1124,7 +1118,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isSidebarCollapsed,
         toggleSidebar,
         isInsideSmartschoolPlatform,
-        isDemoMode,
+        isDemoAvailable: IS_DEV_RUNTIME,
+        isDemoMode: IS_DEV_RUNTIME ? isDemoMode : false,
         toggleDemoMode,
         setDemoMode
       }}

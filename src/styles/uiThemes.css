@@ -1,0 +1,420 @@
+/* ==========================================================================
+   Cross-view structural & surface overrides for BetterSchool UI proposals
+   Covers Dashboard, Messages, Results, Agenda, Courses, Teachers, Tutor, Modals
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. PULSE — BetterSchool Signature (Light, Warm Platinum + Dark Ink)
+   -------------------------------------------------------------------------- */
+[data-ui-theme="pulse"] body {
+  background-color: #F7F6F2;
+  color: #121318;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+}
+
+[data-ui-theme="pulse"] main .bg-white,
+[data-ui-theme="pulse"] main .bg-white\/90 {
+  background-color: #FFFFFF;
+  border-color: rgba(18, 19, 24, 0.07);
+  box-shadow: 0 8px 28px -12px rgba(18, 19, 24, 0.07);
+}
+
+[data-ui-theme="pulse"] main .bg-slate-50,
+[data-ui-theme="pulse"] main .bg-slate-50\/40,
+[data-ui-theme="pulse"] main .bg-slate-50\/80 {
+  background-color: #F3F2ED;
+}
+
+[data-ui-theme="pulse"] main .rounded-3xl,
+[data-ui-theme="pulse"] main .rounded-bento {
+  border-radius: 24px;
+}
+
+[data-ui-theme="pulse"] main .rounded-card {
+  border-radius: 16px;
+}
+
+[data-ui-theme="pulse"] main .rounded-input {
+  border-radius: 14px;
+}
+
+[data-ui-theme="pulse"] main .bg-indigo-600 {
+  background-color: #121318;
+}
+
+[data-ui-theme="pulse"] main .bg-indigo-600:hover {
+  background-color: #4F46E5;
+}
+
+[data-ui-theme="pulse"] main .text-indigo-600,
+[data-ui-theme="pulse"] main .text-indigo-700 {
+  color: #4F46E5;
+}
+
+/* --------------------------------------------------------------------------
+   2. GOOGLE M3E — Authentic Android 16/17 Pixel Dynamic Color
+   -------------------------------------------------------------------------- */
+[data-ui-theme="google_m3e"] body {
+  background-color: #F2F6FC;
+  color: #191C20;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+}
+
+[data-ui-theme="google_m3e"] main .bg-white,
+[data-ui-theme="google_m3e"] main .bg-white\/90 {
+  background-color: #FFFFFF;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+[data-ui-theme="google_m3e"] main .bg-slate-50,
+[data-ui-theme="google_m3e"] main .bg-slate-50\/40,
+[data-ui-theme="google_m3e"] main .bg-slate-50\/80,
+[data-ui-theme="google_m3e"] main .bg-slate-100 {
+  background-color: #E6EEF8;
+}
+
+[data-ui-theme="google_m3e"] main .rounded-3xl,
+[data-ui-theme="google_m3e"] main .rounded-bento,
+[data-ui-theme="google_m3e"] .fixed.inset-0 .rounded-bento {
+  border-radius: 30px;
+}
+
+[data-ui-theme="google_m3e"] main .rounded-card {
+  border-radius: 22px;
+}
+
+[data-ui-theme="google_m3e"] main .rounded-input,
+[data-ui-theme="google_m3e"] main .rounded-xl {
+  border-radius: 9999px;
+}
+
+[data-ui-theme="google_m3e"] main .bg-indigo-600,
+[data-ui-theme="google_m3e"] main .bg-slate-900 {
+  background-color: #00639B;
+}
+
+[data-ui-theme="google_m3e"] main .text-indigo-600,
+[data-ui-theme="google_m3e"] main .text-indigo-700 {
+  color: #00639B;
+}
+
+[data-ui-theme="google_m3e"] main .bg-indigo-50,
+[data-ui-theme="google_m3e"] main .bg-indigo-50\/70 {
+  background-color: #D3E4FF;
+}
+
+/* --------------------------------------------------------------------------
+   3. APPLE PRO — macOS Sequoia / iPadOS Pro (Inset Grouped & System Blue)
+   -------------------------------------------------------------------------- */
+[data-ui-theme="apple_pro"] body {
+  background-color: #F5F5F7;
+  color: #1D1D1F;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+}
+
+[data-ui-theme="apple_pro"] main .bg-white,
+[data-ui-theme="apple_pro"] main .bg-white\/90 {
+  background-color: #FFFFFF;
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+[data-ui-theme="apple_pro"] main .bg-slate-50\/40,
+[data-ui-theme="apple_pro"] main .bg-slate-50\/80 {
+  background-color: #ECECEF;
+}
+
+[data-ui-theme="apple_pro"] main .rounded-3xl,
+[data-ui-theme="apple_pro"] main .rounded-bento {
+  border-radius: 18px;
+}
+
+[data-ui-theme="apple_pro"] main .rounded-2xl {
+  border-radius: 14px;
+}
+
+[data-ui-theme="apple_pro"] main .rounded-card {
+  border-radius: 12px;
+}
+
+[data-ui-theme="apple_pro"] main .rounded-input {
+  border-radius: 10px;
+}
+
+[data-ui-theme="apple_pro"] main .bg-indigo-600 {
+  background-color: #007AFF;
+}
+
+[data-ui-theme="apple_pro"] main .text-indigo-600,
+[data-ui-theme="apple_pro"] main .text-indigo-700 {
+  color: #007AFF;
+}
+
+[data-ui-theme="apple_pro"] main .bg-indigo-50,
+[data-ui-theme="apple_pro"] main .bg-indigo-50\/70 {
+  background-color: rgba(0, 122, 255, 0.1);
+}
+
+/* --------------------------------------------------------------------------
+   4. NOVA & OBSIDIAN — Dark Pro Workspaces (All Views + Messages + Results)
+   -------------------------------------------------------------------------- */
+[data-ui-theme="obsidian"] body {
+  background-color: #0B0C10;
+  color: #E2E8F0;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+[data-ui-theme="nova"] body {
+  background-color: #0C0E14;
+  color: #E2E8F0;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+}
+
+[data-ui-theme="obsidian"] main .rounded-bento {
+  border-radius: 14px;
+}
+
+[data-ui-theme="obsidian"] main .rounded-card {
+  border-radius: 10px;
+}
+
+[data-ui-theme="obsidian"] main .rounded-input {
+  border-radius: 8px;
+}
+
+[data-ui-theme="nova"] main .rounded-bento {
+  border-radius: 24px;
+}
+
+[data-ui-theme="nova"] main .rounded-card {
+  border-radius: 16px;
+}
+
+[data-ui-theme="nova"] main .rounded-input {
+  border-radius: 12px;
+}
+
+[data-ui-theme="obsidian"] main .bg-white,
+[data-ui-theme="obsidian"] main .bg-white\/95,
+[data-ui-theme="obsidian"] main .bg-white\/90,
+[data-ui-theme="obsidian"] main .bg-white\/80,
+[data-ui-theme="obsidian"] main .dark\:bg-slate-900,
+[data-ui-theme="obsidian"] main .dark\:bg-slate-900\/90,
+[data-ui-theme="obsidian"] main .m3-card,
+[data-ui-theme="obsidian"] main .m3-glass,
+[data-ui-theme="obsidian"] .fixed.inset-0 .bg-white {
+  background-color: #151822 !important;
+  color: #E2E8F0;
+}
+
+[data-ui-theme="nova"] main .bg-white,
+[data-ui-theme="nova"] main .bg-white\/95,
+[data-ui-theme="nova"] main .bg-white\/90,
+[data-ui-theme="nova"] main .bg-white\/80,
+[data-ui-theme="nova"] main .dark\:bg-slate-900,
+[data-ui-theme="nova"] main .dark\:bg-slate-900\/90,
+[data-ui-theme="nova"] main .m3-card,
+[data-ui-theme="nova"] main .m3-glass,
+[data-ui-theme="nova"] .fixed.inset-0 .bg-white {
+  background-color: #131620 !important;
+  color: #E2E8F0;
+}
+
+[data-ui-theme="obsidian"] main .bg-slate-50,
+[data-ui-theme="obsidian"] main .bg-slate-50\/90,
+[data-ui-theme="obsidian"] main .bg-slate-50\/80,
+[data-ui-theme="obsidian"] main .bg-slate-50\/50,
+[data-ui-theme="obsidian"] main .bg-slate-50\/40,
+[data-ui-theme="obsidian"] main .dark\:bg-slate-950\/20,
+[data-ui-theme="obsidian"] main .dark\:bg-slate-950\/40,
+[data-ui-theme="obsidian"] main .dark\:bg-slate-950\/60,
+[data-ui-theme="obsidian"] main .bg-\[\#F8FAFC\],
+[data-ui-theme="obsidian"] .fixed.inset-0 .bg-slate-50,
+[data-ui-theme="obsidian"] .fixed.inset-0 .bg-slate-50\/90,
+[data-ui-theme="nova"] main .bg-slate-50,
+[data-ui-theme="nova"] main .bg-slate-50\/90,
+[data-ui-theme="nova"] main .bg-slate-50\/80,
+[data-ui-theme="nova"] main .bg-slate-50\/50,
+[data-ui-theme="nova"] main .bg-slate-50\/40,
+[data-ui-theme="nova"] main .dark\:bg-slate-950\/20,
+[data-ui-theme="nova"] main .dark\:bg-slate-950\/40,
+[data-ui-theme="nova"] main .dark\:bg-slate-950\/60,
+[data-ui-theme="nova"] main .bg-\[\#F8FAFC\],
+[data-ui-theme="nova"] .fixed.inset-0 .bg-slate-50,
+[data-ui-theme="nova"] .fixed.inset-0 .bg-slate-50\/90 {
+  background-color: #10131C !important;
+}
+
+[data-ui-theme="obsidian"] main .bg-slate-100,
+[data-ui-theme="obsidian"] main .bg-slate-100\/80,
+[data-ui-theme="obsidian"] main .bg-slate-200\/80,
+[data-ui-theme="obsidian"] .fixed.inset-0 .bg-slate-100,
+[data-ui-theme="nova"] main .bg-slate-100,
+[data-ui-theme="nova"] main .bg-slate-100\/80,
+[data-ui-theme="nova"] main .bg-slate-200\/80,
+[data-ui-theme="nova"] .fixed.inset-0 .bg-slate-100 {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-ui-theme="obsidian"] main .hover\:bg-slate-50:hover,
+[data-ui-theme="obsidian"] main .hover\:bg-slate-100:hover,
+[data-ui-theme="obsidian"] main .hover\:bg-slate-100\/80:hover,
+[data-ui-theme="nova"] main .hover\:bg-slate-50:hover,
+[data-ui-theme="nova"] main .hover\:bg-slate-100:hover,
+[data-ui-theme="nova"] main .hover\:bg-slate-100\/80:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-ui-theme="obsidian"] main .text-slate-900,
+[data-ui-theme="obsidian"] main .text-slate-800,
+[data-ui-theme="obsidian"] .fixed.inset-0 .text-slate-900,
+[data-ui-theme="obsidian"] .fixed.inset-0 .text-slate-800,
+[data-ui-theme="nova"] main .text-slate-900,
+[data-ui-theme="nova"] main .text-slate-800,
+[data-ui-theme="nova"] .fixed.inset-0 .text-slate-900,
+[data-ui-theme="nova"] .fixed.inset-0 .text-slate-800 {
+  color: #F1F5F9 !important;
+}
+
+[data-ui-theme="obsidian"] main .text-slate-700,
+[data-ui-theme="obsidian"] main .text-slate-600,
+[data-ui-theme="obsidian"] .fixed.inset-0 .text-slate-700,
+[data-ui-theme="obsidian"] .fixed.inset-0 .text-slate-600,
+[data-ui-theme="nova"] main .text-slate-700,
+[data-ui-theme="nova"] main .text-slate-600,
+[data-ui-theme="nova"] .fixed.inset-0 .text-slate-700,
+[data-ui-theme="nova"] .fixed.inset-0 .text-slate-600 {
+  color: #CBD5E1 !important;
+}
+
+[data-ui-theme="obsidian"] main .text-slate-500,
+[data-ui-theme="obsidian"] main .text-slate-400,
+[data-ui-theme="obsidian"] .fixed.inset-0 .text-slate-500,
+[data-ui-theme="obsidian"] .fixed.inset-0 .text-slate-400,
+[data-ui-theme="nova"] main .text-slate-500,
+[data-ui-theme="nova"] main .text-slate-400,
+[data-ui-theme="nova"] .fixed.inset-0 .text-slate-500,
+[data-ui-theme="nova"] .fixed.inset-0 .text-slate-400 {
+  color: #94A3B8 !important;
+}
+
+[data-ui-theme="obsidian"] main .border-slate-200,
+[data-ui-theme="obsidian"] main .border-slate-200\/85,
+[data-ui-theme="obsidian"] main .border-slate-200\/80,
+[data-ui-theme="obsidian"] main .border-slate-200\/70,
+[data-ui-theme="obsidian"] main .border-slate-100,
+[data-ui-theme="obsidian"] main .dark\:border-slate-800,
+[data-ui-theme="obsidian"] main .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+[data-ui-theme="obsidian"] .fixed.inset-0 .border-slate-200,
+[data-ui-theme="obsidian"] .fixed.inset-0 .border-slate-200\/80,
+[data-ui-theme="obsidian"] .fixed.inset-0 .border-slate-100,
+[data-ui-theme="nova"] main .border-slate-200,
+[data-ui-theme="nova"] main .border-slate-200\/85,
+[data-ui-theme="nova"] main .border-slate-200\/80,
+[data-ui-theme="nova"] main .border-slate-200\/70,
+[data-ui-theme="nova"] main .border-slate-100,
+[data-ui-theme="nova"] main .dark\:border-slate-800,
+[data-ui-theme="nova"] main .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+[data-ui-theme="nova"] .fixed.inset-0 .border-slate-200,
+[data-ui-theme="nova"] .fixed.inset-0 .border-slate-200\/80,
+[data-ui-theme="nova"] .fixed.inset-0 .border-slate-100 {
+  border-color: rgba(255, 255, 255, 0.09) !important;
+}
+
+[data-ui-theme="obsidian"] main input,
+[data-ui-theme="obsidian"] main textarea,
+[data-ui-theme="obsidian"] main select,
+[data-ui-theme="obsidian"] .fixed.inset-0 input,
+[data-ui-theme="obsidian"] .fixed.inset-0 textarea,
+[data-ui-theme="obsidian"] .fixed.inset-0 select,
+[data-ui-theme="nova"] main input,
+[data-ui-theme="nova"] main textarea,
+[data-ui-theme="nova"] main select,
+[data-ui-theme="nova"] .fixed.inset-0 input,
+[data-ui-theme="nova"] .fixed.inset-0 textarea,
+[data-ui-theme="nova"] .fixed.inset-0 select {
+  background-color: #0D1017 !important;
+  color: #F1F5F9 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-ui-theme="obsidian"] main .bg-slate-900,
+[data-ui-theme="nova"] main .bg-slate-900 {
+  background-color: #1C2130 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+[data-ui-theme="obsidian"] main .text-indigo-600,
+[data-ui-theme="obsidian"] main .text-indigo-700,
+[data-ui-theme="obsidian"] main .dark\:text-indigo-400,
+[data-ui-theme="obsidian"] main .dark\:text-indigo-300 {
+  color: #38BDF8 !important;
+}
+
+[data-ui-theme="obsidian"] main .bg-indigo-600 {
+  background-color: #0284C7 !important;
+}
+
+[data-ui-theme="obsidian"] main .bg-indigo-50,
+[data-ui-theme="obsidian"] main .bg-indigo-50\/50,
+[data-ui-theme="obsidian"] main .bg-indigo-50\/70,
+[data-ui-theme="obsidian"] main .dark\:bg-indigo-950\/50,
+[data-ui-theme="obsidian"] main .dark\:bg-indigo-950\/60 {
+  background-color: rgba(56, 189, 248, 0.12) !important;
+}
+
+[data-ui-theme="nova"] main .text-indigo-600,
+[data-ui-theme="nova"] main .text-indigo-700,
+[data-ui-theme="nova"] main .dark\:text-indigo-400,
+[data-ui-theme="nova"] main .dark\:text-indigo-300 {
+  color: #FBBF24 !important;
+}
+
+[data-ui-theme="nova"] main .bg-indigo-600 {
+  background-color: #F59E0B !important;
+  color: #090D16 !important;
+}
+
+[data-ui-theme="nova"] main .bg-indigo-50,
+[data-ui-theme="nova"] main .bg-indigo-50\/50,
+[data-ui-theme="nova"] main .bg-indigo-50\/70,
+[data-ui-theme="nova"] main .dark\:bg-indigo-950\/50,
+[data-ui-theme="nova"] main .dark\:bg-indigo-950\/60 {
+  background-color: rgba(251, 191, 36, 0.12) !important;
+}
+
+[data-ui-theme="obsidian"] nav.lg\:hidden,
+[data-ui-theme="nova"] nav.lg\:hidden {
+  background-color: rgba(17, 19, 25, 0.96) !important;
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. HORIZON — Airy Focus Canvas & Cobalt Accents
+   -------------------------------------------------------------------------- */
+[data-ui-theme="horizon"] body {
+  background-color: #ECEFF4;
+  color: #0F172A;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+[data-ui-theme="horizon"] main .rounded-3xl,
+[data-ui-theme="horizon"] main .rounded-bento {
+  border-radius: 24px;
+}
+
+[data-ui-theme="horizon"] main .bg-white,
+[data-ui-theme="horizon"] main .bg-white\/90 {
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 20px -6px rgba(15, 23, 42, 0.06);
+}
+
+[data-ui-theme="horizon"] main .bg-indigo-600 {
+  background-color: #0A66FF;
+}
+
+[data-ui-theme="horizon"] main .text-indigo-600,
+[data-ui-theme="horizon"] main .text-indigo-700 {
+  color: #0A66FF;
+}

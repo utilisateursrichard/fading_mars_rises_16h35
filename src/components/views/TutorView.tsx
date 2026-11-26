@@ -13,6 +13,8 @@ import {
   Clock 
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
+import { useUITheme } from '../../context/UIThemeContext';
+import { getThemeTokens } from '../../utils/themeTokens';
 import { 
   AITutorService, 
   LLM_PROVIDERS_REGISTRY, 
@@ -29,6 +31,8 @@ const INITIAL_VISIBLE_COUNT = 25;
 
 export const TutorView: React.FC = () => {
   const { student, homeworks, courses } = useSchool();
+  const { uiTheme } = useUITheme();
+  const tk = getThemeTokens(uiTheme);
   const [isThinking, setIsThinking] = useState(false);
   const [activeProviderName, setActiveProviderName] = useState<string>('');
   const [expandedFallbackId, setExpandedFallbackId] = useState<string | null>(null);
@@ -253,30 +257,32 @@ export const TutorView: React.FC = () => {
   const isWaitingForFirstChunk = isThinking && currentStreamingMessage?.sender === 'tutor' && !currentStreamingMessage?.text;
 
   return (
-    <div className="h-[calc(100vh-140px)] bg-white rounded-2xl sm:rounded-3xl border border-slate-200/70 shadow-subtle overflow-hidden flex flex-col max-w-5xl mx-auto w-full">
+    <div className={`h-[calc(100vh-140px)] ${tk.card} overflow-hidden flex flex-col max-w-5xl mx-auto w-full`}>
       
       {/* Top Header */}
-      <div className="p-3.5 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-white z-10">
+      <div className={`p-3.5 sm:p-5 border-b ${tk.borderSubtle} flex items-center justify-between z-10`}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-subtle relative">
-            <Bot className="w-5 h-5 text-indigo-400" />
+          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center relative ${tk.primaryBtn}`}>
+            <Bot className="w-5 h-5" />
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-extrabold text-base text-slate-900 tracking-tight">Tuteur IA</h3>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100/80 flex items-center gap-1">
+              <h3 className={`font-extrabold text-base tracking-tight ${tk.textPrimary}`}>Tuteur IA</h3>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${tk.subSurface} ${tk.textSecondary}`}>
                 <Sparkles className="w-2.5 h-2.5" />
                 <span>Production</span>
               </span>
-              <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100/80 items-center gap-1">
+              <span className={`hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold items-center gap-1 ${
+                tk.isDarkTheme ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-700 border border-emerald-100/80'
+              }`}>
                 <ShieldCheck className="w-3 h-3" />
                 <span>Zéro Downtime</span>
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">
+            <p className={`text-xs font-medium mt-0.5 ${tk.textMuted}`}>
               {topActiveProvider ? (
-                <span>Connecté à <strong className="text-slate-600 font-semibold">{topActiveProvider.name}</strong> ({topActiveProvider.model})</span>
+                <span>Connecté à <strong className={`font-semibold ${tk.textPrimary}`}>{topActiveProvider.name}</strong> ({topActiveProvider.model})</span>
               ) : (
                 <span>Moteur pédagogique de secours actif</span>
               )}
@@ -301,7 +307,7 @@ export const TutorView: React.FC = () => {
           {/* Bouton Réinitialiser la discussion */}
           <button
             onClick={handleResetChat}
-            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+            className={`p-2 ${tk.secondaryBtn} transition-colors`}
             title="Réinitialiser la discussion"
           >
             <RotateCcw className="w-4 h-4" />
@@ -312,20 +318,20 @@ export const TutorView: React.FC = () => {
       {/* Chat Messages Body */}
       <div 
         ref={messagesContainerRef}
-        className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4 bg-slate-50/40"
+        className={`flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4 ${tk.subSurface}`}
       >
         
         {/* Info banner */}
         <div className="text-center my-1">
-          <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3.5 py-1.5 bg-white border border-slate-200/60 rounded-full text-[11px] font-medium text-slate-600 shadow-xs">
-            <span className="inline-flex items-center gap-1 text-indigo-600 font-bold">
+          <div className={`inline-flex flex-wrap items-center justify-center gap-2 px-3.5 py-1.5 ${tk.card} text-[11px] font-medium ${tk.textSecondary}`}>
+            <span className="inline-flex items-center gap-1 text-indigo-500 font-bold">
               <Zap className="w-3.5 h-3.5" />
               <span>Orchestrateur Résilient</span>
             </span>
-            <span className="text-slate-300">•</span>
+            <span className="opacity-40">•</span>
             <span>Cascade de réputation active</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-emerald-600 font-semibold">Tolérance aux pannes 100%</span>
+            <span className="opacity-40">•</span>
+            <span className="text-emerald-500 font-semibold">Tolérance aux pannes 100%</span>
           </div>
         </div>
 
@@ -335,7 +341,7 @@ export const TutorView: React.FC = () => {
             <button
               type="button"
               onClick={() => setVisibleCount(prev => prev + 25)}
-              className="m3-press inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white hover:bg-indigo-50 text-indigo-700 font-bold text-xs border border-indigo-200/80 shadow-xs transition-colors cursor-pointer"
+              className={`inline-flex items-center gap-1.5 px-4 py-1.5 text-xs ${tk.secondaryBtn} cursor-pointer`}
             >
               <span>↑ Charger les messages précédents ({hiddenCount} masqués)</span>
             </button>
@@ -357,16 +363,16 @@ export const TutorView: React.FC = () => {
         {/* Thinking Indicator (uniquement avant la réception du premier chunk de texte) */}
         {isWaitingForFirstChunk && (
           <div className="flex items-end gap-2.5 justify-start">
-            <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center shrink-0 mb-1 ring-2 ring-slate-100 shadow-subtle">
-              <Bot className="w-4 h-4 text-indigo-400" />
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mb-1 ${tk.primaryBtn}`}>
+              <Bot className="w-4 h-4" />
             </div>
-            <div className="bg-white border border-slate-200/70 rounded-2xl rounded-bl-xs p-3.5 shadow-subtle flex items-center gap-3">
+            <div className={`${tk.card} rounded-bl-xs p-3.5 flex items-center gap-3`}>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '150ms' }} />
                 <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-              <span className="text-xs text-slate-500 font-medium">
+              <span className={`text-xs font-medium ${tk.textMuted}`}>
                 {activeProviderName ? `Consultation de ${activeProviderName}...` : 'Réflexion pédagogique...'}
               </span>
             </div>
@@ -375,8 +381,8 @@ export const TutorView: React.FC = () => {
       </div>
 
       {/* Suggestions Pills */}
-      <div className="px-3 sm:px-4 py-2 bg-white border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
-        <span className="text-[10px] font-extrabold uppercase text-slate-400 shrink-0">Idées :</span>
+      <div className={`px-3 sm:px-4 py-2 border-t ${tk.borderSubtle} flex items-center gap-2 overflow-x-auto no-scrollbar`}>
+        <span className={`text-[10px] font-extrabold uppercase shrink-0 ${tk.textMuted}`}>Idées :</span>
         {suggestions.map((item, idx) => {
           const Icon = item.icon;
           return (
@@ -384,9 +390,9 @@ export const TutorView: React.FC = () => {
               key={idx}
               onClick={() => handleSendMessage(item.prompt)}
               disabled={isThinking}
-              className="m3-press shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200/80 disabled:opacity-50 disabled:pointer-events-none text-slate-600 text-xs font-semibold border border-slate-200/60 transition-colors"
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 disabled:opacity-50 disabled:pointer-events-none text-xs ${tk.secondaryBtn}`}
             >
-              <Icon className="w-3.5 h-3.5 text-slate-400" />
+              <Icon className="w-3.5 h-3.5 opacity-60" />
               <span>{item.label}</span>
             </button>
           );

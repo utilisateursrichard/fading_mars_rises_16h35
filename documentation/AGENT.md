@@ -7,7 +7,7 @@ Ce document recense l'architecture, les conventions et les mécanismes clés de 
 ## ⚠️ TODO Impératif (À rappeler à l'utilisateur)
 
 > [!IMPORTANT]
-> **Rappeler impérativement à l'utilisateur de supprimer complètement le Mode Démo** (`isDemoMode`, le bouton toggle dans `src/components/layout/Header.tsx`, les données factices `src/data/mockData.ts` / `src/data/mockMessages.ts`, ainsi que toute la logique conditionnelle démo dans `src/context/SchoolContext.tsx`, `src/utils/featureFlags.ts`, les vues et les modales) dès que possible.
+> **Rappeler impérativement à l'utilisateur de supprimer complètement le Mode Démo** (`isDemoMode`, le bouton toggle dans `src/components/layout/Header.tsx`, les données factices `src/data/mockData.ts` / `src/data/mockMessages.ts`, ainsi que toute la logique conditionnelle démo dans `src/context/SchoolContext.tsx`, `src/utils/featureFlags.ts`, les vues et les modales) dès que possible. Note : le Mode Démo est désormais restreint uniquement à `npm run dev` (`import.meta.env.DEV`) et absent des builds de production.
 > À chaque intervention majeure sur le projet tant que le Mode Démo est encore présent, **pensez à rappeler à l'utilisateur** qu'il reste à supprimer complètement.
 
 ---

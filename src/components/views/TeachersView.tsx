@@ -16,6 +16,8 @@ import {
   X
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
+import { useUITheme } from '../../context/UIThemeContext';
+import { getThemeTokens } from '../../utils/themeTokens';
 import { Teacher } from '../../types/school';
 import { getSubjectTheme } from '../../utils/theme';
 
@@ -27,6 +29,8 @@ export const TeachersView: React.FC = () => {
     startDirectMessageWithTeacher,
     isDemoMode 
   } = useSchool();
+  const { uiTheme } = useUITheme();
+  const tk = getThemeTokens(uiTheme);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>('all');
@@ -116,19 +120,25 @@ export const TeachersView: React.FC = () => {
   return (
     <div className="space-y-6 pb-16 max-w-7xl mx-auto animate-in fade-in duration-300">
       
-      {/* Hero Header avec Apple Glass refraction */}
-      <div className="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
+      {/* Hero Header adapté au thème */}
+      <div className={`p-6 sm:p-8 relative overflow-hidden transition-all ${tk.heroBanner}`}>
         {/* Glow décoratif */}
         <div className="absolute -top-12 -right-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2.5 mb-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                  tk.isDarkHero
+                    ? 'bg-white/10 text-white'
+                    : 'bg-indigo-50 text-indigo-700 border border-indigo-200/60'
+                }`}
+              >
                 <Users className="w-3.5 h-3.5" />
                 <span>Annuaire Enseignants</span>
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-slate-900 text-white">
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${tk.pillSwitchActive}`}>
                 {teachers.length} {teachers.length > 1 ? 'professeurs' : 'professeur'}
               </span>
               {titulaireCount > 0 && (
@@ -139,10 +149,10 @@ export const TeachersView: React.FC = () => {
               )}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            <h1 className={`text-2xl sm:text-3xl font-black tracking-tight ${tk.heroTitle}`}>
               Liste de professeurs
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+            <p className={`text-xs sm:text-sm font-medium mt-1 ${tk.heroSubtitle}`}>
               Liste complète des professeurs déduite de votre agenda Smartschool avec nom, prénom et contact direct.
             </p>
           </div>
@@ -160,13 +170,11 @@ export const TeachersView: React.FC = () => {
             </button>
 
             {/* Sélecteur de vue Grille / Liste */}
-            <div className="inline-flex items-center p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
+            <div className={`inline-flex items-center ${tk.pillSwitchTrack}`}>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-xl transition-all ${
-                  viewMode === 'grid'
-                    ? 'bg-white text-indigo-600 shadow-xs font-bold'
-                    : 'text-slate-500 hover:text-slate-900'
+                className={`p-2 transition-all ${
+                  viewMode === 'grid' ? tk.pillSwitchActive : tk.pillSwitchIdle
                 }`}
                 title="Vue en grille"
               >
@@ -174,10 +182,8 @@ export const TeachersView: React.FC = () => {
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-xl transition-all ${
-                  viewMode === 'list'
-                    ? 'bg-white text-indigo-600 shadow-xs font-bold'
-                    : 'text-slate-500 hover:text-slate-900'
+                className={`p-2 transition-all ${
+                  viewMode === 'list' ? tk.pillSwitchActive : tk.pillSwitchIdle
                 }`}
                 title="Vue en liste"
               >
@@ -188,21 +194,21 @@ export const TeachersView: React.FC = () => {
         </div>
 
         {/* Barre de recherche & Filtres rapides */}
-        <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col md:flex-row gap-3">
+        <div className={`mt-6 pt-6 border-t ${tk.isDarkHero ? 'border-white/10' : tk.borderSubtle} flex flex-col md:flex-row gap-3`}>
           {/* Champ de recherche */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className={`w-4 h-4 ${tk.textMuted} absolute left-3.5 top-1/2 -translate-y-1/2`} />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Rechercher par nom, prénom, matière, trigramme (ex: DR) ou salle..."
-              className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 focus:bg-white border border-slate-200/80 focus:border-indigo-500 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-hidden transition-all shadow-2xs"
+              className={`w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm font-medium focus:outline-hidden transition-all ${tk.inputField}`}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                className={`absolute right-3 top-1/2 -translate-y-1/2 ${tk.textMuted} p-0.5 rounded-full`}
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -213,10 +219,10 @@ export const TeachersView: React.FC = () => {
           {titulaireCount > 0 && (
             <button
               onClick={() => setOnlyTitulaire(prev => !prev)}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold border transition-all active:scale-95 shrink-0 ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold transition-all active:scale-95 shrink-0 ${
                 onlyTitulaire
-                  ? 'bg-amber-500 text-white border-amber-600 shadow-xs shadow-amber-500/20'
-                  : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'
+                  ? 'bg-amber-500 text-white rounded-full shadow-xs shadow-amber-500/20'
+                  : tk.secondaryBtn
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -228,17 +234,15 @@ export const TeachersView: React.FC = () => {
         {/* Pilules de filtres par matière */}
         {allSubjects.length > 0 && (
           <div className="mt-4 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+            <span className={`text-[11px] font-bold uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1 ${tk.isDarkHero ? 'text-white/60' : tk.textMuted}`}>
               <Filter className="w-3 h-3" />
               <span>Matière :</span>
             </span>
 
             <button
               onClick={() => setSelectedSubjectFilter('all')}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                selectedSubjectFilter === 'all'
-                  ? 'bg-slate-900 text-white shadow-2xs'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+              className={`px-3 py-1 text-xs font-bold transition-all shrink-0 ${
+                selectedSubjectFilter === 'all' ? tk.primaryBtn : tk.secondaryBtn
               }`}
             >
               Toutes ({teachers.length})
@@ -251,10 +255,8 @@ export const TeachersView: React.FC = () => {
                 <button
                   key={sub}
                   onClick={() => setSelectedSubjectFilter(isSelected ? 'all' : sub)}
-                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                    isSelected
-                      ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/20'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                  className={`px-3 py-1 text-xs font-bold transition-all shrink-0 ${
+                    isSelected ? tk.primaryBtn : tk.secondaryBtn
                   }`}
                 >
                   {sub} <span className="text-[10px] opacity-75 font-normal">({count})</span>
@@ -323,7 +325,7 @@ export const TeachersView: React.FC = () => {
             return (
               <div
                 key={teacher.id}
-                className="group bg-white/90 backdrop-blur-xl border border-slate-200/80 hover:border-indigo-300/80 rounded-3xl p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden"
+                className={`group p-5 flex flex-col justify-between relative overflow-hidden ${tk.interactiveCard}`}
               >
                 {/* Lueur d'accentuation discrète */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-bl-full pointer-events-none group-hover:from-indigo-500/10 transition-colors" />
@@ -362,7 +364,7 @@ export const TeachersView: React.FC = () => {
 
                         {/* Identifiant sort Smartschool (ex: deridder-andre) */}
                         {teacher.sort && (
-                          <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">
+                          <p className={`text-[11px] font-mono mt-0.5 truncate ${tk.textMuted}`}>
                             @{teacher.sort}
                           </p>
                         )}
@@ -372,7 +374,7 @@ export const TeachersView: React.FC = () => {
                     {/* Trigramme / Code prof Smartschool (ex: DR) */}
                     {teacher.trigram && (
                       <span 
-                        className="px-2.5 py-1 rounded-xl bg-slate-900 text-white text-[11px] font-black tracking-widest uppercase shadow-2xs shrink-0"
+                        className={`px-2.5 py-1 rounded-xl text-[11px] font-black tracking-widest uppercase shrink-0 ${tk.subSurface} ${tk.textPrimary}`}
                         title={`Trigramme officiel : ${teacher.trigram}`}
                       >
                         {teacher.trigram}
@@ -383,7 +385,11 @@ export const TeachersView: React.FC = () => {
                   {/* Badge Titulaire */}
                   {teacher.isTitulaire && (
                     <div className="mt-3">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/70 shadow-2xs">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                        tk.isDarkTheme
+                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                          : 'bg-amber-50 text-amber-700 border-amber-200/70'
+                      }`}>
                         <Sparkles className="w-3 h-3 text-amber-500" />
                         <span>Professeur Titulaire</span>
                       </span>
@@ -412,13 +418,13 @@ export const TeachersView: React.FC = () => {
                   {/* Salles de classe associées */}
                   {teacher.rooms.length > 0 && (
                     <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[11px] font-bold text-slate-400">Salles :</span>
+                      <span className={`text-[11px] font-bold ${tk.textMuted}`}>Salles :</span>
                       {teacher.rooms.map(room => (
                         <span
                           key={room}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-200/60"
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold border ${tk.subSurface} ${tk.textSecondary} ${tk.borderSubtle}`}
                         >
-                          <MapPin className="w-3 h-3 text-slate-400" />
+                          <MapPin className="w-3 h-3 opacity-60" />
                           <span>{room}</span>
                         </span>
                       ))}
@@ -427,14 +433,14 @@ export const TeachersView: React.FC = () => {
                 </div>
 
                 {/* Footer de la carte : Action Contacter */}
-                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <span className="text-[11px] text-slate-400 font-medium">
+                <div className={`mt-5 pt-4 border-t ${tk.borderSubtle} flex items-center justify-between gap-2`}>
+                  <span className={`text-[11px] font-medium ${tk.textMuted}`}>
                     {teacher.rooms.length > 0 ? teacher.rooms.join(', ') : 'Emploi du temps'}
                   </span>
 
                   <button
                     onClick={() => startDirectMessageWithTeacher(teacher.fullName || `${teacher.lastName} ${teacher.firstName}`)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-bold transition-all shadow-xs active:scale-95 group/btn"
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs active:scale-95 group/btn ${tk.primaryBtn}`}
                   >
                     <Mail className="w-3.5 h-3.5" />
                     <span>Contacter</span>
@@ -449,11 +455,11 @@ export const TeachersView: React.FC = () => {
 
       {/* VUE 2 : LISTE COMPACTE DÉTAILLÉE */}
       {viewMode === 'list' && filteredTeachers.length > 0 && (
-        <div className="bg-white/90 backdrop-blur-xl border border-slate-200/80 rounded-3xl shadow-xs overflow-hidden">
+        <div className={`${tk.card} overflow-hidden`}>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-black text-slate-400 uppercase tracking-wider">
+                <tr className={`${tk.tableHeader} text-[11px] font-black uppercase tracking-wider`}>
                   <th className="py-3.5 px-5">Enseignant</th>
                   <th className="py-3.5 px-4">Trigramme</th>
                   <th className="py-3.5 px-4">Matières</th>
@@ -462,13 +468,13 @@ export const TeachersView: React.FC = () => {
                   <th className="py-3.5 px-5 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs sm:text-sm font-medium">
+              <tbody className={`divide-y ${tk.divider} text-xs sm:text-sm font-medium`}>
                 {filteredTeachers.map(teacher => {
                   const initials = getInitials(teacher);
                   const gradient = getAvatarGradient(teacher.id);
 
                   return (
-                    <tr key={teacher.id} className="hover:bg-slate-50/80 transition-colors group">
+                    <tr key={teacher.id} className={`${tk.tableRowHover} transition-colors group`}>
                       {/* Nom + Prénom + Avatar */}
                       <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
@@ -476,7 +482,7 @@ export const TeachersView: React.FC = () => {
                             <img
                               src={teacher.pictureUrl}
                               alt={teacher.fullName}
-                              className="w-10 h-10 rounded-xl object-cover ring-1 ring-slate-200 shrink-0"
+                              className="w-10 h-10 rounded-xl object-cover ring-1 ring-black/10 shrink-0"
                               onError={(e) => {
                                 (e.target as HTMLElement).style.display = 'none';
                               }}
@@ -489,15 +495,15 @@ export const TeachersView: React.FC = () => {
 
                           <div>
                             <div className="flex items-baseline gap-1.5">
-                              <span className="font-black text-slate-900 uppercase">
+                              <span className={`font-black uppercase ${tk.textPrimary}`}>
                                 {teacher.lastName}
                               </span>
-                              <span className="font-semibold text-slate-600 capitalize">
+                              <span className={`font-semibold capitalize ${tk.textSecondary}`}>
                                 {teacher.firstName}
                               </span>
                             </div>
                             {teacher.sort && (
-                              <p className="text-[11px] text-slate-400 font-mono">
+                              <p className={`text-[11px] font-mono ${tk.textMuted}`}>
                                 @{teacher.sort}
                               </p>
                             )}
@@ -508,11 +514,11 @@ export const TeachersView: React.FC = () => {
                       {/* Trigramme */}
                       <td className="py-3.5 px-4">
                         {teacher.trigram ? (
-                          <span className="px-2 py-0.5 rounded-lg bg-slate-900 text-white font-mono text-xs font-black">
+                          <span className={`px-2 py-0.5 rounded-lg font-mono text-xs font-black ${tk.subSurface} ${tk.textPrimary}`}>
                             {teacher.trigram}
                           </span>
                         ) : (
-                          <span className="text-slate-300">—</span>
+                          <span className="opacity-40">—</span>
                         )}
                       </td>
 
@@ -534,26 +540,30 @@ export const TeachersView: React.FC = () => {
                       </td>
 
                       {/* Salles */}
-                      <td className="py-3.5 px-4 text-slate-600">
+                      <td className={`py-3.5 px-4 ${tk.textSecondary}`}>
                         {teacher.rooms.length > 0 ? (
                           <div className="flex items-center gap-1 text-xs">
-                            <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                            <MapPin className="w-3.5 h-3.5 opacity-60" />
                             <span>{teacher.rooms.join(', ')}</span>
                           </div>
                         ) : (
-                          <span className="text-slate-300">—</span>
+                          <span className="opacity-40">—</span>
                         )}
                       </td>
 
                       {/* Rôle / Titulaire */}
                       <td className="py-3.5 px-4">
                         {teacher.isTitulaire ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/70">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                            tk.isDarkTheme
+                              ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                              : 'bg-amber-50 text-amber-700 border-amber-200/70'
+                          }`}>
                             <Sparkles className="w-3 h-3 text-amber-500" />
                             <span>Titulaire</span>
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-400 font-medium">Enseignant</span>
+                          <span className={`text-xs font-medium ${tk.textMuted}`}>Enseignant</span>
                         )}
                       </td>
 
@@ -561,7 +571,7 @@ export const TeachersView: React.FC = () => {
                       <td className="py-3.5 px-5 text-right">
                         <button
                           onClick={() => startDirectMessageWithTeacher(teacher.fullName || `${teacher.lastName} ${teacher.firstName}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 text-xs font-bold transition-all active:scale-95"
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs active:scale-95 ${tk.secondaryBtn}`}
                         >
                           <Mail className="w-3.5 h-3.5" />
                           <span>Contacter</span>

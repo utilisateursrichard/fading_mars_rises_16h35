@@ -9,6 +9,8 @@ import {
   ChevronLeft
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
+import { useUITheme } from '../../context/UIThemeContext';
+import { getThemeTokens } from '../../utils/themeTokens';
 import { CourseEvent, DayOfWeek } from '../../types/school';
 import { getSubjectTheme } from '../../utils/theme';
 
@@ -144,6 +146,8 @@ export const AgendaView: React.FC = () => {
     globalSearch,
     syncWeek
   } = useSchool();
+  const { uiTheme } = useUITheme();
+  const tk = getThemeTokens(uiTheme);
 
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
   const [weekOffset, setWeekOffset] = useState<number>(0);
@@ -367,34 +371,34 @@ export const AgendaView: React.FC = () => {
     <div className="space-y-6 pb-12 max-w-6xl mx-auto">
       
       {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/70 shadow-subtle">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 transition-all ${tk.heroBanner}`}>
         <div className="flex flex-wrap items-center gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Agenda</h2>
+              <h2 className={`text-xl font-extrabold tracking-tight ${tk.heroTitle}`}>Agenda</h2>
             </div>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">
+            <p className={`text-xs font-medium mt-0.5 ${tk.heroSubtitle}`}>
               Séances de cours, horaires, salles et devoirs associés
             </p>
           </div>
 
           {/* Navigation Semaine Dynamique */}
-          <div className="flex items-center gap-1.5 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/50">
+          <div className={`flex items-center gap-1.5 ${tk.pillSwitchTrack}`}>
             <button
               onClick={handlePrevWeek}
-              className="p-1.5 rounded-xl hover:bg-white text-slate-500 hover:text-slate-900 transition-all shadow-none hover:shadow-subtle"
+              className={`p-1.5 transition-all ${tk.pillSwitchIdle}`}
               title="Semaine précédente"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            <span className="px-2.5 text-xs font-bold text-slate-700 select-none">
+            <span className={`px-2.5 text-xs font-bold select-none ${tk.heroTitle}`}>
               {weekLabel}
             </span>
 
             <button
               onClick={handleNextWeek}
-              className="p-1.5 rounded-xl hover:bg-white text-slate-500 hover:text-slate-900 transition-all shadow-none hover:shadow-subtle"
+              className={`p-1.5 transition-all ${tk.pillSwitchIdle}`}
               title="Semaine suivante"
             >
               <ChevronRight className="w-4 h-4" />
@@ -404,7 +408,7 @@ export const AgendaView: React.FC = () => {
           {weekOffset !== 0 && (
             <button
               onClick={handleResetToday}
-              className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-all border border-indigo-200/50"
+              className={`px-3 py-1.5 text-xs font-bold transition-all ${tk.pillSwitchActive}`}
             >
               Aujourd'hui
             </button>
@@ -413,19 +417,19 @@ export const AgendaView: React.FC = () => {
 
         <div className="flex items-center gap-2.5">
           {/* Toggle View Mode */}
-          <div className="flex items-center p-1 bg-slate-100/90 rounded-xl text-xs font-bold border border-slate-200/50">
+          <div className={`flex items-center text-xs font-bold ${tk.pillSwitchTrack}`}>
             <button
               onClick={() => setViewMode('week')}
-              className={`px-3.5 py-1.5 rounded-lg transition-all ${
-                viewMode === 'week' ? 'bg-white text-slate-900 shadow-subtle' : 'text-slate-500 hover:text-slate-900'
+              className={`px-3.5 py-1.5 transition-all ${
+                viewMode === 'week' ? tk.pillSwitchActive : tk.pillSwitchIdle
               }`}
             >
               Semaine
             </button>
             <button
               onClick={() => setViewMode('day')}
-              className={`px-3.5 py-1.5 rounded-lg transition-all ${
-                viewMode === 'day' ? 'bg-white text-slate-900 shadow-subtle' : 'text-slate-500 hover:text-slate-900'
+              className={`px-3.5 py-1.5 transition-all ${
+                viewMode === 'day' ? tk.pillSwitchActive : tk.pillSwitchIdle
               }`}
             >
               Jour
@@ -434,7 +438,7 @@ export const AgendaView: React.FC = () => {
 
           <button
             onClick={() => setIsNewHomeworkModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-subtle transition-all"
+            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs ${tk.primaryBtn}`}
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Ajouter devoir</span>
@@ -443,7 +447,7 @@ export const AgendaView: React.FC = () => {
       </div>
 
       {/* Date & Filter Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/70 shadow-subtle">
+      <div className={`flex flex-wrap items-center justify-between gap-3 p-3.5 ${tk.card}`}>
         {/* Day Pills with clean numbers */}
         <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
           {daysConfig.map((d) => {
@@ -480,7 +484,7 @@ export const AgendaView: React.FC = () => {
           <select
             value={subjectFilter}
             onChange={(e) => setSubjectFilter(e.target.value)}
-            className="px-3 py-1.5 bg-slate-100/80 rounded-xl text-slate-700 font-semibold border border-slate-200/60 text-xs focus:ring-2 focus:ring-indigo-500/20"
+            className={`px-3 py-1.5 text-xs font-semibold ${tk.inputField}`}
           >
             <option value="all">Toutes les matières</option>
             {uniqueSubjects.map(sub => (
@@ -492,38 +496,52 @@ export const AgendaView: React.FC = () => {
 
       {/* Week Grid (Tableau de temps proportionnel) */}
       {viewMode === 'week' ? (
-        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-subtle overflow-hidden">
+        <div className={tk.agendaGridContainer}>
           <div className="overflow-x-auto">
             <div className="min-w-[960px]">
               {/* Header Row: Heure + Jours (Lundi à Dimanche) */}
               <div 
-                className="grid border-b border-slate-200/80 bg-slate-50/70 sticky top-0 z-20"
+                className={`grid border-b ${tk.borderSubtle} ${tk.tableHeader} sticky top-0 z-20`}
                 style={{ gridTemplateColumns: `55px repeat(${daysConfig.length}, minmax(0, 1fr))` }}
               >
-                <div className="py-3 px-2 text-center text-[11px] font-bold text-slate-400 border-r border-slate-200/60 flex items-center justify-center">
-                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                <div className={`py-3 px-2 text-center text-[11px] font-bold border-r ${tk.borderSubtle} flex items-center justify-center`}>
+                  <Clock className="w-3.5 h-3.5 opacity-60" />
                 </div>
                 {daysConfig.map((day) => (
                   <div
                     key={day.dayOfWeek}
                     onClick={() => setSelectedDay(day.dayOfWeek)}
-                    className={`py-3 px-2 text-center border-r last:border-r-0 border-slate-200/60 cursor-pointer transition-colors ${
-                      day.isToday ? 'bg-indigo-50/50' : 'hover:bg-slate-100/60'
+                    className={`py-3 px-2 text-center cursor-pointer transition-colors ${
+                      day.isToday ? tk.agendaTodayHeader : tk.agendaDayHeader
                     }`}
                   >
                     <div className="flex items-center justify-center gap-1.5">
                       <span className={`text-xs font-black uppercase tracking-wider ${
-                        day.isToday ? 'text-indigo-600' : 'text-slate-800'
+                        day.isToday
+                          ? uiTheme === 'pulse'
+                            ? 'text-white'
+                            : uiTheme === 'apple_pro'
+                              ? 'text-[#FF3B30]'
+                              : uiTheme === 'nova'
+                                ? 'text-amber-400'
+                                : uiTheme === 'obsidian'
+                                  ? 'text-sky-400'
+                                  : uiTheme === 'google_m3e'
+                                    ? 'text-[#001C38]'
+                                    : 'text-[#0A66FF]'
+                          : tk.textPrimary
                       }`}>
                         {day.name}
                       </span>
                       <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
-                        day.isToday ? 'bg-indigo-600 text-white' : 'text-slate-500'
+                        day.isToday ? tk.agendaTodayBadge : tk.textMuted
                       }`}>
                         {day.dateNum}
                       </span>
                     </div>
-                    <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                    <div className={`text-[10px] font-medium mt-0.5 ${
+                      day.isToday && uiTheme === 'pulse' ? 'text-white/70' : tk.textMuted
+                    }`}>
                       {eventsByDay[day.dayOfWeek]?.length || 0} cours
                     </div>
                   </div>
@@ -539,13 +557,13 @@ export const AgendaView: React.FC = () => {
                 }}
               >
                 {/* Colonne des heures */}
-                <div className="relative border-r border-slate-200/60 select-none bg-slate-50/40">
+                <div className={`relative select-none ${tk.agendaHoursAxis}`}>
                   {hoursList.map((h, i) => {
                     if (i === hoursList.length - 1) return null;
                     return (
                       <div
                         key={h}
-                        className="absolute right-2 text-[10px] font-bold text-slate-400 -translate-y-1/2"
+                        className={`absolute right-2 text-[10px] font-bold -translate-y-1/2 ${tk.textMuted}`}
                         style={{ top: `${i * HOUR_HEIGHT}px` }}
                       >
                         {String(h).padStart(2, '0')}:00
@@ -564,21 +582,21 @@ export const AgendaView: React.FC = () => {
                   )}
                 </div>
 
-                {/* 6 Colonnes de jours */}
+                {/* Colonnes de jours */}
                 {daysConfig.map((day) => {
                   const dayLayout = layoutByDay[day.dayOfWeek] || [];
                   return (
                     <div
                       key={day.dayOfWeek}
-                      className={`relative border-r last:border-r-0 border-slate-200/60 ${
-                        day.isToday ? 'bg-indigo-50/15' : ''
+                      className={`relative border-r last:border-r-0 ${tk.borderSubtle} ${
+                        day.isToday ? tk.agendaTodayColumn : ''
                       }`}
                     >
                       {/* Lignes d'heures horizontales */}
                       {hoursList.map((h, i) => (
                         <div
                           key={h}
-                          className="absolute left-0 right-0 border-t border-slate-100 pointer-events-none"
+                          className={`absolute left-0 right-0 pointer-events-none ${tk.agendaHourLine}`}
                           style={{ top: `${i * HOUR_HEIGHT}px` }}
                         />
                       ))}
@@ -589,7 +607,7 @@ export const AgendaView: React.FC = () => {
                         return (
                           <div
                             key={`half-${h}`}
-                            className="absolute left-0 right-0 border-t border-slate-50/90 border-dashed pointer-events-none"
+                            className={`absolute left-0 right-0 pointer-events-none ${tk.agendaHalfHourLine}`}
                             style={{ top: `${i * HOUR_HEIGHT + HOUR_HEIGHT / 2}px` }}
                           />
                         );
@@ -620,10 +638,11 @@ export const AgendaView: React.FC = () => {
                               top: `${top}px`,
                               height: `${height}px`,
                               left: `calc(${leftPercent}% + 2px)`,
-                              width: `calc(${widthPercent}% - 4px)`
+                              width: `calc(${widthPercent}% - 4px)`,
+                              ...(uiTheme === 'apple_pro' ? { borderLeftColor: theme.accent } : {}),
                             }}
-                            className={`absolute rounded-xl border p-2 cursor-pointer transition-all hover:z-30 hover:shadow-md hover:ring-2 hover:ring-indigo-400/50 flex flex-col justify-between overflow-hidden group bg-white ${
-                              evt.status === 'in_progress' ? 'ring-2 ring-emerald-500 shadow-sm' : 'border-slate-200/80 shadow-xs'
+                            className={`absolute p-2 cursor-pointer transition-all hover:z-30 flex flex-col justify-between overflow-hidden group ${
+                              evt.status === 'in_progress' ? tk.agendaEventActive : tk.agendaEventBlock
                             }`}
                           >
                             <div>
@@ -643,18 +662,18 @@ export const AgendaView: React.FC = () => {
                                 )}
                               </div>
 
-                              <h4 className="font-bold text-[11px] text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1 leading-tight">
+                              <h4 className={`font-bold text-[11px] transition-colors line-clamp-1 leading-tight ${tk.textPrimary}`}>
                                 {evt.subject}
                               </h4>
 
-                              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-500">
-                                <span className="font-semibold text-slate-700 flex items-center gap-0.5">
-                                  <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                              <div className={`mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] ${tk.textMuted}`}>
+                                <span className={`font-semibold flex items-center gap-0.5 ${tk.textSecondary}`}>
+                                  <Clock className="w-2.5 h-2.5 opacity-60 shrink-0" />
                                   {evt.wholeDay ? 'Toute la journée' : `${evt.startTime}-${evt.endTime}`}
                                 </span>
                                 {evt.room && (
                                   <span className="flex items-center gap-0.5 truncate">
-                                    <MapPin className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                                    <MapPin className="w-2.5 h-2.5 opacity-60 shrink-0" />
                                     {evt.room}
                                   </span>
                                 )}
@@ -663,7 +682,7 @@ export const AgendaView: React.FC = () => {
 
                             {/* Devoirs attachés sous le cours (sans bloc séparé) */}
                             {hasHomework && (
-                              <div className="mt-1 pt-1 border-t border-slate-100 overflow-hidden">
+                              <div className={`mt-1 pt-1 border-t ${tk.borderSubtle} overflow-hidden`}>
                                 {isTwoHours ? (
                                   <div className="space-y-1">
                                     {evt.homeworkDue!.slice(0, 2).map(hw => {
@@ -673,28 +692,36 @@ export const AgendaView: React.FC = () => {
                                           key={hw.id}
                                           className={`flex items-center gap-1 px-1 py-0.5 rounded text-[9px] truncate ${
                                             hw.isCompleted
-                                              ? 'bg-slate-50 text-slate-400 line-through'
+                                              ? `${tk.subSurface} ${tk.textMuted} line-through`
                                               : isUrgent
-                                                ? 'bg-rose-50 text-rose-800 font-bold border border-rose-100'
-                                                : 'bg-amber-50 text-amber-800 font-medium border border-amber-100'
+                                                ? tk.isDarkTheme
+                                                  ? 'bg-rose-500/15 text-rose-300 font-bold border border-rose-500/25'
+                                                  : 'bg-rose-50 text-rose-800 font-bold border border-rose-100'
+                                                : tk.isDarkTheme
+                                                  ? 'bg-amber-500/15 text-amber-300 font-medium border border-amber-500/25'
+                                                  : 'bg-amber-50 text-amber-800 font-medium border border-amber-100'
                                           }`}
                                           title={hw.description || hw.title}
                                         >
                                           <span className={`w-1 h-1 rounded-full shrink-0 ${
-                                            hw.isCompleted ? 'bg-slate-300' : isUrgent ? 'bg-rose-500' : 'bg-amber-500'
+                                            hw.isCompleted ? 'bg-slate-400' : isUrgent ? 'bg-rose-500' : 'bg-amber-500'
                                           }`} />
                                           <span className="truncate">{hw.title}</span>
                                         </div>
                                       );
                                     })}
                                     {evt.homeworkDue!.length > 2 && (
-                                      <div className="text-[9px] text-slate-400 font-semibold pl-0.5">
+                                      <div className={`text-[9px] font-semibold pl-0.5 ${tk.textMuted}`}>
                                         +{evt.homeworkDue!.length - 2} autre(s)
                                       </div>
                                     )}
                                   </div>
                                 ) : (
-                                  <div className="flex items-center gap-1 px-1 py-0.2 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200/50 truncate w-fit">
+                                  <div className={`flex items-center gap-1 px-1 py-0.2 rounded text-[9px] font-bold truncate w-fit ${
+                                    tk.isDarkTheme
+                                      ? 'bg-amber-500/15 text-amber-300 border border-amber-500/25'
+                                      : 'bg-amber-50 text-amber-800 border border-amber-200/50'
+                                  }`}>
                                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
                                     <span className="truncate">{evt.homeworkDue!.length} devoir{evt.homeworkDue!.length > 1 ? 's' : ''}</span>
                                   </div>
@@ -713,13 +740,13 @@ export const AgendaView: React.FC = () => {
         </div>
       ) : (
         /* Day View (Tableau de temps proportionnel 1 jour) */
-        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-subtle overflow-hidden max-w-4xl mx-auto">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className={`${tk.agendaGridContainer} max-w-4xl mx-auto`}>
+          <div className={`p-4 border-b ${tk.borderSubtle} flex items-center justify-between ${tk.tableHeader}`}>
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">
+              <h3 className={`text-base font-extrabold ${tk.textPrimary}`}>
                 {daysConfig.find(d => d.dayOfWeek === selectedDay)?.name} <span className="opacity-70 font-semibold">{daysConfig.find(d => d.dayOfWeek === selectedDay)?.dateNum}</span>
               </h3>
-              <p className="text-xs text-slate-400 font-medium">
+              <p className={`text-xs font-medium ${tk.textMuted}`}>
                 {eventsByDay[selectedDay]?.length || 0} séances prévues
               </p>
             </div>
@@ -729,13 +756,13 @@ export const AgendaView: React.FC = () => {
             <div className="min-w-[600px]">
               <div className="grid grid-cols-[60px_1fr] relative" style={{ height: `${totalGridHeight}px` }}>
                 {/* Colonne des heures */}
-                <div className="relative border-r border-slate-200/60 select-none bg-slate-50/40">
+                <div className={`relative select-none ${tk.agendaHoursAxis}`}>
                   {hoursList.map((h, i) => {
                     if (i === hoursList.length - 1) return null;
                     return (
                       <div
                         key={h}
-                        className="absolute right-2.5 text-[10px] font-bold text-slate-400 -translate-y-1/2"
+                        className={`absolute right-2.5 text-[10px] font-bold -translate-y-1/2 ${tk.textMuted}`}
                         style={{ top: `${i * HOUR_HEIGHT}px` }}
                       >
                         {String(h).padStart(2, '0')}:00
@@ -755,12 +782,12 @@ export const AgendaView: React.FC = () => {
                 </div>
 
                 {/* Colonne du jour unique */}
-                <div className={`relative ${daysConfig.find(d => d.dayOfWeek === selectedDay)?.isToday ? 'bg-indigo-50/15' : ''}`}>
+                <div className={`relative ${daysConfig.find(d => d.dayOfWeek === selectedDay)?.isToday ? tk.agendaTodayColumn : ''}`}>
                   {/* Lignes d'heures horizontales */}
                   {hoursList.map((h, i) => (
                     <div
                       key={h}
-                      className="absolute left-0 right-0 border-t border-slate-100 pointer-events-none"
+                      className={`absolute left-0 right-0 pointer-events-none ${tk.agendaHourLine}`}
                       style={{ top: `${i * HOUR_HEIGHT}px` }}
                     />
                   ))}
@@ -771,7 +798,7 @@ export const AgendaView: React.FC = () => {
                     return (
                       <div
                         key={`day-half-${h}`}
-                        className="absolute left-0 right-0 border-t border-slate-50/90 border-dashed pointer-events-none"
+                        className={`absolute left-0 right-0 pointer-events-none ${tk.agendaHalfHourLine}`}
                         style={{ top: `${i * HOUR_HEIGHT + HOUR_HEIGHT / 2}px` }}
                       />
                     );
@@ -802,10 +829,11 @@ export const AgendaView: React.FC = () => {
                             top: `${top}px`,
                             height: `${height}px`,
                             left: `calc(${leftPercent}% + 4px)`,
-                            width: `calc(${widthPercent}% - 8px)`
+                            width: `calc(${widthPercent}% - 8px)`,
+                            ...(uiTheme === 'apple_pro' ? { borderLeftColor: theme.accent } : {}),
                           }}
-                          className={`absolute rounded-2xl border p-3.5 cursor-pointer transition-all hover:z-30 hover:shadow-lg hover:ring-2 hover:ring-indigo-400/50 flex flex-col justify-between overflow-hidden group bg-white ${
-                            evt.status === 'in_progress' ? 'ring-2 ring-emerald-500 shadow-md' : 'border-slate-200/80 shadow-sm'
+                          className={`absolute p-3.5 cursor-pointer transition-all hover:z-30 flex flex-col justify-between overflow-hidden group ${
+                            evt.status === 'in_progress' ? tk.agendaEventActive : tk.agendaEventBlock
                           }`}
                         >
                           <div>
@@ -814,7 +842,7 @@ export const AgendaView: React.FC = () => {
                                 <span className={`px-2.5 py-1 rounded-xl text-xs font-black border uppercase tracking-wider ${theme.badgeClass}`}>
                                   {evt.subjectCode}
                                 </span>
-                                <h4 className="font-extrabold text-sm text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
+                                <h4 className={`font-extrabold text-sm transition-colors truncate ${tk.textPrimary}`}>
                                   {evt.subject}
                                 </h4>
                                 {evt.status === 'in_progress' && (
@@ -829,30 +857,30 @@ export const AgendaView: React.FC = () => {
                                 {evt.teacher && (
                                   <button
                                     onClick={() => startDirectMessageWithTeacher(evt.teacher)}
-                                    className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                                    className={`px-2.5 py-1 text-xs ${tk.secondaryBtn}`}
                                   >
                                     Prof
                                   </button>
                                 )}
                                 <button
                                   onClick={() => setSelectedEventModal(evt)}
-                                  className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-900 hover:bg-indigo-600 text-white transition-colors"
+                                  className={`px-2.5 py-1 text-xs ${tk.primaryBtn}`}
                                 >
                                   Détails
                                 </button>
                               </div>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                              <span className="font-bold text-slate-700 flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                            <div className={`flex flex-wrap items-center gap-3 text-xs ${tk.textMuted}`}>
+                              <span className={`font-bold flex items-center gap-1 ${tk.textSecondary}`}>
+                                <Clock className="w-3.5 h-3.5 opacity-60" />
                                 {evt.wholeDay ? 'Toute la journée' : `${evt.startTime} - ${evt.endTime}`}
                               </span>
                               {evt.room && (
                                 <>
                                   <span>•</span>
                                   <span className="flex items-center gap-1">
-                                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                                    <MapPin className="w-3.5 h-3.5 opacity-60" />
                                     {evt.room}
                                   </span>
                                 </>
@@ -861,7 +889,7 @@ export const AgendaView: React.FC = () => {
                                 <>
                                   <span>•</span>
                                   <span className="flex items-center gap-1">
-                                    <User className="w-3.5 h-3.5 text-slate-400" />
+                                    <User className="w-3.5 h-3.5 opacity-60" />
                                     {evt.teacher}
                                   </span>
                                 </>
@@ -871,7 +899,7 @@ export const AgendaView: React.FC = () => {
 
                           {/* Devoirs attachés */}
                           {hasHomework && (
-                            <div className="mt-2 pt-2 border-t border-slate-100 flex flex-wrap gap-2">
+                            <div className={`mt-2 pt-2 border-t ${tk.borderSubtle} flex flex-wrap gap-2`}>
                               {evt.homeworkDue!.map((hw) => {
                                 const isUrgent = hw.priority === 'high';
                                 return (
@@ -879,18 +907,22 @@ export const AgendaView: React.FC = () => {
                                     key={hw.id}
                                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs leading-none ${
                                       hw.isCompleted
-                                        ? 'bg-slate-50 text-slate-400 line-through'
+                                        ? `${tk.subSurface} ${tk.textMuted} line-through`
                                         : isUrgent
-                                          ? 'bg-rose-50 text-rose-800 border border-rose-200 font-bold'
-                                          : 'bg-amber-50 text-amber-800 border border-amber-200 font-semibold'
+                                          ? tk.isDarkTheme
+                                            ? 'bg-rose-500/15 text-rose-300 border border-rose-500/25 font-bold'
+                                            : 'bg-rose-50 text-rose-800 border border-rose-200 font-bold'
+                                          : tk.isDarkTheme
+                                            ? 'bg-amber-500/15 text-amber-300 border border-amber-500/25 font-semibold'
+                                            : 'bg-amber-50 text-amber-800 border border-amber-200 font-semibold'
                                     }`}
                                   >
                                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                      hw.isCompleted ? 'bg-slate-300' : isUrgent ? 'bg-rose-500' : 'bg-amber-500'
+                                      hw.isCompleted ? 'bg-slate-400' : isUrgent ? 'bg-rose-500' : 'bg-amber-500'
                                     }`} />
                                     <span className="truncate">{hw.title}</span>
                                     {isUrgent && !hw.isCompleted && (
-                                      <span className="text-[9px] uppercase tracking-wider font-extrabold text-rose-600 bg-rose-100 px-1 py-0.2 rounded">
+                                      <span className="text-[9px] uppercase tracking-wider font-extrabold text-rose-500 bg-rose-500/10 px-1 py-0.2 rounded">
                                         Urgent
                                       </span>
                                     )}
@@ -903,7 +935,7 @@ export const AgendaView: React.FC = () => {
                       );
                     })
                   ) : (
-                    <div className="flex items-center justify-center h-full text-slate-400 text-xs italic">
+                    <div className={`flex items-center justify-center h-full text-xs italic ${tk.textMuted}`}>
                       Aucun cours prévu pour ce jour
                     </div>
                   )}

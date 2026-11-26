@@ -30,6 +30,8 @@ import {
   Info
 } from 'lucide-react';
 import { useSchool } from '../../context/SchoolContext';
+import { useUITheme } from '../../context/UIThemeContext';
+import { getThemeTokens } from '../../utils/themeTokens';
 import { SubjectCourse, Homework } from '../../types/school';
 import { getSubjectTheme, SubjectTheme } from '../../utils/theme';
 import { getSmartschoolCourseIconUrl } from '../../services/smartschoolParsers';
@@ -120,6 +122,8 @@ export const CoursesView: React.FC = () => {
     isDemoMode,
     isInsideSmartschoolPlatform
   } = useSchool();
+  const { uiTheme } = useUITheme();
+  const tk = getThemeTokens(uiTheme);
 
   const [activeCourseTab, setActiveCourseTab] = useState<'chapters' | 'assignments' | 'info'>('chapters');
   const [submittedAssignments, setSubmittedAssignments] = useState<{ [key: string]: boolean }>({});
@@ -285,13 +289,11 @@ export const CoursesView: React.FC = () => {
         {hasLegacyContent ? (
           <>
             {/* Onglets Mode Démo / Contenu structuré */}
-            <div className="flex border-b border-slate-200 bg-white px-3 rounded-2xl shadow-subtle overflow-x-auto">
+            <div className={`flex px-3 ${tk.card} ${tk.tabBar} overflow-x-auto`}>
               <button
                 onClick={() => setActiveCourseTab('chapters')}
                 className={`py-3 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
-                  activeCourseTab === 'chapters'
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeCourseTab === 'chapters' ? tk.tabActive : tk.tabIdle
                 }`}
               >
                 <BookOpen className="w-4 h-4" />
@@ -300,9 +302,7 @@ export const CoursesView: React.FC = () => {
               <button
                 onClick={() => setActiveCourseTab('assignments')}
                 className={`py-3 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
-                  activeCourseTab === 'assignments'
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeCourseTab === 'assignments' ? tk.tabActive : tk.tabIdle
                 }`}
               >
                 <UploadCloud className="w-4 h-4" />
@@ -311,9 +311,7 @@ export const CoursesView: React.FC = () => {
               <button
                 onClick={() => setActiveCourseTab('info')}
                 className={`py-3 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
-                  activeCourseTab === 'info'
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeCourseTab === 'info' ? tk.tabActive : tk.tabIdle
                 }`}
               >
                 <Mail className="w-4 h-4" />
@@ -326,36 +324,39 @@ export const CoursesView: React.FC = () => {
                 {selectedCourse.chapters.map((chap) => (
                   <div
                     key={chap.id}
-                    className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/70 shadow-subtle"
+                    className={`${tk.card} p-5 sm:p-6`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
-                        chap.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
-                        chap.status === 'in_progress' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-600'
+                        chap.status === 'completed'
+                          ? tk.isDarkTheme ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-50 text-emerald-700'
+                          : chap.status === 'in_progress'
+                            ? tk.isDarkTheme ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-50 text-indigo-700'
+                            : `${tk.subSurface} ${tk.textSecondary}`
                       }`}>
                         {chap.status === 'completed' ? 'Terminé' : chap.status === 'in_progress' ? 'En cours' : 'À venir'}
                       </span>
-                      <h3 className="font-extrabold text-sm sm:text-base text-slate-900">{chap.title}</h3>
+                      <h3 className={`font-extrabold text-sm sm:text-base ${tk.textPrimary}`}>{chap.title}</h3>
                     </div>
-                    <p className="text-xs text-slate-500">{chap.description}</p>
+                    <p className={`text-xs ${tk.textMuted}`}>{chap.description}</p>
 
-                    <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                    <div className={`mt-4 pt-4 border-t ${tk.borderSubtle} space-y-2`}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {chap.documents.map((doc) => (
                           <div
                             key={doc.id}
-                            className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/80 hover:bg-slate-100 border border-slate-200/60 transition-colors"
+                            className={`flex items-center justify-between p-3 ${tk.subSurface} border ${tk.borderSubtle} transition-colors`}
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <FileText className="w-4 h-4 text-indigo-600 shrink-0" />
+                              <FileText className="w-4 h-4 text-indigo-500 shrink-0" />
                               <div className="min-w-0">
-                                <p className="text-xs font-bold text-slate-800 truncate">{doc.title}</p>
-                                <p className="text-[10px] text-slate-400">{doc.size} • Déposé le {doc.uploadDate}</p>
+                                <p className={`text-xs font-bold truncate ${tk.textPrimary}`}>{doc.title}</p>
+                                <p className={`text-[10px] ${tk.textMuted}`}>{doc.size} • Déposé le {doc.uploadDate}</p>
                               </div>
                             </div>
                             <button
                               onClick={() => alert(`Téléchargement de : ${doc.title}`)}
-                              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-white rounded-xl transition-colors shrink-0 ml-2"
+                              className={`p-1.5 ${tk.secondaryBtn} shrink-0 ml-2`}
                               title="Télécharger"
                             >
                               <Download className="w-4 h-4" />
@@ -378,35 +379,39 @@ export const CoursesView: React.FC = () => {
                   return (
                     <div
                       key={asg.id}
-                      className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/70 shadow-subtle"
+                      className={`${tk.card} p-5 sm:p-6`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                           <div className="flex items-center gap-2">
                             <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full ${
-                              isDone ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'
+                              isDone
+                                ? tk.isDarkTheme ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-50 text-emerald-700'
+                                : tk.isDarkTheme ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-50 text-amber-800'
                             }`}>
                               {isDone ? 'Devoir remis' : 'À rendre en ligne'}
                             </span>
-                            <span className="text-xs font-semibold text-slate-400">Barème : {asg.points} pts</span>
+                            <span className={`text-xs font-semibold ${tk.textMuted}`}>Barème : {asg.points} pts</span>
                           </div>
-                          <h3 className="font-extrabold text-base text-slate-900 mt-1">{asg.title}</h3>
-                          <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <h3 className={`font-extrabold text-base mt-1 ${tk.textPrimary}`}>{asg.title}</h3>
+                          <p className={`text-xs mt-0.5 flex items-center gap-1.5 ${tk.textMuted}`}>
+                            <Clock className="w-3.5 h-3.5 opacity-60" />
                             <span>Échéance : {asg.dueDate}</span>
                           </p>
                         </div>
 
                         <div>
                           {isDone ? (
-                            <div className="flex items-center gap-2 px-3.5 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-bold border border-emerald-200/60">
+                            <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border ${
+                              tk.isDarkTheme ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                            }`}>
                               <CheckCircle2 className="w-4 h-4" />
                               <span>Rendu validé</span>
                             </div>
                           ) : (
                             <button
                               onClick={() => handleSimulateSubmit(asg.id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition-all shadow-subtle"
+                              className={`flex items-center gap-2 px-4 py-2 text-xs ${tk.primaryBtn}`}
                             >
                               <UploadCloud className="w-4 h-4" />
                               <span>Déposer mon devoir</span>
@@ -416,12 +421,12 @@ export const CoursesView: React.FC = () => {
                       </div>
 
                       {asg.status === 'graded' && asg.obtainedGrade && (
-                        <div className="mt-4 pt-4 border-t border-slate-100 p-3 bg-indigo-50/50 rounded-2xl flex items-center justify-between">
+                        <div className={`mt-4 pt-4 border-t ${tk.borderSubtle} p-3 ${tk.subSurface} flex items-center justify-between`}>
                           <div>
-                            <p className="text-xs font-bold text-indigo-950">Note : {asg.obtainedGrade} / {asg.points}</p>
-                            <p className="text-[11px] text-indigo-700 mt-0.5 italic">{asg.feedback}</p>
+                            <p className={`text-xs font-bold ${tk.textPrimary}`}>Note : {asg.obtainedGrade} / {asg.points}</p>
+                            <p className={`text-[11px] mt-0.5 italic ${tk.textSecondary}`}>{asg.feedback}</p>
                           </div>
-                          <CheckCircle2 className="w-5 h-5 text-indigo-600" />
+                          <CheckCircle2 className="w-5 h-5 text-indigo-500" />
                         </div>
                       )}
                     </div>
@@ -431,31 +436,31 @@ export const CoursesView: React.FC = () => {
             )}
 
             {activeCourseTab === 'info' && (
-              <div className="bg-white rounded-3xl p-6 border border-slate-200/70 shadow-subtle max-w-lg">
-                <h3 className="font-extrabold text-base text-slate-900 mb-4">Contact Enseignant</h3>
+              <div className={`${tk.card} p-6 max-w-lg`}>
+                <h3 className={`font-extrabold text-base mb-4 ${tk.textPrimary}`}>Contact Enseignant</h3>
                 <div className="space-y-2.5 text-xs">
-                  <div className="flex items-center justify-between p-3 bg-slate-50/80 rounded-2xl">
-                    <span className="text-slate-400 font-medium">Professeur :</span>
-                    <span className="font-bold text-slate-800">{selectedCourse.teacher}</span>
+                  <div className={`flex items-center justify-between p-3 ${tk.subSurface}`}>
+                    <span className={`font-medium ${tk.textMuted}`}>Professeur :</span>
+                    <span className={`font-bold ${tk.textPrimary}`}>{selectedCourse.teacher}</span>
                   </div>
                   {selectedCourse.teacherEmail && (
-                    <div className="flex items-center justify-between p-3 bg-slate-50/80 rounded-2xl">
-                      <span className="text-slate-400 font-medium">Courriel :</span>
-                      <span className="font-mono text-indigo-600 font-medium">{selectedCourse.teacherEmail}</span>
+                    <div className={`flex items-center justify-between p-3 ${tk.subSurface}`}>
+                      <span className={`font-medium ${tk.textMuted}`}>Courriel :</span>
+                      <span className="font-mono text-indigo-500 font-medium">{selectedCourse.teacherEmail}</span>
                     </div>
                   )}
                   {selectedCourse.room && (
-                    <div className="flex items-center justify-between p-3 bg-slate-50/80 rounded-2xl">
-                      <span className="text-slate-400 font-medium">Salle habituelle :</span>
-                      <span className="font-bold text-slate-800">{selectedCourse.room}</span>
+                    <div className={`flex items-center justify-between p-3 ${tk.subSurface}`}>
+                      <span className={`font-medium ${tk.textMuted}`}>Salle habituelle :</span>
+                      <span className={`font-bold ${tk.textPrimary}`}>{selectedCourse.room}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-slate-100">
+                <div className={`mt-5 pt-4 border-t ${tk.borderSubtle}`}>
                   <button
                     onClick={() => startDirectMessageWithTeacher(selectedCourse.teacher)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition-all shadow-subtle"
+                    className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs ${tk.primaryBtn}`}
                   >
                     <MessageSquare className="w-4 h-4" />
                     <span>Écrire à {selectedCourse.teacher}</span>
@@ -467,68 +472,68 @@ export const CoursesView: React.FC = () => {
         ) : (
           /* Vue Mode Réel : Fiche complète du cours Smartschool & devoirs liés */
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-subtle space-y-4">
+            <div className={`${tk.card} p-6 space-y-4`}>
               <div className="flex items-center justify-between">
-                <h3 className="font-extrabold text-base text-slate-900">Informations Smartschool</h3>
+                <h3 className={`font-extrabold text-base ${tk.textPrimary}`}>Informations Smartschool</h3>
                 {selectedCourse.courseId !== undefined && (
-                  <span className="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600 font-mono text-[11px] font-bold">
+                  <span className={`px-2.5 py-0.5 rounded-lg ${tk.subSurface} ${tk.textSecondary} font-mono text-[11px] font-bold`}>
                     ID #{selectedCourse.courseId}
                   </span>
                 )}
               </div>
 
               <div className="space-y-2.5 text-xs">
-                <div className="flex items-center justify-between p-3 bg-slate-50/80 rounded-2xl gap-4">
-                  <span className="text-slate-400 font-medium shrink-0">Intitulé :</span>
-                  <span className="font-bold text-slate-800 text-right">{selectedCourse.subject}</span>
+                <div className={`flex items-center justify-between p-3 ${tk.subSurface} gap-4`}>
+                  <span className={`font-medium shrink-0 ${tk.textMuted}`}>Intitulé :</span>
+                  <span className={`font-bold text-right ${tk.textPrimary}`}>{selectedCourse.subject}</span>
                 </div>
                 {selectedCourse.description && (
-                  <div className="flex items-center justify-between p-3 bg-slate-50/80 rounded-2xl gap-4">
-                    <span className="text-slate-400 font-medium shrink-0">Description :</span>
-                    <span className="font-semibold text-slate-700 text-right">{selectedCourse.description}</span>
+                  <div className={`flex items-center justify-between p-3 ${tk.subSurface} gap-4`}>
+                    <span className={`font-medium shrink-0 ${tk.textMuted}`}>Description :</span>
+                    <span className={`font-semibold text-right ${tk.textSecondary}`}>{selectedCourse.description}</span>
                   </div>
                 )}
-                <div className="flex items-center justify-between p-3 bg-slate-50/80 rounded-2xl gap-4">
-                  <span className="text-slate-400 font-medium shrink-0">Enseignant :</span>
-                  <span className="font-bold text-slate-800 text-right">
+                <div className={`flex items-center justify-between p-3 ${tk.subSurface} gap-4`}>
+                  <span className={`font-medium shrink-0 ${tk.textMuted}`}>Enseignant :</span>
+                  <span className={`font-bold text-right ${tk.textPrimary}`}>
                     {selectedCourse.teacher}
                     {selectedCourse.teacherTrigram ? ` (${selectedCourse.teacherTrigram})` : ''}
                   </span>
                 </div>
                 {selectedCourse.room && (
-                  <div className="flex items-center justify-between p-3 bg-slate-50/80 rounded-2xl gap-4">
-                    <span className="text-slate-400 font-medium shrink-0">Salle habituelle :</span>
-                    <span className="font-bold text-slate-800 text-right">{selectedCourse.room}</span>
+                  <div className={`flex items-center justify-between p-3 ${tk.subSurface} gap-4`}>
+                    <span className={`font-medium shrink-0 ${tk.textMuted}`}>Salle habituelle :</span>
+                    <span className={`font-bold text-right ${tk.textPrimary}`}>{selectedCourse.room}</span>
                   </div>
                 )}
                 {selectedCourse.url && (
-                  <div className="flex items-center justify-between p-3 bg-slate-50/80 rounded-2xl gap-4">
-                    <span className="text-slate-400 font-medium shrink-0">Route Smartschool :</span>
-                    <span className="font-mono text-[11px] text-indigo-600 font-medium truncate">
+                  <div className={`flex items-center justify-between p-3 ${tk.subSurface} gap-4`}>
+                    <span className={`font-medium shrink-0 ${tk.textMuted}`}>Route Smartschool :</span>
+                    <span className="font-mono text-[11px] text-indigo-500 font-medium truncate">
                       {selectedCourse.url}
                     </span>
                   </div>
                 )}
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200/60 flex items-start gap-2.5 text-xs text-indigo-800">
-                <Info className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+              <div className={`p-3.5 ${tk.subSurface} border ${tk.borderSubtle} flex items-start gap-2.5 text-xs ${tk.textSecondary}`}>
+                <Info className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
                 <p>
                   L’exploration des documents, dossiers et actualités internes de ce cours sera ajoutée dans les prochaines étapes.
                 </p>
               </div>
             </div>
 
-            <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-subtle space-y-4">
+            <div className={`${tk.card} p-6 space-y-4`}>
               <div className="flex items-center justify-between">
-                <h3 className="font-extrabold text-base text-slate-900">Devoirs liés à ce cours</h3>
-                <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
+                <h3 className={`font-extrabold text-base ${tk.textPrimary}`}>Devoirs liés à ce cours</h3>
+                <span className={`px-2.5 py-0.5 rounded-full ${tk.subSurface} ${tk.textSecondary} text-xs font-bold`}>
                   {linkedHomeworks.length}
                 </span>
               </div>
 
               {linkedHomeworks.length === 0 ? (
-                <div className="p-8 text-center rounded-2xl bg-slate-50/70 border border-slate-200/50 text-xs text-slate-500">
+                <div className={`p-8 text-center ${tk.subSurface} border ${tk.borderSubtle} text-xs ${tk.textMuted}`}>
                   Aucun devoir à venir détecté dans l’agenda pour ce cours.
                 </div>
               ) : (
@@ -536,20 +541,20 @@ export const CoursesView: React.FC = () => {
                   {linkedHomeworks.map(hw => (
                     <div
                       key={hw.id}
-                      className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/60 flex items-start justify-between gap-3"
+                      className={`p-3.5 ${tk.subSurface} border ${tk.borderSubtle} flex items-start justify-between gap-3`}
                     >
                       <div className="min-w-0">
-                        <p className={`text-xs font-bold ${hw.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                        <p className={`text-xs font-bold ${hw.isCompleted ? `line-through ${tk.textMuted}` : tk.textPrimary}`}>
                           {hw.title}
                         </p>
                         {hw.description && (
-                          <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{hw.description}</p>
+                          <p className={`text-[11px] mt-0.5 line-clamp-1 ${tk.textMuted}`}>{hw.description}</p>
                         )}
                       </div>
                       <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold shrink-0 ${
                         hw.isCompleted
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
-                          : 'bg-amber-50 text-amber-800 border border-amber-200/60'
+                          ? tk.isDarkTheme ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                          : tk.isDarkTheme ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-50 text-amber-800 border border-amber-200/60'
                       }`}>
                         {hw.isCompleted ? 'Fait' : hw.dueDate}
                       </span>
@@ -558,10 +563,10 @@ export const CoursesView: React.FC = () => {
                 </div>
               )}
 
-              <div className="pt-2 border-t border-slate-100">
+              <div className={`pt-2 border-t ${tk.borderSubtle}`}>
                 <button
                   onClick={() => startDirectMessageWithTeacher(selectedCourse.teacher)}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition-all shadow-subtle"
+                  className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs ${tk.primaryBtn}`}
                 >
                   <Mail className="w-4 h-4" />
                   <span>Écrire à {selectedCourse.teacher}</span>
@@ -577,18 +582,24 @@ export const CoursesView: React.FC = () => {
   // Vue Liste Complète des Cours
   return (
     <div className="space-y-6 pb-16 max-w-7xl mx-auto animate-in fade-in duration-300">
-      {/* Hero Header M3E Pro */}
-      <div className="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
+      {/* Hero Header adapté au thème */}
+      <div className={`p-6 sm:p-8 relative overflow-hidden transition-all ${tk.heroBanner}`}>
         <div className="absolute -top-12 -right-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex flex-wrap items-center gap-2.5 mb-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                  tk.isDarkHero
+                    ? 'bg-white/10 text-white'
+                    : 'bg-indigo-50 text-indigo-700 border border-indigo-200/60'
+                }`}
+              >
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>Espace Cours</span>
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-slate-900 text-white">
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${tk.pillSwitchActive}`}>
                 {courses.length} {courses.length > 1 ? 'cours' : 'cours'}
               </span>
               {favouritesCount > 0 && (
@@ -599,10 +610,10 @@ export const CoursesView: React.FC = () => {
               )}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            <h1 className={`text-2xl sm:text-3xl font-black tracking-tight ${tk.heroTitle}`}>
               Liste de vos cours
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+            <p className={`text-xs sm:text-sm font-medium mt-1 ${tk.heroSubtitle}`}>
               {isDemoMode
                 ? 'Fiches de cours, chapitres, supports de révision et dépôts de devoirs'
                 : 'Vos cours Smartschool synchronisés avec leurs enseignants et favoris.'}
@@ -789,7 +800,7 @@ export const CoursesView: React.FC = () => {
               <div
                 key={c.id}
                 onClick={() => setSelectedCourseId(c.id)}
-                className="cursor-pointer group bg-white/90 backdrop-blur-xl rounded-3xl p-5 sm:p-6 border border-slate-200/80 hover:border-indigo-300/80 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden"
+                className={`cursor-pointer group p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden ${tk.interactiveCard}`}
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-3.5">
@@ -803,51 +814,55 @@ export const CoursesView: React.FC = () => {
                     <div className="flex items-center gap-1.5">
                       {c.isFavourite && (
                         <span
-                          className="p-1.5 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-500"
+                          className={`p-1.5 rounded-xl border ${
+                            tk.isDarkTheme
+                              ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+                              : 'bg-amber-50 border-amber-200/60 text-amber-500'
+                          }`}
                           title="Cours favori"
                         >
                           <Star className="w-3.5 h-3.5 fill-amber-400" />
                         </span>
                       )}
                       {c.hoursPerWeek > 0 && (
-                        <span className="text-[11px] font-semibold text-slate-400">
+                        <span className={`text-[11px] font-semibold ${tk.textMuted}`}>
                           {c.hoursPerWeek}h/sem
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <h3 className="text-base sm:text-lg font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug">
+                  <h3 className={`text-base sm:text-lg font-extrabold transition-colors leading-snug ${tk.textPrimary}`}>
                     {c.subject}
                   </h3>
 
                   {c.description && (
-                    <p className="text-xs text-slate-500 font-medium mt-1 line-clamp-2">
+                    <p className={`text-xs font-medium mt-1 line-clamp-2 ${tk.textMuted}`}>
                       {c.description}
                     </p>
                   )}
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600 font-medium">
+                  <div className={`mt-3 flex flex-wrap items-center gap-2 text-xs font-medium ${tk.textSecondary}`}>
                     <span className="inline-flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-slate-400" />
+                      <User className="w-3.5 h-3.5 opacity-60" />
                       <span>{c.teacher}</span>
                     </span>
                     {c.teacherTrigram && (
-                      <span className="px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-black tracking-wider">
+                      <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-black tracking-wider ${tk.subSurface} ${tk.textSecondary}`}>
                         {c.teacherTrigram}
                       </span>
                     )}
                     {c.room && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
-                        <MapPin className="w-3 h-3 text-slate-400" />
+                      <span className={`inline-flex items-center gap-1 text-[11px] ${tk.textMuted}`}>
+                        <MapPin className="w-3 h-3 opacity-60" />
                         <span>{c.room}</span>
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-2 text-xs font-bold text-slate-600">
-                  <span className="text-[11px] font-semibold text-slate-400">
+                <div className={`mt-5 pt-4 border-t ${tk.borderSubtle} flex items-center justify-between gap-2 text-xs font-bold ${tk.textSecondary}`}>
+                  <span className={`text-[11px] font-semibold ${tk.textMuted}`}>
                     {c.chapters.length > 0 || c.assignments.length > 0
                       ? `${c.chapters.length} chapitres • ${c.assignments.length} devoirs`
                       : linkedCount > 0
@@ -861,12 +876,12 @@ export const CoursesView: React.FC = () => {
                         e.stopPropagation();
                         startDirectMessageWithTeacher(c.teacher);
                       }}
-                      className="p-1.5 rounded-xl bg-slate-100 hover:bg-indigo-600 text-slate-500 hover:text-white transition-colors"
+                      className={`p-1.5 ${tk.secondaryBtn}`}
                       title={`Contacter ${c.teacher}`}
                     >
                       <Mail className="w-3.5 h-3.5" />
                     </button>
-                    <div className="flex items-center gap-0.5 text-slate-700 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all">
+                    <div className="flex items-center gap-0.5 group-hover:translate-x-0.5 transition-all">
                       <span>Accéder</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </div>
@@ -880,11 +895,11 @@ export const CoursesView: React.FC = () => {
 
       {/* Vue Liste */}
       {viewMode === 'list' && filteredCourses.length > 0 && (
-        <div className="bg-white/90 backdrop-blur-xl border border-slate-200/80 rounded-3xl shadow-xs overflow-hidden">
+        <div className={`${tk.card} overflow-hidden`}>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-black text-slate-400 uppercase tracking-wider">
+                <tr className={`${tk.tableHeader} text-[11px] font-black uppercase tracking-wider`}>
                   <th className="py-3.5 px-5">Cours</th>
                   <th className="py-3.5 px-4">Code</th>
                   <th className="py-3.5 px-4">Description</th>
@@ -893,19 +908,19 @@ export const CoursesView: React.FC = () => {
                   <th className="py-3.5 px-5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs sm:text-sm font-medium">
+              <tbody className={`divide-y ${tk.divider} text-xs sm:text-sm font-medium`}>
                 {filteredCourses.map(c => {
                   const theme = getSubjectTheme(c.subjectCode || c.subject);
                   return (
                     <tr
                       key={c.id}
                       onClick={() => setSelectedCourseId(c.id)}
-                      className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                      className={`${tk.tableRowHover} transition-colors cursor-pointer group`}
                     >
                       <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
                           <CourseIconBadge course={c} theme={theme} size="sm" />
-                          <span className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                          <span className={`font-bold transition-colors ${tk.textPrimary}`}>
                             {c.subject}
                           </span>
                         </div>
@@ -915,14 +930,14 @@ export const CoursesView: React.FC = () => {
                           {c.subjectCode}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-slate-500 max-w-xs truncate">
-                        {c.description || <span className="text-slate-300">—</span>}
+                      <td className={`py-3.5 px-4 text-xs max-w-xs truncate ${tk.textMuted}`}>
+                        {c.description || <span className="opacity-40">—</span>}
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-slate-700">
+                      <td className={`py-3.5 px-4 text-xs ${tk.textSecondary}`}>
                         <div className="flex items-center gap-1.5">
                           <span className="font-semibold">{c.teacher}</span>
                           {c.teacherTrigram && (
-                            <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px] font-bold">
+                            <span className={`px-1.5 py-0.5 rounded ${tk.subSurface} font-mono text-[10px] font-bold`}>
                               {c.teacherTrigram}
                             </span>
                           )}
@@ -932,7 +947,7 @@ export const CoursesView: React.FC = () => {
                         {c.isFavourite ? (
                           <Star className="w-4 h-4 fill-amber-400 text-amber-500 inline-block" />
                         ) : (
-                          <span className="text-slate-300">—</span>
+                          <span className="opacity-40">—</span>
                         )}
                       </td>
                       <td className="py-3.5 px-5 text-right">
@@ -942,7 +957,7 @@ export const CoursesView: React.FC = () => {
                               e.stopPropagation();
                               startDirectMessageWithTeacher(c.teacher);
                             }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 text-xs font-bold transition-all"
+                            className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs ${tk.secondaryBtn}`}
                             title={`Contacter ${c.teacher}`}
                           >
                             <Mail className="w-3.5 h-3.5" />
@@ -953,7 +968,7 @@ export const CoursesView: React.FC = () => {
                               e.stopPropagation();
                               setSelectedCourseId(c.id);
                             }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-bold transition-all"
+                            className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs ${tk.primaryBtn}`}
                           >
                             <span>Ouvrir</span>
                             <ChevronRight className="w-3.5 h-3.5" />

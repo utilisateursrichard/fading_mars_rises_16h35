@@ -15,6 +15,8 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { useSchool } from '../../../context/SchoolContext';
+import { useUITheme } from '../../../context/UIThemeContext';
+import { getThemeTokens } from '../../../utils/themeTokens';
 import { AttachmentCard } from './AttachmentCard';
 import { QuickReplyBox } from './QuickReplyBox';
 import { SmartschoolFlagColor } from '../../../types/school';
@@ -24,6 +26,8 @@ interface MessageDetailPaneProps {
 }
 
 export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToList }) => {
+  const { uiTheme } = useUITheme();
+  const tk = getThemeTokens(uiTheme);
   const {
     selectedMailId,
     selectedMailDetail,
@@ -43,14 +47,14 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
 
   if (!selectedMailId) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-white/40 dark:bg-slate-900/30 rounded-card border border-dashed border-slate-200 dark:border-slate-800">
-        <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-400 mb-4 shadow-subtle">
+      <div className={`h-full flex flex-col items-center justify-center p-8 text-center border border-dashed ${tk.borderSubtle} ${tk.card}`}>
+        <div className={`w-16 h-16 rounded-full ${tk.subSurface} flex items-center justify-center ${tk.textMuted} mb-4`}>
           <MessageSquare className="w-8 h-8 stroke-[1.5]" />
         </div>
-        <h3 className="font-display text-lg font-bold text-slate-700 dark:text-slate-200">
+        <h3 className={`font-display text-lg font-bold ${tk.textPrimary}`}>
           Aucun message sélectionné
         </h3>
-        <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mt-1 leading-5">
+        <p className={`text-xs max-w-sm mt-1 leading-5 ${tk.textMuted}`}>
           Choisissez un message dans la liste de gauche pour afficher son contenu complet, ses pièces jointes et y répondre.
         </p>
       </div>
@@ -59,26 +63,26 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
 
   if (isMailDetailLoading || !selectedMailDetail) {
     return (
-      <div className="h-full p-6 space-y-6 animate-pulse bg-white dark:bg-slate-900 rounded-card border border-slate-200/80 dark:border-slate-800">
+      <div className={`h-full p-6 space-y-6 animate-pulse ${tk.card}`}>
         <div className="flex items-center justify-between">
-          <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-28" />
+          <div className="h-4 bg-slate-400/20 rounded w-28" />
           <div className="flex gap-2">
-            <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded-input" />
-            <div className="h-8 w-8 bg-slate-200 dark:bg-slate-700 rounded-input" />
+            <div className="h-8 w-20 bg-slate-400/20 rounded-xl" />
+            <div className="h-8 w-8 bg-slate-400/20 rounded-xl" />
           </div>
         </div>
-        <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-3/4" />
+        <div className="h-8 bg-slate-400/20 rounded w-3/4" />
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
+          <div className="w-10 h-10 rounded-full bg-slate-400/20 shrink-0" />
           <div className="space-y-1.5 w-48">
-            <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full" />
-            <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-2/3" />
+            <div className="h-4 bg-slate-400/20 rounded w-full" />
+            <div className="h-3 bg-slate-400/20 rounded w-2/3" />
           </div>
         </div>
-        <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-          <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full" />
-          <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-5/6" />
-          <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-4/6" />
+        <div className={`space-y-3 pt-4 border-t ${tk.borderSubtle}`}>
+          <div className="h-4 bg-slate-400/20 rounded w-full" />
+          <div className="h-4 bg-slate-400/20 rounded w-5/6" />
+          <div className="h-4 bg-slate-400/20 rounded w-4/6" />
         </div>
       </div>
     );
@@ -122,15 +126,15 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
   };
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-slate-900 rounded-card border border-slate-200/90 dark:border-slate-800 shadow-subtle overflow-hidden">
+    <div className={`h-full flex flex-col overflow-hidden ${tk.card}`}>
       {/* Barre d'actions supérieure */}
-      <div className="p-3 sm:p-4 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0 bg-slate-50/60 dark:bg-slate-900/60">
+      <div className={`p-3 sm:p-4 border-b ${tk.borderSubtle} flex items-center justify-between gap-2 shrink-0 ${tk.tableHeader}`}>
         <div className="flex items-center gap-1.5">
           {onBackToList && (
             <button
               type="button"
               onClick={onBackToList}
-              className="lg:hidden p-2 rounded-input text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors m3-press active:scale-[0.97]"
+              className={`lg:hidden p-2 ${tk.secondaryBtn} active:scale-[0.97]`}
               title="Retour à la liste"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -141,7 +145,7 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
             <button
               type="button"
               onClick={handleReplyClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-input bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-subtle m3-press active:scale-[0.97] transition-all"
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs active:scale-[0.97] transition-all ${tk.primaryBtn}`}
             >
               <Reply className="w-3.5 h-3.5" />
               <span>Répondre</span>
@@ -154,7 +158,7 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
                 type="button"
                 onClick={() => setMailRead(selectedMailDetail.id)}
                 title="Marquer comme lu"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-input text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold m3-press active:scale-[0.97] transition-all"
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold active:scale-[0.97] transition-all ${tk.secondaryBtn}`}
               >
                 <Check className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Marquer comme lu</span>
@@ -164,9 +168,9 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
                 type="button"
                 onClick={() => setMailUnread(selectedMailDetail.id)}
                 title="Marquer comme non lu"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-input text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-xs font-semibold m3-press active:scale-[0.97] transition-all"
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold active:scale-[0.97] transition-all ${tk.secondaryBtn}`}
               >
-                <Mail className="w-3.5 h-3.5 text-slate-500" />
+                <Mail className="w-3.5 h-3.5 opacity-60" />
                 <span className="hidden sm:inline">Marquer non lu</span>
               </button>
             )
@@ -180,27 +184,27 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
               type="button"
               onClick={() => setShowFlagMenu(!showFlagMenu)}
               title="Changer le drapeau"
-              className="flex items-center gap-1.5 p-2 rounded-input text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-xs font-semibold m3-press active:scale-[0.97] transition-all"
+              className={`flex items-center gap-1.5 p-2 text-xs font-semibold active:scale-[0.97] transition-all ${tk.secondaryBtn}`}
             >
               <span className={`w-2.5 h-2.5 rounded-full ${currentFlagDot()}`} />
-              <Tag className="w-3.5 h-3.5 text-slate-500" />
+              <Tag className="w-3.5 h-3.5 opacity-60" />
             </button>
 
             {showFlagMenu && (
-              <div className="absolute right-0 top-full mt-1.5 w-44 rounded-card bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-modal z-20 py-1.5 animate-in zoom-in-95 duration-150">
+              <div className={`absolute right-0 top-full mt-1.5 w-44 ${tk.card} shadow-modal z-20 py-1.5 animate-in zoom-in-95 duration-150`}>
                 {flags.map(f => (
                   <button
                     key={f.id}
                     type="button"
                     onClick={() => handleFlagSelect(f.id)}
-                    className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium ${tk.textSecondary} ${tk.tableRowHover} transition-colors`}
                   >
                     <div className="flex items-center gap-2">
                       <span className={`w-2.5 h-2.5 rounded-full ${f.dotClass}`} />
                       <span>{f.label}</span>
                     </div>
                     {selectedMailDetail.label === f.id && (
-                      <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                      <Check className="w-3.5 h-3.5 text-indigo-500" />
                     )}
                   </button>
                 ))}
@@ -212,7 +216,7 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
             type="button"
             onClick={() => archiveMail(selectedMailDetail.id)}
             title="Archiver"
-            className="p-2 rounded-input text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 transition-all m3-press active:scale-[0.97]"
+            className={`p-2 transition-all active:scale-[0.97] ${tk.secondaryBtn}`}
           >
             <Archive className="w-4 h-4" />
           </button>
@@ -221,7 +225,7 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
             type="button"
             onClick={() => deleteMail(selectedMailDetail.id)}
             title="Supprimer"
-            className="p-2 rounded-input text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 transition-all m3-press active:scale-[0.97]"
+            className={`p-2 hover:text-rose-500 transition-all active:scale-[0.97] ${tk.secondaryBtn}`}
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -231,26 +235,26 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
       {/* Contenu déroulant du message */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
         {/* Titre Objet Majeur */}
-        <h2 className="font-display text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
+        <h2 className={`font-display text-xl sm:text-2xl font-extrabold tracking-tight leading-snug ${tk.textPrimary}`}>
           {selectedMailDetail.subject || '(Sans objet)'}
         </h2>
 
         {/* Bloc Expéditeur & Destinataires */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-4 rounded-card bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800/80">
+        <div className={`flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-4 ${tk.subSurface} border ${tk.borderSubtle}`}>
           <div className="flex items-start gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-input bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-display font-extrabold text-sm flex items-center justify-center shrink-0 border border-indigo-200/70 dark:border-indigo-800/60 shadow-subtle">
+            <div className={`w-11 h-11 rounded-xl font-display font-extrabold text-sm flex items-center justify-center shrink-0 ${tk.primaryBtn}`}>
               {selectedMailDetail.from.charAt(0).toUpperCase()}
             </div>
 
             <div className="min-w-0">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate font-display">
+              <h3 className={`text-sm font-bold truncate font-display ${tk.textPrimary}`}>
                 {selectedMailDetail.from}
               </h3>
 
               {/* Destinataires et détails */}
-              <div className="mt-1 flex items-center gap-1.5 flex-wrap text-xs text-slate-500 dark:text-slate-400">
+              <div className={`mt-1 flex items-center gap-1.5 flex-wrap text-xs ${tk.textMuted}`}>
                 <span>À :</span>
-                <span className="font-medium text-slate-700 dark:text-slate-300">
+                <span className={`font-medium ${tk.textSecondary}`}>
                   {selectedMailDetail.to || 'Moi'}
                 </span>
 
@@ -258,7 +262,7 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
                   <button
                     type="button"
                     onClick={() => setShowAllRecipients(!showAllRecipients)}
-                    className="inline-flex items-center gap-0.5 text-indigo-600 dark:text-indigo-400 font-semibold hover:underline ml-1"
+                    className="inline-flex items-center gap-0.5 text-indigo-500 font-semibold hover:underline ml-1"
                   >
                     <span>+{selectedMailDetail.receivers.length - 1} autre(s)</span>
                     {showAllRecipients ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -267,8 +271,8 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
               </div>
 
               {showAllRecipients && selectedMailDetail.receivers && (
-                <div className="mt-2 p-2 rounded-input bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 space-y-1">
-                  <p className="font-bold text-slate-700 dark:text-slate-300">Tous les destinataires :</p>
+                <div className={`mt-2 p-2 ${tk.card} text-[11px] ${tk.textMuted} space-y-1`}>
+                  <p className={`font-bold ${tk.textPrimary}`}>Tous les destinataires :</p>
                   <ul className="list-disc list-inside space-y-0.5">
                     {selectedMailDetail.receivers.map((r, i) => (
                       <li key={i}>{r.name}</li>
@@ -279,7 +283,7 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-medium shrink-0 sm:pt-1">
+          <div className={`flex items-center gap-1.5 text-xs font-medium shrink-0 sm:pt-1 ${tk.textMuted}`}>
             <Clock className="w-3.5 h-3.5" />
             <span>{selectedMailDetail.date}</span>
           </div>
@@ -287,16 +291,16 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
 
         {/* Corps HTML du Message */}
         <div
-          className="prose dark:prose-invert max-w-none text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-sans"
+          className={`prose ${tk.isDarkTheme ? 'prose-invert' : ''} max-w-none text-sm leading-relaxed font-sans ${tk.textPrimary}`}
           dangerouslySetInnerHTML={{ __html: selectedMailDetail.bodyHtml }}
         />
 
         {/* Section Pièces Jointes */}
         {selectedMailDetail.attachments && selectedMailDetail.attachments.length > 0 && (
-          <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800 space-y-3">
+          <div className={`pt-4 border-t ${tk.borderSubtle} space-y-3`}>
             <div className="flex items-center gap-2">
-              <Paperclip className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-sans">
+              <Paperclip className="w-4 h-4 text-indigo-500" />
+              <h4 className={`text-xs font-bold uppercase tracking-wider font-sans ${tk.textMuted}`}>
                 Pièces jointes ({selectedMailDetail.attachments.length})
               </h4>
             </div>
@@ -310,7 +314,7 @@ export const MessageDetailPane: React.FC<MessageDetailPaneProps> = ({ onBackToLi
         )}
 
         {/* Boîte de Réponse Rapide */}
-        <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800">
+        <div className={`pt-4 border-t ${tk.borderSubtle}`}>
           <QuickReplyBox onOpenFullComposer={handleReplyClick} />
         </div>
       </div>
