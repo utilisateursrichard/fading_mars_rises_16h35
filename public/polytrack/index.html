@@ -1,0 +1,214 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>PolyTrack</title>
+  <link rel="icon" type="image/svg+xml" href="images/icon.svg" />
+  <link rel="preload" href="forced_square.woff2" as="font" type="font/woff2" crossorigin="anonymous"/>
+  <link rel="preload" href="images/logo.svg" as="image" type="image/svg+xml"/>
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+  <script>
+    window.polytrackModConfiguration = {
+      unblocked: true
+    };
+  </script>
+  <script>
+    (function() {
+      var isFrozen = false;
+      var nextRafId = 1;
+      var queuedCallbacks = new Map();
+      var activeRealIds = new Map();
+      var trackedAudioContexts = new Set();
+      var trackedWorkers = new Set();
+
+      var origRaf = window.requestAnimationFrame.bind(window);
+      var origCancelRaf = window.cancelAnimationFrame.bind(window);
+
+      function scheduleRealRaf(id, cb) {
+        if (isFrozen || activeRealIds.has(id)) return;
+        var realId = origRaf(function(ts) {
+          activeRealIds.delete(id);
+          queuedCallbacks.delete(id);
+          cb(ts);
+        });
+        activeRealIds.set(id, realId);
+      }
+
+      window.requestAnimationFrame = function(cb) {
+        var id = nextRafId++;
+        queuedCallbacks.set(id, cb);
+        if (!isFrozen) {
+          scheduleRealRaf(id, cb);
+        }
+        return id;
+      };
+
+      window.cancelAnimationFrame = function(id) {
+        var realId = activeRealIds.get(id);
+        if (realId !== undefined) {
+          origCancelRaf(realId);
+          activeRealIds.delete(id);
+        }
+        queuedCallbacks.delete(id);
+      };
+
+      function wrapAudioContext(name) {
+        var Ctor = window[name];
+        if (typeof Ctor !== 'function') return;
+        window[name] = new Proxy(Ctor, {
+          construct: function(target, args, newTarget) {
+            var ctx = Reflect.construct(target, args, newTarget);
+            trackedAudioContexts.add(ctx);
+            if (isFrozen && typeof ctx.suspend === 'function') {
+              ctx.suspend().catch(function() {});
+            }
+            return ctx;
+          }
+        });
+      }
+      wrapAudioContext('AudioContext');
+      wrapAudioContext('webkitAudioContext');
+
+      if (typeof window.Worker === 'function') {
+        var OrigWorker = window.Worker;
+        window.Worker = new Proxy(OrigWorker, {
+          construct: function(target, args, newTarget) {
+            var worker = Reflect.construct(target, args, newTarget);
+            trackedWorkers.add(worker);
+            if (isFrozen) {
+              try {
+                worker.postMessage({ messageType: '__BETTERSCHOOL_FREEZE__', frozen: true });
+              } catch (e) {}
+            }
+            return worker;
+          }
+        });
+      }
+
+      function releaseDrivingControls() {
+        var ctrl = window.polytrackActiveCarController;
+        if (!ctrl) return;
+        try {
+          ctrl.up = false;
+          ctrl.right = false;
+          ctrl.down = false;
+          ctrl.left = false;
+          ctrl.reset = false;
+        } catch (e) {}
+      }
+
+      function setPolytrackFrozen(frozen) {
+        var nextFrozen = Boolean(frozen);
+        if (nextFrozen === isFrozen) return;
+
+        if (nextFrozen) {
+          releaseDrivingControls();
+
+          if (typeof window.polytrackPauseIfPlaying === 'function') {
+            try {
+              window.polytrackPauseIfPlaying();
+            } catch (e) {}
+          }
+          if (typeof window.polytrackSetReplayPause === 'function') {
+            try {
+              window.polytrackSetReplayPause(true);
+            } catch (e) {}
+          }
+
+          if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(function() {});
+          }
+          if (document.pointerLockElement && document.exitPointerLock) {
+            document.exitPointerLock();
+          }
+
+          trackedAudioContexts.forEach(function(ctx) {
+            if (typeof ctx.suspend === 'function') {
+              ctx.suspend().catch(function() {});
+            }
+          });
+
+          trackedWorkers.forEach(function(worker) {
+            try {
+              worker.postMessage({ messageType: '__BETTERSCHOOL_FREEZE__', frozen: true });
+            } catch (e) {}
+          });
+
+          isFrozen = true;
+          activeRealIds.forEach(function(realId) {
+            origCancelRaf(realId);
+          });
+          activeRealIds.clear();
+        } else {
+          isFrozen = false;
+
+          trackedWorkers.forEach(function(worker) {
+            try {
+              worker.postMessage({ messageType: '__BETTERSCHOOL_FREEZE__', frozen: false });
+            } catch (e) {}
+          });
+
+          trackedAudioContexts.forEach(function(ctx) {
+            if (typeof ctx.resume === 'function') {
+              ctx.resume().catch(function() {});
+            }
+          });
+
+          var entries = Array.from(queuedCallbacks.entries());
+          for (var i = 0; i < entries.length; i++) {
+            var id = entries[i][0];
+            var cb = entries[i][1];
+            if (queuedCallbacks.has(id)) {
+              scheduleRealRaf(id, cb);
+            }
+          }
+
+          try {
+            window.dispatchEvent(new Event('resize'));
+          } catch (e) {}
+        }
+      }
+
+      window.__setPolytrackFrozen = setPolytrackFrozen;
+
+      window.addEventListener('message', function(event) {
+        if (event.origin !== window.location.origin) return;
+        if (event.data && event.data.type === 'BETTERSCHOOL_POLYTRACK_SET_FROZEN') {
+          setPolytrackFrozen(Boolean(event.data.frozen));
+        }
+      });
+
+      window.addEventListener('keydown', function(e) {
+        if (!e.ctrlKey || e.altKey || e.metaKey || e.repeat) return;
+        var keyCode = e.keyCode || e.which;
+        var isAngleKey =
+          e.key === '<' ||
+          e.key === '>' ||
+          e.code === 'IntlBackslash' ||
+          keyCode === 226 ||
+          keyCode === 60 ||
+          keyCode === 62;
+        var isExit =
+          (!e.shiftKey && e.key !== '>' && isAngleKey) ||
+          (e.shiftKey && e.code === 'Comma' && e.key === '<');
+        if (isExit) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          setPolytrackFrozen(true);
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'BETTERSCHOOL_POLYTRACK_EXIT' }, window.location.origin);
+          }
+        }
+      }, true);
+    })();
+  </script>
+  <script defer="defer" src="error_screen.bundle.js"></script>
+  <script defer="defer" src="main.bundle.js"></script>
+</head>
+<body>
+  <canvas id="screen"></canvas>
+  <div id="ui"></div>
+  <div id="transition-layer"></div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SchoolProvider, useSchool } from './context/SchoolContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -15,6 +15,11 @@ import { LiveModeEmptyState } from './components/common/LiveModeEmptyState';
 import { isFeatureReadyInLive } from './utils/featureFlags';
 import { CourseDetailModal } from './components/modals/CourseDetailModal';
 import { NewHomeworkModal } from './components/modals/NewHomeworkModal';
+import { PolytrackOverlay } from './components/common/PolytrackOverlay';
+import {
+  isEnterPolytrackShortcut,
+  isExitPolytrackShortcut,
+} from './utils/polytrackShortcuts';
 
 const MainLayout: React.FC = () => {
   const { activeTab, isDemoMode } = useSchool();
@@ -107,10 +112,46 @@ const MainLayout: React.FC = () => {
 };
 
 export function App() {
+  const [hasMountedPolytrack, setHasMountedPolytrack] = useState(false);
+  const [isPolytrackActive, setIsPolytrackActive] = useState(false);
+  const isPolytrackActiveRef = useRef(isPolytrackActive);
+  isPolytrackActiveRef.current = isPolytrackActive;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isPolytrackActiveRef.current && isEnterPolytrackShortcut(e)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        setHasMountedPolytrack(true);
+        setIsPolytrackActive(true);
+      } else if (isPolytrackActiveRef.current && isExitPolytrackShortcut(e)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        setIsPolytrackActive(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, []);
+
   return (
-    <SchoolProvider>
-      <MainLayout />
-    </SchoolProvider>
+    <>
+      <div
+        aria-hidden={isPolytrackActive}
+        className={isPolytrackActive ? 'pointer-events-none select-none' : undefined}
+      >
+        <SchoolProvider>
+          <MainLayout />
+        </SchoolProvider>
+      </div>
+      {hasMountedPolytrack && (
+        <PolytrackOverlay
+          isActive={isPolytrackActive}
+          onExit={() => setIsPolytrackActive(false)}
+        />
+      )}
+    </>
   );
 }
 

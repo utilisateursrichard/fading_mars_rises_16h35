@@ -4,6 +4,14 @@ Ce document recense l'architecture, les conventions et les mécanismes clés de 
 
 ---
 
+## ⚠️ TODO Impératif (À rappeler à l'utilisateur)
+
+> [!IMPORTANT]
+> **Rappeler impérativement à l'utilisateur de supprimer complètement le Mode Démo** (`isDemoMode`, le bouton toggle dans `src/components/layout/Header.tsx`, les données factices `src/data/mockData.ts` / `src/data/mockMessages.ts`, ainsi que toute la logique conditionnelle démo dans `src/context/SchoolContext.tsx`, `src/utils/featureFlags.ts`, les vues et les modales) dès que possible.
+> À chaque intervention majeure sur le projet tant que le Mode Démo est encore présent, **pensez à rappeler à l'utilisateur** qu'il reste à supprimer complètement.
+
+---
+
 ## 1. 🏗️ Architecture Globale
 
 - **Framework :** React 18 + TypeScript + Vite 6
@@ -15,6 +23,9 @@ Ce document recense l'architecture, les conventions et les mécanismes clés de 
 ---
 
 ## 2. 🎭 Mode Démo vs Mode Réel (`isDemoMode`)
+
+> [!WARNING]
+> **TODO Impératif :** Toujours rappeler à l'utilisateur de supprimer complètement le Mode Démo (code, toggle UI et données factices) dès que possible.
 
 ### 2.1. Philosophie
 Pour permettre aux utilisateurs de visualiser l'ensemble de la vision du projet sans confusion avec leurs données réelles :
