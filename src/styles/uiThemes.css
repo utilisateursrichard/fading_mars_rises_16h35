@@ -418,3 +418,18 @@
 [data-ui-theme="horizon"] main .text-indigo-700 {
   color: #0A66FF;
 }
+
+/* Google Material 3 Expressive: continuous flowing sine wave */
+@keyframes m3e-wave-flow {
+  0% {
+    transform: translateX(-32px);
+  }
+  100% {
+    transform: translateX(0px);
+  }
+}
+
+.m3e-wavy-flow {
+  animation: m3e-wave-flow 1.15s linear infinite;
+  will-change: transform;
+}

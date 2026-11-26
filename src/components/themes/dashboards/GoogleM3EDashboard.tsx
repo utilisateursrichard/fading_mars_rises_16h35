@@ -52,7 +52,7 @@ export const GoogleM3EDashboard: React.FC = () => {
     student,
     greeting,
     todayFormatted,
-    dayProgressPct,
+    liveClassProgressPct,
     filteredHomeworks,
     homeworkFilter,
     setHomeworkFilter,
@@ -157,41 +157,59 @@ export const GoogleM3EDashboard: React.FC = () => {
             </span>
           </div>
 
-          {/* Android 16/17 Wavy Progress Indicator */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] font-bold text-[#001C38]/80">
-              <span>Progression de la journée</span>
-              <span>{dayProgressPct}%</span>
+          {/* Android 16/17 Wavy Progress Indicator — uniquement quand un cours est en cours */}
+          {nextClassSpotlight?.isLive && liveClassProgressPct !== null && (
+            <div className="space-y-1.5 animate-in fade-in duration-300">
+              <div className="flex items-center justify-between text-[11px] font-bold text-[#001C38]/80">
+                <span>Progression du cours</span>
+                <span>{Math.round(liveClassProgressPct)}%</span>
+              </div>
+              <div className="relative h-5 w-full flex items-center">
+                <svg viewBox="0 0 300 18" preserveAspectRatio="none" className="w-full h-4 overflow-hidden">
+                  <defs>
+                    <clipPath id="m3e-wave-progress-clip">
+                      <rect
+                        x="0"
+                        y="0"
+                        width={(liveClassProgressPct / 100) * 300}
+                        height="18"
+                        className="transition-[width] duration-700 ease-out"
+                      />
+                    </clipPath>
+                  </defs>
+                  {/* Inactive Track (starts after active wave gap, M3E style) */}
+                  {liveClassProgressPct < 98 && (
+                    <line
+                      x1={Math.min(296, Math.max(4, (liveClassProgressPct / 100) * 300 + (liveClassProgressPct > 0 ? 6 : 0)))}
+                      y1="9"
+                      x2="296"
+                      y2="9"
+                      stroke="#9AB8E0"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                    />
+                  )}
+                  {/* M3E Stop Indicator Dot */}
+                  {liveClassProgressPct < 99 && (
+                    <circle cx="296" cy="9" r="2" fill="#00639B" />
+                  )}
+                  {/* Flowing Wavy Active Indicator */}
+                  {liveClassProgressPct > 0 && (
+                    <g clipPath="url(#m3e-wave-progress-clip)">
+                      <path
+                        className="m3e-wavy-flow"
+                        d="M -32 9 Q -24 2 -16 9 T 0 9 T 16 9 T 32 9 T 48 9 T 64 9 T 80 9 T 96 9 T 112 9 T 128 9 T 144 9 T 160 9 T 176 9 T 192 9 T 208 9 T 224 9 T 240 9 T 256 9 T 272 9 T 288 9 T 304 9 T 320 9 T 336 9"
+                        fill="none"
+                        stroke="#00639B"
+                        strokeWidth="4.2"
+                        strokeLinecap="round"
+                      />
+                    </g>
+                  )}
+                </svg>
+              </div>
             </div>
-            <div className="relative h-5 w-full flex items-center">
-              <svg viewBox="0 0 300 18" preserveAspectRatio="none" className="w-full h-4">
-                <defs>
-                  <clipPath id="m3e-wave-progress-clip">
-                    <rect x="0" y="0" width={Math.max(8, (dayProgressPct / 100) * 300)} height="18" />
-                  </clipPath>
-                </defs>
-                {/* Track */}
-                <line
-                  x1="4"
-                  y1="9"
-                  x2="296"
-                  y2="9"
-                  stroke="#9AB8E0"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                />
-                {/* Wavy Active Indicator */}
-                <path
-                  d="M 4 9 Q 12 2 20 9 T 36 9 T 52 9 T 68 9 T 84 9 T 100 9 T 116 9 T 132 9 T 148 9 T 164 9 T 180 9 T 196 9 T 212 9 T 228 9 T 244 9 T 260 9 T 276 9 T 292 9"
-                  fill="none"
-                  stroke="#00639B"
-                  strokeWidth="4.2"
-                  strokeLinecap="round"
-                  clipPath="url(#m3e-wave-progress-clip)"
-                />
-              </svg>
-            </div>
-          </div>
+          )}
         </button>
 
         {/* Right 4 Cols: 12-Petal Scalloped Soft-Burst SVG Grade Badge + Coral Urgent Pill */}

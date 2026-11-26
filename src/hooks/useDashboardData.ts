@@ -33,17 +33,18 @@ export function useDashboardData() {
   } = useSchool();
 
   const [homeworkFilter, setHomeworkFilter] = useState<'pending' | 'urgent' | 'all' | 'completed'>('pending');
-  const [nowMinutes, setNowMinutes] = useState<number>(() => {
+  const [nowPreciseMinutes, setNowPreciseMinutes] = useState<number>(() => {
     const d = new Date();
-    return d.getHours() * 60 + d.getMinutes();
+    return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
   });
+  const nowMinutes = Math.floor(nowPreciseMinutes);
 
   useEffect(() => {
     const updateClock = () => {
       const d = new Date();
-      setNowMinutes(d.getHours() * 60 + d.getMinutes());
+      setNowPreciseMinutes(d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60);
     };
-    const timer = window.setInterval(updateClock, 30000);
+    const timer = window.setInterval(updateClock, 5000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -194,6 +195,15 @@ export function useDashboardData() {
     return null;
   }, [sortedTodayEvents, events, nowMinutes]);
 
+  const liveClassProgressPct = useMemo(() => {
+    if (!nextClassSpotlight || !nextClassSpotlight.isLive) return null;
+    const startMin = parseMinutes(nextClassSpotlight.event.startTime);
+    const endMin = parseMinutes(nextClassSpotlight.event.endTime);
+    const duration = Math.max(1, endMin - startMin);
+    const pct = Math.min(100, Math.max(0, ((nowPreciseMinutes - startMin) / duration) * 100));
+    return Number(pct.toFixed(1));
+  }, [nextClassSpotlight, nowPreciseMinutes]);
+
   const pendingHomeworksCount = useMemo(() => {
     return homeworks.filter((h) => !h.isCompleted && (!h.dueDate || h.dueDate >= todayDateStr)).length;
   }, [homeworks, todayDateStr]);
@@ -225,6 +235,7 @@ export function useDashboardData() {
     nowMinutes,
     currentTimeLabel,
     dayProgressPct,
+    liveClassProgressPct,
     filteredHomeworks,
     homeworkFilter,
     setHomeworkFilter,
