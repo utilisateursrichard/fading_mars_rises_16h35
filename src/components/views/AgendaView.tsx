@@ -220,27 +220,6 @@ export const AgendaView: React.FC = () => {
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
   }, [currentTime]);
 
-  const daysConfig = useMemo(() => {
-    return weekDates.map((wd) => ({
-      dayOfWeek: wd.dayOfWeek,
-      name: wd.name,
-      short: wd.short,
-      dateNum: wd.dateNum,
-      fullDate: wd.fullDate,
-      isToday: wd.fullDate === todayDateStr
-    }));
-  }, [weekDates, todayDateStr]);
-
-  // Libellé de la semaine (ex: "07 - 12 sept.")
-  const weekLabel = useMemo(() => {
-    if (weekDates.length === 0) return 'Semaine';
-    const startDay = weekDates[0].dateNum;
-    const endDay = weekDates[weekDates.length - 1].dateNum;
-    const monthNames = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-    const month = monthNames[new Date(weekDates[0].fullDate).getMonth()];
-    return `${startDay} - ${endDay} ${month}`;
-  }, [weekDates]);
-
   // Synchronisation automatique des données de la semaine
   useEffect(() => {
     syncWeek(targetDate);
@@ -315,6 +294,38 @@ export const AgendaView: React.FC = () => {
     });
     return map;
   }, [filteredEvents, weekDates]);
+
+  // Lundi à Vendredi toujours affichés ; Samedi (6) et Dimanche (7) uniquement s'ils contiennent au moins un événement
+  const daysConfig = useMemo(() => {
+    return weekDates
+      .filter((wd) => wd.dayOfWeek <= 5 || (eventsByDay[wd.dayOfWeek]?.length ?? 0) > 0)
+      .map((wd) => ({
+        dayOfWeek: wd.dayOfWeek,
+        name: wd.name,
+        short: wd.short,
+        dateNum: wd.dateNum,
+        fullDate: wd.fullDate,
+        isToday: wd.fullDate === todayDateStr
+      }));
+  }, [weekDates, eventsByDay, todayDateStr]);
+
+  // Si le jour sélectionné (ex: week-end) n'est pas affiché car vide, basculer sur un jour visible
+  useEffect(() => {
+    if (daysConfig.length > 0 && !daysConfig.some((d) => d.dayOfWeek === selectedDay)) {
+      const todayVisible = daysConfig.find((d) => d.isToday);
+      setSelectedDay(todayVisible ? todayVisible.dayOfWeek : daysConfig[0].dayOfWeek);
+    }
+  }, [daysConfig, selectedDay]);
+
+  // Libellé de la semaine (ex: "07 - 11 sept.")
+  const weekLabel = useMemo(() => {
+    if (daysConfig.length === 0) return 'Semaine';
+    const startDay = daysConfig[0].dateNum;
+    const endDay = daysConfig[daysConfig.length - 1].dateNum;
+    const monthNames = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+    const month = monthNames[new Date(daysConfig[0].fullDate).getMonth()];
+    return `${startDay} - ${endDay} ${month}`;
+  }, [daysConfig]);
 
   // Calcul dynamique des bornes horaires de la semaine (minHour et maxHour)
   const { minHour, maxHour, totalHours } = useMemo(() => {

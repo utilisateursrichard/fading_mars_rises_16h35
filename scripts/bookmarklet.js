@@ -52,12 +52,6 @@ const overlayBookmarkletCode = `javascript:(function(){
   iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
   iframe.title = 'BetterSchool Interface';
 
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕ Quitter BetterSchool';
-  closeBtn.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:2147483648;background:rgb(15,23,42);color:white;border:1px solid rgba(255,255,255,0.15);padding:8px 16px;border-radius:9999px;font-family:sans-serif;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 10px 25px -5px rgba(0,0,0,0.3);transition:all 0.2s;';
-  closeBtn.onmouseenter = () => closeBtn.style.transform = 'scale(1.05)';
-  closeBtn.onmouseleave = () => closeBtn.style.transform = 'scale(1)';
-
   const onMsg = (ev) => {
     try {
       if (ev.source !== iframe.contentWindow) return;
@@ -136,7 +130,6 @@ const overlayBookmarkletCode = `javascript:(function(){
   };
 
   window.__closeBS = cleanup;
-  closeBtn.onclick = cleanup;
 
   const handleEsc = (e) => {
     if (e.key === 'Escape') cleanup();
@@ -144,7 +137,6 @@ const overlayBookmarkletCode = `javascript:(function(){
   window.addEventListener('keydown', handleEsc);
 
   overlay.appendChild(iframe);
-  overlay.appendChild(closeBtn);
   document.body.appendChild(overlay);
 })();`;
 
