@@ -19,12 +19,14 @@ import { NovaShell } from './components/themes/shells/NovaShell';
 import { AppleProShell } from './components/themes/shells/AppleProShell';
 import { HorizonShell } from './components/themes/shells/HorizonShell';
 import { ObsidianShell } from './components/themes/shells/ObsidianShell';
+import { M3EProShell } from './components/themes/shells/M3EProShell';
 import { PulseDashboard } from './components/themes/dashboards/PulseDashboard';
 import { GoogleM3EDashboard } from './components/themes/dashboards/GoogleM3EDashboard';
 import { NovaDashboard } from './components/themes/dashboards/NovaDashboard';
 import { AppleProDashboard } from './components/themes/dashboards/AppleProDashboard';
 import { HorizonDashboard } from './components/themes/dashboards/HorizonDashboard';
 import { ObsidianDashboard } from './components/themes/dashboards/ObsidianDashboard';
+import { DashboardView } from './components/views/DashboardView';
 import {
   isEnterPolytrackShortcut,
   isExitPolytrackShortcut,
@@ -49,6 +51,8 @@ const MainLayout: React.FC = () => {
         return <HorizonDashboard />;
       case 'obsidian':
         return <ObsidianDashboard />;
+      case 'm3e_pro':
+        return <DashboardView />;
       default:
         return <PulseDashboard />;
     }
@@ -123,6 +127,8 @@ const MainLayout: React.FC = () => {
         return <HorizonShell {...shellProps} />;
       case 'obsidian':
         return <ObsidianShell {...shellProps} />;
+      case 'm3e_pro':
+        return <M3EProShell {...shellProps} />;
       default:
         return <PulseShell {...shellProps} />;
     }

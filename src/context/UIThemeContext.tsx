@@ -6,7 +6,8 @@ export type UIThemeId =
   | 'nova'
   | 'apple_pro'
   | 'horizon'
-  | 'obsidian';
+  | 'obsidian'
+  | 'm3e_pro';
 
 export interface UIThemeMeta {
   id: UIThemeId;
@@ -61,6 +62,13 @@ export const UI_THEMES: UIThemeMeta[] = [
     previewBg: '#0B0C10',
     previewAccent: '#38BDF8',
     isDark: true,
+  },
+  {
+    id: 'm3e_pro',
+    label: 'M3E Pro',
+    shortTag: 'Classique BetterSchool',
+    previewBg: '#F8FAFC',
+    previewAccent: '#4F46E5',
   },
 ];
 

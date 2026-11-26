@@ -277,6 +277,46 @@ const TOKENS_MAP: Record<UIThemeId, ThemeTokens> = {
     tabActive: 'border-[#38BDF8] text-[#38BDF8]',
     tabIdle: 'border-transparent text-slate-400 hover:text-white',
   },
+  m3e_pro: {
+    heroBanner:
+      'bg-white text-slate-900 rounded-3xl border border-slate-200/70 shadow-subtle',
+    heroTitle: 'text-slate-900',
+    heroSubtitle: 'text-slate-500',
+    card: 'bg-white rounded-3xl border border-slate-200/70 shadow-subtle',
+    interactiveCard:
+      'bg-white rounded-3xl border border-slate-200/80 hover:border-indigo-300/80 shadow-xs hover:shadow-md transition-all duration-200',
+    primaryBtn:
+      'bg-slate-900 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all',
+    secondaryBtn:
+      'bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors',
+    subSurface: 'bg-slate-50/80 rounded-2xl',
+    pillSwitchTrack: 'bg-slate-100 rounded-2xl p-1',
+    pillSwitchActive: 'bg-white text-slate-900 rounded-xl shadow-xs',
+    pillSwitchIdle: 'text-slate-500 hover:text-slate-900 rounded-xl',
+    isDarkHero: false,
+    isDarkTheme: false,
+    textPrimary: 'text-slate-900',
+    textSecondary: 'text-slate-600',
+    textMuted: 'text-slate-400',
+    borderSubtle: 'border-slate-200/70',
+    divider: 'divide-slate-100',
+    inputField: 'bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:ring-2 focus:ring-indigo-500/20',
+    tableHeader: 'bg-slate-50/70 text-slate-400 border-b border-slate-100',
+    tableRowHover: 'hover:bg-slate-50/80',
+    agendaGridContainer: 'bg-white rounded-3xl border border-slate-200/80 shadow-subtle overflow-hidden',
+    agendaHoursAxis: 'border-r border-slate-200/60 bg-slate-50/40',
+    agendaDayHeader: 'border-r last:border-r-0 border-slate-200/60 hover:bg-slate-100/60',
+    agendaTodayHeader: 'bg-indigo-50/50',
+    agendaTodayColumn: 'bg-indigo-50/15',
+    agendaTodayBadge: 'bg-indigo-600 text-white',
+    agendaHourLine: 'border-t border-slate-100',
+    agendaHalfHourLine: 'border-t border-slate-50/90 border-dashed',
+    agendaEventBlock: 'bg-white rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md hover:ring-2 hover:ring-indigo-400/50',
+    agendaEventActive: 'bg-white rounded-xl ring-2 ring-emerald-500 shadow-sm',
+    tabBar: 'border-b border-slate-200',
+    tabActive: 'border-indigo-600 text-indigo-600',
+    tabIdle: 'border-transparent text-slate-500 hover:text-slate-900',
+  },
 };
 
 export function getThemeTokens(theme: UIThemeId): ThemeTokens {
